@@ -1,0 +1,635 @@
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronRight, Star, Truck, Package, Calendar, Wine, Leaf, UtensilsCrossed, DoorOpen, MapPin, Phone, Clock, ChevronLeft, ExternalLink } from 'lucide-react';
+import { DataStore } from '@/data/store';
+import type { Location, Testimonial, FeaturedDish, FAQ } from '@/types';
+
+export default function Home() {
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [featuredDishes, setFeaturedDishes] = useState<FeaturedDish[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [siteContent, setSiteContent] = useState(DataStore.getSiteContent());
+  const [features, setFeatures] = useState(DataStore.getFeatures());
+  const [activeLocation, setActiveLocation] = useState(0);
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const dishesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setLocations(DataStore.getLocations());
+    setTestimonials(DataStore.getTestimonials());
+    setFaqs(DataStore.getFAQs());
+    setSiteContent(DataStore.getSiteContent());
+    setFeatures(DataStore.getFeatures());
+
+    const fetchFeatured = async () => {
+      try {
+        const res = await fetch('/api/menu');
+        if (res.ok) {
+          const items = await res.json();
+          const featured = items
+            .filter((item: any) => item.popular)
+            .slice(0, 6)
+            .map((item: any) => ({
+              id: item.id || item._id, // Handle both id formats
+              name: item.name,
+              image: item.image,
+              menuItemId: item.id || item._id,
+            }));
+          setFeaturedDishes(featured);
+        } else {
+          setFeaturedDishes(DataStore.getFeaturedDishes());
+        }
+      } catch (e) {
+        setFeaturedDishes(DataStore.getFeaturedDishes());
+      }
+    };
+    fetchFeatured();
+  }, []);
+
+  const scrollGallery = (direction: 'left' | 'right') => {
+    if (galleryRef.current) {
+      const scrollAmount = 300;
+      galleryRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const scrollDishes = (direction: 'left' | 'right') => {
+    if (dishesRef.current) {
+      const scrollAmount = 280;
+      dishesRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const getFeatureIcon = (iconName: string) => {
+    const icons: Record<string, React.ReactNode> = {
+      truck: <Truck className="w-5 h-5" />,
+      package: <Package className="w-5 h-5" />,
+      calendar: <Calendar className="w-5 h-5" />,
+      wine: <Wine className="w-5 h-5" />,
+      leaf: <Leaf className="w-5 h-5" />,
+      utensils: <UtensilsCrossed className="w-5 h-5" />,
+      door: <DoorOpen className="w-5 h-5" />,
+    };
+    return icons[iconName] || <Star className="w-5 h-5" />;
+  };
+
+  return (
+    <div className="overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative h-[600px] lg:h-[700px] flex items-center justify-center">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${siteContent.hero.backgroundImage})` }}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+
+        <div className="relative z-10 text-center text-white px-4 section-padding max-w-4xl mx-auto">
+          <p className="text-lg md:text-xl font-medium mb-4 animate-fade-in-up">
+            {siteContent.hero.title}
+          </p>
+          <h1 className="heading-xl mb-8 animate-fade-in-up stagger-1">
+            {siteContent.hero.subtitle}
+          </h1>
+          <Link
+            to="/menu?order=true"
+            className="btn-primary inline-flex items-center gap-2 animate-fade-in-up stagger-2"
+          >
+            Order online
+            <ChevronRight className="w-5 h-5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* Featured Dishes Section */}
+      <section className="py-12 lg:py-16 bg-white">
+        <div className="section-padding">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="heading-sm text-lotus-dark">Featured</h2>
+            <Link
+              to="/menu"
+              className="flex items-center gap-1 text-lotus-gold hover:text-lotus-gold-dark transition-colors text-sm font-medium"
+            >
+              View menu
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => scrollDishes('left')}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-lotus-cream transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <div
+              ref={dishesRef}
+              className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-12"
+            >
+              {featuredDishes.map((dish) => (
+                <Link
+                  key={dish.id}
+                  to={`/menu?item=${dish.menuItemId}`}
+                  className="flex-shrink-0 w-48 lg:w-56 group"
+                >
+                  <div className="relative aspect-square rounded-xl overflow-hidden mb-3">
+                    <img
+                      src={dish.image}
+                      alt={dish.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <p className="absolute bottom-3 left-3 right-3 text-white font-medium text-sm">
+                      {dish.name}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <button
+              onClick={() => scrollDishes('right')}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-lotus-cream transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Awards Section */}
+      <section className="py-12 lg:py-16 bg-lotus-cream">
+        <div className="section-padding text-center max-w-3xl mx-auto">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            {siteContent.awards.years.map((year, index) => (
+              <span key={year} className="flex items-center gap-2">
+                <span className="text-2xl md:text-3xl font-bold text-lotus-gold font-['Playfair_Display']">
+                  {year}
+                </span>
+                {index < siteContent.awards.years.length - 1 && (
+                  <span className="text-golden_lotus-gray">•</span>
+                )}
+              </span>
+            ))}
+          </div>
+          <h2 className="heading-md text-lotus-dark mb-4">
+            {siteContent.awards.title}
+          </h2>
+          <p className="text-body mb-6">
+            {siteContent.awards.description}
+          </p>
+          <a
+            href={siteContent.awards.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-lotus-gold hover:text-lotus-gold-dark transition-colors font-medium"
+          >
+            Read More!
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </div>
+      </section>
+
+      {/* Welcome Section */}
+      <section className="py-12 lg:py-20 bg-white">
+        <div className="section-padding">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            <div>
+              <h2 className="heading-md text-lotus-dark mb-6">
+                {siteContent.about.title}
+              </h2>
+              <p className="text-body text-lg leading-relaxed">
+                {siteContent.about.content}
+              </p>
+            </div>
+            <div className="relative">
+              <img
+                src={siteContent.about.image}
+                alt="Golden Lotus Restaurant"
+                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Authentic Cuisine Section */}
+      <section className="py-12 lg:py-20 bg-lotus-cream">
+        <div className="section-padding">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            <div className="order-2 lg:order-1 relative">
+              <img
+                src={siteContent.cuisine.image}
+                alt="Authentic Indian Cuisine"
+                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
+              />
+            </div>
+            <div className="order-1 lg:order-2">
+              <h2 className="heading-md text-lotus-dark mb-6">
+                {siteContent.cuisine.title}
+              </h2>
+              <p className="text-body text-lg leading-relaxed mb-6">
+                {siteContent.cuisine.description}
+              </p>
+              <Link to="/menu" className="btn-primary inline-flex items-center gap-2">
+                Explore Our Menu
+                <ChevronRight className="w-5 h-5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Full Bar Section */}
+      <section className="py-12 lg:py-20 bg-white">
+        <div className="section-padding">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            <div>
+              <h2 className="heading-md text-lotus-dark mb-6">
+                {siteContent.bar.title}
+              </h2>
+              <p className="text-body text-lg leading-relaxed">
+                {siteContent.bar.description}
+              </p>
+            </div>
+            <div className="relative">
+              <img
+                src={siteContent.bar.image}
+                alt="Full Bar"
+                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Order CTA Section */}
+      <section className="py-16 lg:py-24 bg-lotus-gold">
+        <div className="section-padding text-center text-white max-w-3xl mx-auto">
+          <h2 className="heading-md mb-4">Order From Our Website!</h2>
+          <p className="text-lg opacity-90 mb-8">
+            Craving something bold and delicious? Skip the wait and order straight from our website!
+            With just a few clicks, you can have our flavorful dishes delivered right to your door.
+            Quick, easy, and packed with the authentic taste you love. Why wait? Get your flavor fix now!
+          </p>
+          <Link
+            to="/menu?order=true"
+            className="btn-outline inline-flex items-center gap-2"
+          >
+            Order Now
+            <ChevronRight className="w-5 h-5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* Gallery Section */}
+      <section className="py-12 lg:py-16 bg-white">
+        <div className="section-padding">
+          <h2 className="heading-sm text-lotus-dark mb-8 text-center">
+            A Feast for Your Eyes! 📸
+          </h2>
+          <p className="text-center text-gray-600 mb-8">
+            Explore the vibrant, mouth-watering creations that come from our kitchen!
+          </p>
+
+          <div className="relative">
+            <button
+              onClick={() => scrollGallery('left')}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-lotus-cream transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <div
+              ref={galleryRef}
+              className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-12"
+            >
+              {DataStore.getGalleryImages().map((image) => (
+                <div
+                  key={image.id}
+                  className="flex-shrink-0 w-64 lg:w-80 aspect-square rounded-xl overflow-hidden"
+                >
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => scrollGallery('right')}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-lotus-cream transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Ambience Section */}
+      <section className="py-12 lg:py-20 bg-lotus-cream">
+        <div className="section-padding">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            <div>
+              <h2 className="heading-md text-lotus-dark mb-6">
+                {siteContent.ambience.title}
+              </h2>
+              <p className="text-body text-lg leading-relaxed">
+                {siteContent.ambience.description}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {siteContent.ambience.images.map((image, index) => (
+                <img
+                  key={index}
+                  src={image}
+                  alt={`Ambience ${index + 1}`}
+                  className={`rounded-xl shadow-lg w-full h-48 object-cover ${index === 0 ? 'col-span-2 h-64' : ''
+                    }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Catering CTA Section */}
+      <section className="py-12 lg:py-20 bg-white">
+        <div className="section-padding">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            <div className="relative">
+              <img
+                src={siteContent.catering.image}
+                alt="Catering"
+                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
+              />
+            </div>
+            <div>
+              <h2 className="heading-md text-lotus-dark mb-6">
+                {siteContent.catering.title}
+              </h2>
+              <p className="text-body text-lg leading-relaxed mb-6">
+                {siteContent.catering.description}
+              </p>
+              <Link to="/catering" className="btn-primary inline-flex items-center gap-2">
+                Cater Now
+                <ChevronRight className="w-5 h-5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Henna Party Section */}
+      <section className="py-12 lg:py-20 bg-lotus-cream">
+        <div className="section-padding">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            <div>
+              <h2 className="heading-md text-lotus-dark mb-6">
+                {siteContent.events.hennaParty.title}
+              </h2>
+              <p className="text-body text-lg leading-relaxed mb-6">
+                {siteContent.events.hennaParty.description}
+              </p>
+              <Link to="/events" className="btn-primary inline-flex items-center gap-2">
+                Learn More
+                <ChevronRight className="w-5 h-5" />
+              </Link>
+            </div>
+            <div className="relative">
+              <img
+                src={siteContent.events.hennaParty.image}
+                alt="Henna Party"
+                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Visit Us Section */}
+      <section className="py-16 lg:py-24 bg-lotus-gold">
+        <div className="section-padding text-center text-white max-w-4xl mx-auto">
+          <h2 className="heading-md mb-6">{siteContent.visitUs.title}</h2>
+          <p className="text-lg opacity-90 leading-relaxed">
+            {siteContent.visitUs.content}
+          </p>
+          <div className="mt-8">
+            <Link
+              to="/locations"
+              className="btn-outline inline-flex items-center gap-2"
+            >
+              Check Our Locations
+              <MapPin className="w-5 h-5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-12 lg:py-16 bg-white">
+        <div className="section-padding">
+          <h2 className="heading-sm text-lotus-dark mb-8 text-center">
+            What our guests are saying
+          </h2>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {testimonials.slice(0, 3).map((testimonial) => (
+              <div
+                key={testimonial.id}
+                className="bg-lotus-cream rounded-xl p-6"
+              >
+                <div className="flex gap-1 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-lotus-gold text-lotus-gold" />
+                  ))}
+                </div>
+                <p className="text-gray-700 mb-4 line-clamp-4">{testimonial.text}</p>
+                <p className="font-medium text-lotus-dark">{testimonial.name}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-8">
+            <button className="text-lotus-gold hover:text-lotus-gold-dark transition-colors font-medium">
+              View more
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-12 lg:py-16 bg-lotus-cream">
+        <div className="section-padding">
+          <h2 className="heading-sm text-lotus-dark mb-8 text-center">Featuring</h2>
+
+          <div className="flex flex-wrap justify-center gap-4">
+            {features.map((feature) => (
+              <div
+                key={feature.id}
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm"
+              >
+                <span className="text-lotus-gold">{getFeatureIcon(feature.icon)}</span>
+                <span className="text-sm font-medium text-lotus-dark">{feature.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Rewards Section */}
+      <section className="py-12 lg:py-20 bg-white">
+        <div className="section-padding">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="heading-md text-lotus-dark mb-4">
+              {siteContent.rewards.title}
+            </h2>
+            <p className="text-body text-lg mb-8">
+              {siteContent.rewards.description}
+            </p>
+            <button className="btn-primary inline-flex items-center gap-2">
+              Start Earning Now
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-12 lg:py-16 bg-lotus-cream">
+        <div className="section-padding max-w-3xl mx-auto">
+          <h2 className="heading-sm text-lotus-dark mb-8 text-center">
+            Frequently Asked Questions
+          </h2>
+
+          <div className="space-y-4">
+            {faqs.map((faq) => (
+              <div
+                key={faq.id}
+                className="bg-white rounded-lg overflow-hidden shadow-sm"
+              >
+                <button
+                  onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+                  className="w-full px-6 py-4 flex items-center justify-between text-left"
+                >
+                  <span className="font-medium text-lotus-dark">{faq.question}</span>
+                  <ChevronRight
+                    className={`w-5 h-5 text-lotus-gold transition-transform ${openFaq === faq.id ? 'rotate-90' : ''
+                      }`}
+                  />
+                </button>
+                {openFaq === faq.id && (
+                  <div className="px-6 pb-4">
+                    <p className="text-gray-600">{faq.answer}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Locations Section */}
+      <section className="py-12 lg:py-20 bg-white">
+        <div className="section-padding">
+          <h2 className="heading-sm text-lotus-dark mb-8 text-center">Our locations</h2>
+
+          {/* Location Tabs */}
+          <div className="flex justify-center gap-4 mb-8">
+            {locations.map((location, index) => (
+              <button
+                key={location.id}
+                onClick={() => setActiveLocation(index)}
+                className={`px-6 py-2 rounded-full font-medium transition-colors ${activeLocation === index
+                    ? 'bg-lotus-gold text-white'
+                    : 'bg-lotus-cream text-lotus-dark hover:bg-lotus-gold/10'
+                  }`}
+              >
+                {location.city}
+              </button>
+            ))}
+          </div>
+
+          {/* Location Card */}
+          {locations[activeLocation] && (
+            <div className="max-w-2xl mx-auto bg-lotus-cream rounded-2xl p-8">
+              <h3 className="text-xl font-bold text-lotus-dark mb-2">
+                {locations[activeLocation].name}
+              </h3>
+              <p className="text-lotus-gold font-medium mb-6">
+                {locations[activeLocation].city}, {locations[activeLocation].state}
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-lotus-gold mt-0.5" />
+                  <div>
+                    <p className="font-medium text-lotus-dark">Address</p>
+                    <p className="text-gray-600">
+                      {locations[activeLocation].address}
+                    </p>
+                    <p className="text-gray-600">
+                      {locations[activeLocation].city}, {locations[activeLocation].state} {locations[activeLocation].zip}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Phone className="w-5 h-5 text-lotus-gold mt-0.5" />
+                  <div>
+                    <p className="font-medium text-lotus-dark">Contacts</p>
+                    <a
+                      href={`tel:${locations[activeLocation].phone}`}
+                      className="text-gray-600 hover:text-lotus-gold transition-colors"
+                    >
+                      {locations[activeLocation].phone}
+                    </a>
+                    <p className="text-gray-600">{locations[activeLocation].email}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-lotus-gold mt-0.5" />
+                  <div>
+                    <p className="font-medium text-lotus-dark">Hours</p>
+                    <p className="text-gray-600">
+                      Today: 11:30 AM - 4:00 PM, 5:00 PM - 10:00 PM
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4 mt-6">
+                <a
+                  href={locations[activeLocation].googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 btn-secondary text-center"
+                >
+                  Get Directions
+                </a>
+                <Link
+                  to="/menu?order=true"
+                  className="flex-1 btn-primary text-center"
+                >
+                  Order Now
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}

@@ -1,0 +1,91 @@
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { initializeData, DataStore } from '@/data/store';
+
+// Layout
+import MainLayout from '@/components/ui-custom/MainLayout';
+
+// User Pages
+import Home from '@/pages/Home';
+import Menu from '@/pages/Menu';
+import Catering from '@/pages/Catering';
+import Locations from '@/pages/Locations';
+import Story from '@/pages/Story';
+import Events from '@/pages/Events';
+import Login from '@/pages/Login';
+
+// Admin Pages
+import AdminLayout from '@/admin/AdminLayout';
+import AdminLogin from '@/admin/Login';
+import AdminDashboard from '@/admin/Dashboard';
+import AdminMenu from '@/admin/Menu';
+import AdminCategories from '@/admin/Categories';
+import AdminLocations from '@/admin/Locations';
+import AdminTestimonials from '@/admin/Testimonials';
+import AdminGallery from '@/admin/Gallery';
+import AdminContent from '@/admin/Content';
+import AdminSettings from '@/admin/Settings';
+import AdminOrders from '@/admin/Orders';
+import AdminOrderDetail from '@/admin/OrderDetail';
+import AdminAnalytics from '@/admin/Analytics';
+
+// Protected Route Component
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = DataStore.isAuthenticated();
+  return isAuthenticated ? <>{children}</> : <Navigate to="/admin/login" replace />;
+}
+
+function App() {
+  useEffect(() => {
+    initializeData();
+  }, []);
+
+  return (
+    <Router>
+      <Routes>
+        {/* User Routes */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/catering" element={<Catering />} />
+          <Route path="/locations" element={<Locations />} />
+          <Route path="/story" element={<Story />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/login" element={<Login />} />
+          
+          {/* Placeholder routes */}
+          <Route path="/careers" element={<div className="pt-32 pb-20 text-center">We're Hiring - Coming Soon</div>} />
+          <Route path="/gift-cards" element={<div className="pt-32 pb-20 text-center">Gift Cards - Coming Soon</div>} />
+          <Route path="/contact" element={<div className="pt-32 pb-20 text-center">Contact Us - Coming Soon</div>} />
+          <Route path="/terms" element={<div className="pt-32 pb-20 text-center">Terms of Service - Coming Soon</div>} />
+          <Route path="/accessibility" element={<div className="pt-32 pb-20 text-center">Accessibility - Coming Soon</div>} />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="menu" element={<AdminMenu />} />
+          <Route path="categories" element={<AdminCategories />} />
+          <Route path="locations" element={<AdminLocations />} />
+          <Route path="testimonials" element={<AdminTestimonials />} />
+          <Route path="gallery" element={<AdminGallery />} />
+          <Route path="content" element={<AdminContent />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="orders/:id" element={<AdminOrderDetail />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
+        </Route>
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;

@@ -1,0 +1,22 @@
+# Environment variables (DO NOT COMMIT)
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Node modules
+node_modules/
+
+# Temp scripts (not needed in production)
+seed-db.ts
+test-mongo.ts
+test-data.ts
+
+# OS / Editor
+.DS_Store
+*.pem
+.vscode/extensions.json
