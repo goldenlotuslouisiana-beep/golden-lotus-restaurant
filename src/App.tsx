@@ -13,6 +13,8 @@ import Locations from '@/pages/Locations';
 import Story from '@/pages/Story';
 import Events from '@/pages/Events';
 import Login from '@/pages/Login';
+import Checkout from '@/pages/Checkout';
+import OrderConfirmed from '@/pages/OrderConfirmed';
 
 // Admin Pages
 import AdminLayout from '@/admin/AdminLayout';
@@ -52,7 +54,9 @@ function App() {
           <Route path="/story" element={<Story />} />
           <Route path="/events" element={<Events />} />
           <Route path="/login" element={<Login />} />
-          
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order/:id/confirmed" element={<OrderConfirmed />} />
+
           {/* Placeholder routes */}
           <Route path="/careers" element={<div className="pt-32 pb-20 text-center">We're Hiring - Coming Soon</div>} />
           <Route path="/gift-cards" element={<div className="pt-32 pb-20 text-center">Gift Cards - Coming Soon</div>} />

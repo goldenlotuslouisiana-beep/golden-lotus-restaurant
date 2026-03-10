@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Plus, Minus, X, Tag } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { MenuItem, MenuCategory, Coupon } from '@/types';
@@ -8,6 +9,7 @@ interface CartItem extends MenuItem {
 }
 
 export default function Menu() {
+  const navigate = useNavigate();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -346,8 +348,19 @@ export default function Menu() {
                       <span>Total</span>
                       <span>${cartTotal.toFixed(2)}</span>
                     </div>
-                    <button className="w-full btn-primary py-3">
-                      Checkout
+                    <button
+                      onClick={() => {
+                        setIsCartOpen(false);
+                        navigate('/checkout', {
+                          state: {
+                            cart: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, image: i.image })),
+                            orderType,
+                          },
+                        });
+                      }}
+                      className="w-full btn-primary py-3"
+                    >
+                      Proceed to Checkout
                     </button>
                   </div>
                 )}

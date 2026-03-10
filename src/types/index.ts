@@ -209,6 +209,12 @@ export interface Order {
   updatedAt: string;
   estimatedReadyTime?: string;
   assignedDriver?: string;
+  // Stripe payment fields
+  stripePaymentIntentId?: string;
+  stripeChargeId?: string;
+  paidAt?: string;
+  totalAmountCents?: number;
+  cardLast4?: string;
 }
 
 // Analytics Types
