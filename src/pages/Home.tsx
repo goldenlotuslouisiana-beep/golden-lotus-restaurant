@@ -84,7 +84,7 @@ export default function Home() {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative h-[600px] lg:h-[700px] flex items-center justify-center">
+      <section className="relative h-[500px] sm:h-[600px] lg:h-[700px] flex items-center justify-center">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${siteContent.hero.backgroundImage})` }}
@@ -92,16 +92,16 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/50" />
         </div>
 
-        <div className="relative z-10 text-center text-white px-4 section-padding max-w-4xl mx-auto">
-          <p className="text-lg md:text-xl font-medium mb-4 animate-fade-in-up">
+        <div className="relative z-10 text-center text-white px-4 section-padding max-w-4xl mx-auto mt-10 sm:mt-0">
+          <p className="text-base sm:text-lg md:text-xl font-medium mb-3 sm:mb-4 animate-fade-in-up">
             {siteContent.hero.title}
           </p>
-          <h1 className="heading-xl mb-8 animate-fade-in-up stagger-1">
+          <h1 className="text-4xl sm:text-5xl md:heading-xl mb-6 sm:mb-8 animate-fade-in-up stagger-1 px-2">
             {siteContent.hero.subtitle}
           </h1>
           <Link
             to="/menu?order=true"
-            className="btn-primary inline-flex items-center gap-2 animate-fade-in-up stagger-2"
+            className="btn-primary inline-flex items-center gap-2 animate-fade-in-up stagger-2 text-sm sm:text-base px-6 py-3"
           >
             Order online
             <ChevronRight className="w-5 h-5" />
@@ -203,19 +203,19 @@ export default function Home() {
       <section className="py-12 lg:py-20 bg-white">
         <div className="section-padding">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            <div>
-              <h2 className="heading-md text-lotus-dark mb-6">
+            <div className="text-center lg:text-left">
+              <h2 className="text-3xl sm:heading-md text-lotus-dark mb-4 sm:mb-6">
                 {siteContent.about.title}
               </h2>
-              <p className="text-body text-lg leading-relaxed">
+              <p className="text-body text-base sm:text-lg leading-relaxed">
                 {siteContent.about.content}
               </p>
             </div>
-            <div className="relative">
+            <div className="relative mt-4 lg:mt-0">
               <img
                 src={siteContent.about.image}
                 alt="Golden Lotus Restaurant"
-                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
+                className="rounded-2xl shadow-xl w-full h-[300px] sm:h-[400px] object-cover"
               />
             </div>
           </div>
@@ -230,14 +230,14 @@ export default function Home() {
               <img
                 src={siteContent.cuisine.image}
                 alt="Authentic Indian Cuisine"
-                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
+                className="rounded-2xl shadow-xl w-full h-[300px] sm:h-[400px] object-cover"
               />
             </div>
-            <div className="order-1 lg:order-2">
-              <h2 className="heading-md text-lotus-dark mb-6">
+            <div className="order-1 lg:order-2 text-center lg:text-left">
+              <h2 className="text-3xl sm:heading-md text-lotus-dark mb-4 sm:mb-6">
                 {siteContent.cuisine.title}
               </h2>
-              <p className="text-body text-lg leading-relaxed mb-6">
+              <p className="text-body text-base sm:text-lg leading-relaxed mb-6">
                 {siteContent.cuisine.description}
               </p>
               <Link to="/menu" className="btn-primary inline-flex items-center gap-2">
@@ -341,21 +341,21 @@ export default function Home() {
       <section className="py-12 lg:py-20 bg-lotus-cream">
         <div className="section-padding">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            <div>
-              <h2 className="heading-md text-lotus-dark mb-6">
+            <div className="text-center lg:text-left">
+              <h2 className="text-3xl sm:heading-md text-lotus-dark mb-4 sm:mb-6">
                 {siteContent.ambience.title}
               </h2>
-              <p className="text-body text-lg leading-relaxed">
+              <p className="text-body text-base sm:text-lg leading-relaxed">
                 {siteContent.ambience.description}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-4 lg:mt-0">
               {siteContent.ambience.images.map((image, index) => (
                 <img
                   key={index}
                   src={image}
                   alt={`Ambience ${index + 1}`}
-                  className={`rounded-xl shadow-lg w-full h-48 object-cover ${index === 0 ? 'col-span-2 h-64' : ''
+                  className={`rounded-xl shadow-lg w-full h-32 sm:h-48 object-cover ${index === 0 ? 'col-span-2 h-48 sm:h-64' : ''
                     }`}
                 />
               ))}
@@ -368,18 +368,18 @@ export default function Home() {
       <section className="py-12 lg:py-20 bg-white">
         <div className="section-padding">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            <div className="relative">
+            <div className="relative order-2 lg:order-1">
               <img
                 src={siteContent.catering.image}
                 alt="Catering"
-                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
+                className="rounded-2xl shadow-xl w-full h-[300px] sm:h-[400px] object-cover"
               />
             </div>
-            <div>
-              <h2 className="heading-md text-lotus-dark mb-6">
+            <div className="order-1 lg:order-2 text-center lg:text-left">
+              <h2 className="text-3xl sm:heading-md text-lotus-dark mb-4 sm:mb-6">
                 {siteContent.catering.title}
               </h2>
-              <p className="text-body text-lg leading-relaxed mb-6">
+              <p className="text-body text-base sm:text-lg leading-relaxed mb-6">
                 {siteContent.catering.description}
               </p>
               <Link to="/catering" className="btn-primary inline-flex items-center gap-2">
@@ -419,16 +419,16 @@ export default function Home() {
       </section>
 
       {/* Visit Us Section */}
-      <section className="py-16 lg:py-24 bg-lotus-gold">
+      <section className="py-12 lg:py-24 bg-lotus-gold">
         <div className="section-padding text-center text-white max-w-4xl mx-auto">
-          <h2 className="heading-md mb-6">{siteContent.visitUs.title}</h2>
-          <p className="text-lg opacity-90 leading-relaxed">
+          <h2 className="text-3xl sm:heading-md mb-4 sm:mb-6">{siteContent.visitUs.title}</h2>
+          <p className="text-base sm:text-lg opacity-90 leading-relaxed px-4">
             {siteContent.visitUs.content}
           </p>
-          <div className="mt-8">
+          <div className="mt-6 sm:mt-8">
             <Link
               to="/locations"
-              className="btn-outline inline-flex items-center gap-2"
+              className="btn-outline inline-flex items-center gap-2 bg-white/10 hover:bg-white hover:text-lotus-gold transition-colors text-sm sm:text-base border-white"
             >
               Check Our Locations
               <MapPin className="w-5 h-5" />
@@ -552,8 +552,8 @@ export default function Home() {
                 key={location.id}
                 onClick={() => setActiveLocation(index)}
                 className={`px-6 py-2 rounded-full font-medium transition-colors ${activeLocation === index
-                    ? 'bg-lotus-gold text-white'
-                    : 'bg-lotus-cream text-lotus-dark hover:bg-lotus-gold/10'
+                  ? 'bg-lotus-gold text-white'
+                  : 'bg-lotus-cream text-lotus-dark hover:bg-lotus-gold/10'
                   }`}
               >
                 {location.city}
@@ -572,11 +572,14 @@ export default function Home() {
               </p>
 
               <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-lotus-gold mt-0.5" />
+                <div className="flex items-start gap-3 flex-col sm:flex-row">
+                  <MapPin className="hidden sm:block w-5 h-5 text-lotus-gold mt-0.5" />
                   <div>
-                    <p className="font-medium text-lotus-dark">Address</p>
-                    <p className="text-gray-600">
+                    <p className="font-medium text-lotus-dark flex items-center gap-2 sm:gap-0">
+                      <MapPin className="sm:hidden w-4 h-4 text-lotus-gold inline-block" />
+                      Address
+                    </p>
+                    <p className="text-gray-600 mt-1 sm:mt-0">
                       {locations[activeLocation].address}
                     </p>
                     <p className="text-gray-600">
@@ -610,18 +613,18 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6">
                 <a
                   href={locations[activeLocation].googleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 btn-secondary text-center"
+                  className="flex-1 btn-secondary text-center text-sm py-3"
                 >
                   Get Directions
                 </a>
                 <Link
                   to="/menu?order=true"
-                  className="flex-1 btn-primary text-center"
+                  className="flex-1 btn-primary text-center text-sm py-3"
                 >
                   Order Now
                 </Link>

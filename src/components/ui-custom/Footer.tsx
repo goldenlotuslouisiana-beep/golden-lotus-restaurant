@@ -9,9 +9,9 @@ export default function Footer() {
     <footer className="bg-lotus-dark text-white">
       {/* Main Footer */}
       <div className="section-padding py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 text-center sm:text-left">
           {/* Brand */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 flex flex-col items-center sm:items-start">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="w-12 h-12 bg-lotus-gold rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-xl">A</span>
@@ -21,7 +21,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Experience the art of authentic Indian cuisine at Golden Lotus Indian Restaurant. 
+              Experience the art of authentic Indian cuisine at Golden Lotus Indian Restaurant.
               Two locations in Florida serving the finest Indian food.
             </p>
             <div className="flex items-center gap-4">
@@ -94,11 +94,11 @@ export default function Footer() {
           {/* Contact Info */}
           <div>
             <h3 className="text-lg font-semibold mb-4 font-['Playfair_Display']">Contact Us</h3>
-            <div className="space-y-4">
+            <div className="space-y-6 sm:space-y-4">
               {locations.map((location) => (
-                <div key={location.id} className="text-sm">
-                  <p className="font-medium text-white mb-1">{location.name}</p>
-                  <p className="text-gray-400 flex items-start gap-2">
+                <div key={location.id} className="text-sm flex flex-col items-center sm:items-start group">
+                  <p className="font-medium text-white mb-1 group-hover:text-lotus-gold transition-colors">{location.name}</p>
+                  <p className="text-gray-400 flex items-start gap-2 text-center sm:text-left">
                     <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <span>
                       {location.address}, {location.city}, {location.state} {location.zip}
@@ -112,7 +112,7 @@ export default function Footer() {
                   </p>
                 </div>
               ))}
-              <p className="text-gray-400 flex items-center gap-2 text-sm">
+              <p className="text-gray-400 flex items-center justify-center sm:justify-start gap-2 text-sm mt-4 sm:mt-0">
                 <Mail className="w-4 h-4 flex-shrink-0" />
                 <a href="mailto:golden_lotusmiami@gmail.com" className="hover:text-lotus-gold transition-colors">
                   golden_lotusmiami@gmail.com

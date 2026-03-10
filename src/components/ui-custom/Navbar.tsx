@@ -34,11 +34,10 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
           ? 'bg-white shadow-md py-2'
           : 'bg-white/95 backdrop-blur-sm py-3'
-      }`}
+        }`}
     >
       <div className="section-padding">
         <div className="flex items-center justify-between">
@@ -58,16 +57,15 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 to={link.href}
-                className={`text-sm font-medium transition-colors hover:text-lotus-gold ${
-                  isActive(link.href)
+                className={`text-sm font-medium transition-colors hover:text-lotus-gold ${isActive(link.href)
                     ? 'text-lotus-gold'
                     : 'text-lotus-dark'
-                }`}
+                  }`}
               >
                 {link.name}
               </Link>
             ))}
-            
+
             {/* More Dropdown */}
             <div className="relative">
               <button
@@ -77,7 +75,7 @@ export default function Navbar() {
                 More
                 <ChevronDown className={`w-4 h-4 transition-transform ${isMoreOpen ? 'rotate-180' : ''}`} />
               </button>
-              
+
               {isMoreOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 animate-fade-in">
                   {moreLinks.map((link) => (
@@ -96,22 +94,22 @@ export default function Navbar() {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               to="/login"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-lotus-dark hover:text-lotus-gold transition-colors"
+              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-lotus-dark hover:text-lotus-gold transition-colors"
             >
               <User className="w-4 h-4" />
               Sign in
             </Link>
-            
+
             <Link
               to="/menu?order=true"
-              className="flex items-center gap-2 px-4 py-2 bg-lotus-gold text-white text-sm font-medium rounded-lg hover:bg-lotus-gold-dark transition-colors"
+              className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2 bg-lotus-gold text-white text-sm font-medium rounded-lg hover:bg-lotus-gold-dark transition-colors"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">Order online</span>
-              <span className="sm:hidden">Order</span>
+              <span className="hidden lg:inline">Order online</span>
+              <span className="hidden sm:inline lg:hidden">Order</span>
             </Link>
 
             {/* Mobile Menu Button */}
@@ -132,11 +130,10 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   to={link.href}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    isActive(link.href)
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive(link.href)
                       ? 'bg-lotus-gold/10 text-lotus-gold'
                       : 'text-lotus-dark hover:bg-gray-50'
-                  }`}
+                    }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.name}

@@ -134,7 +134,7 @@ export default function Menu() {
       {/* Category Tabs */}
       <div className="bg-white border-b sticky top-[129px] z-20">
         <div className="section-padding">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3 -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               onClick={() => setActiveCategory('Popular')}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === 'Popular'
@@ -226,13 +226,13 @@ export default function Menu() {
                     <p className="text-sm text-gray-500 mb-3 line-clamp-2">
                       {item.description}
                     </p>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mt-2">
                       <span className="text-lg font-bold text-lotus-gold">
                         ${item.price.toFixed(2)}
                       </span>
                       <button
                         onClick={() => addToCart(item)}
-                        className="w-10 h-10 bg-lotus-gold text-white rounded-full flex items-center justify-center hover:bg-lotus-gold-dark transition-colors"
+                        className="w-10 h-10 bg-lotus-gold text-white rounded-full flex items-center justify-center hover:bg-lotus-gold-dark transition-colors shrink-0"
                       >
                         <Plus className="w-5 h-5" />
                       </button>
