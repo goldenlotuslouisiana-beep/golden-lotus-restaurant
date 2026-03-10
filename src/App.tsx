@@ -34,6 +34,11 @@ import AdminSettings from '@/admin/Settings';
 import AdminOrders from '@/admin/Orders';
 import AdminOrderDetail from '@/admin/OrderDetail';
 import AdminAnalytics from '@/admin/Analytics';
+import AdminUsers from '@/admin/Users';
+import AdminDelivery from '@/admin/Delivery';
+import AdminLoyalty from '@/admin/Loyalty';
+import AdminPromos from '@/admin/Promos';
+import AdminReviews from '@/admin/Reviews';
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -94,6 +99,11 @@ function App() {
             <Route path="orders" element={<AdminOrders />} />
             <Route path="orders/:id" element={<AdminOrderDetail />} />
             <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="delivery" element={<AdminDelivery />} />
+            <Route path="loyalty" element={<AdminLoyalty />} />
+            <Route path="promos" element={<AdminPromos />} />
+            <Route path="reviews" element={<AdminReviews />} />
           </Route>
         </Routes>
       </Router>

@@ -15,15 +15,25 @@ import {
   ChevronRight,
   ShoppingBag,
   BarChart3,
+  Users,
+  Truck,
+  Gift,
+  Tag,
+  MessageSquare,
 } from 'lucide-react';
 import { DataStore } from '@/data/store';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+  { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { name: 'Delivery', href: '/admin/delivery', icon: Truck },
   { name: 'Menu Items', href: '/admin/menu', icon: UtensilsCrossed },
   { name: 'Categories', href: '/admin/categories', icon: List },
+  { name: 'Promos', href: '/admin/promos', icon: Tag },
+  { name: 'Loyalty', href: '/admin/loyalty', icon: Gift },
+  { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare },
   { name: 'Locations', href: '/admin/locations', icon: MapPin },
   { name: 'Testimonials', href: '/admin/testimonials', icon: Star },
   { name: 'Gallery', href: '/admin/gallery', icon: Image },
