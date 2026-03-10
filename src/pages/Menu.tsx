@@ -230,10 +230,10 @@ export default function Menu() {
                           if (!isLoggedIn) { setFavToast('Sign in to save favorites'); setTimeout(() => setFavToast(''), 2500); return; }
                           const isFav = favorites.includes(item.id);
                           if (isFav) {
-                            fetch('/api/users/favorites', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ menuItemId: item.id }) });
+                            fetch('/api/users?action=favorites', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ menuItemId: item.id }) });
                             setFavorites(f => f.filter(id => id !== item.id));
                           } else {
-                            fetch('/api/users/favorites', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ menuItemId: item.id }) });
+                            fetch('/api/users?action=favorites', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ menuItemId: item.id }) });
                             setFavorites(f => [...f, item.id]);
                           }
                         }}

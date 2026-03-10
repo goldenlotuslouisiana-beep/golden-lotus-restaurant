@@ -130,14 +130,14 @@ function CheckoutInner() {
                     const oRes = await fetch('/api/orders/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...orderPayload, paymentMethod: 'card', stripePaymentIntentId: paymentIntentId, cardLast4: '' }) });
                     if (!oRes.ok) { setGeneralError('Payment OK but order creation failed. Contact support.'); setIsProcessing(false); return; }
                     const od = await oRes.json();
-                    if (user && token) { try { await fetch('/api/users/loyalty', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ orderId: od.orderId, amount: Math.floor(total), action: 'earned' }) }); } catch { } }
+                    if (user && token) { try { await fetch('/api/users?action=loyalty', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ orderId: od.orderId, amount: Math.floor(total), action: 'earned' }) }); } catch { } }
                     navigate(`/order/${od.orderId}/confirmed`, { state: { orderNumber: od.orderNumber, total, paymentMethod: 'card' } });
                 }
             } else {
                 const oRes = await fetch('/api/orders/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...orderPayload, paymentMethod: 'cash' }) });
                 if (!oRes.ok) { setGeneralError('Failed to place order'); setIsProcessing(false); return; }
                 const od = await oRes.json();
-                if (user && token) { try { await fetch('/api/users/loyalty', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ orderId: od.orderId, amount: Math.floor(total), action: 'earned' }) }); } catch { } }
+                if (user && token) { try { await fetch('/api/users?action=loyalty', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ orderId: od.orderId, amount: Math.floor(total), action: 'earned' }) }); } catch { } }
                 navigate(`/order/${od.orderId}/confirmed`, { state: { orderNumber: od.orderNumber, total, paymentMethod: 'cash' } });
             }
         } catch { setGeneralError('An unexpected error occurred'); setIsProcessing(false); }

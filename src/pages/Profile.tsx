@@ -80,7 +80,7 @@ function PersonalInfo({ user, token, updateUser }: { user: { name: string; email
     const save = async () => {
         setSaving(true);
         try {
-            await fetch('/api/users/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+            await fetch('/api/users?action=profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
             updateUser({ name: form.name, phone: form.phone });
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
@@ -120,11 +120,11 @@ function Addresses({ token }: { token: string | null }) {
     const [form, setForm] = useState({ label: 'Home', street: '', apt: '', city: '', state: '', zip: '' });
 
     useEffect(() => {
-        fetch('/api/users/addresses', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(setAddresses).catch(() => { }).finally(() => setLoading(false));
+        fetch('/api/users?action=addresses', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(setAddresses).catch(() => { }).finally(() => setLoading(false));
     }, [token]);
 
     const addAddress = async () => {
-        const res = await fetch('/api/users/addresses', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+        const res = await fetch('/api/users?action=addresses', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
         if (res.ok) { const addr = await res.json(); setAddresses(p => [...p, addr]); setShowForm(false); setForm({ label: 'Home', street: '', apt: '', city: '', state: '', zip: '' }); }
     };
 
@@ -224,13 +224,13 @@ function Favorites({ token }: { token: string | null }) {
 
     useEffect(() => {
         Promise.all([
-            fetch('/api/users/favorites', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+            fetch('/api/users?action=favorites', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
             fetch('/api/menu').then(r => r.json()),
         ]).then(([favs, items]) => { setFavorites(favs); setMenuItems(items); }).catch(() => { }).finally(() => setLoading(false));
     }, [token]);
 
     const removeFav = async (id: string) => {
-        await fetch('/api/users/favorites', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ menuItemId: id }) });
+        await fetch('/api/users?action=favorites', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ menuItemId: id }) });
         setFavorites(p => p.filter(f => f !== id));
     };
 
@@ -268,7 +268,7 @@ function LoyaltyPoints({ token, userPoints }: { token: string | null; userPoints
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/api/users/loyalty', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(d => { setPoints(d.points); setHistory(d.history || []); }).catch(() => { }).finally(() => setLoading(false));
+        fetch('/api/users?action=loyalty', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(d => { setPoints(d.points); setHistory(d.history || []); }).catch(() => { }).finally(() => setLoading(false));
     }, [token]);
 
     if (loading) return <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100"><Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" /></div>;
