@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, X, Check, Image } from 'lucide-react';
+import { Plus, Trash2, X, Check, Image, UploadCloud, Link as LinkIcon } from 'lucide-react';
 import { DataStore } from '@/data/store';
+import { uploadImage } from '@/lib/uploadImage';
 import type { GalleryImage } from '@/types';
 
 export default function AdminGallery() {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
   const [formData, setFormData] = useState({ src: '', alt: '', category: 'food' });
 
   useEffect(() => {
@@ -31,15 +34,35 @@ export default function AdminGallery() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!formData.src) {
+      alert("Please provide an image URL or upload an image file.");
+      return;
+    }
+
     const newImage: GalleryImage = {
       ...formData,
       id: Date.now().toString(),
     };
     DataStore.setGalleryImages([...images, newImage]);
-    
+
     setIsModalOpen(false);
     loadData();
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setFormData(prev => ({ ...prev, src: url }));
+    } catch (error) {
+      alert('Failed to upload image. Please try again or use a URL.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -98,15 +121,66 @@ export default function AdminGallery() {
 
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                <input
-                  type="url"
-                  value={formData.src}
-                  onChange={(e) => setFormData({ ...formData, src: e.target.value })}
-                  required
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">Image</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setUploadMethod('url')}
+                      className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${uploadMethod === 'url' ? 'bg-lotus-gold text-white' : 'bg-gray-100 text-gray-600'}`}
+                    >
+                      <LinkIcon className="w-3 h-3" /> URL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUploadMethod('file')}
+                      className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${uploadMethod === 'file' ? 'bg-lotus-gold text-white' : 'bg-gray-100 text-gray-600'}`}
+                    >
+                      <UploadCloud className="w-3 h-3" /> Upload
+                    </button>
+                  </div>
+                </div>
+
+                {uploadMethod === 'url' ? (
+                  <input
+                    type="url"
+                    value={formData.src}
+                    onChange={(e) => setFormData({ ...formData, src: e.target.value })}
+                    required
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
+                  />
+                ) : (
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-lotus-gold transition-colors">
+                    <div className="space-y-1 text-center">
+                      {isUploading ? (
+                        <div className="flex flex-col items-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lotus-gold mb-2"></div>
+                          <p className="text-sm text-gray-500">Uploading...</p>
+                        </div>
+                      ) : (
+                        <>
+                          <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                          <div className="flex text-sm text-gray-600 justify-center">
+                            <label
+                              htmlFor="file-upload-gallery"
+                              className="relative cursor-pointer bg-white rounded-md font-medium text-lotus-gold hover:text-lotus-gold-dark focus-within:outline-none"
+                            >
+                              <span>Upload a file</span>
+                              <input id="file-upload-gallery" name="file-upload-gallery" type="file" className="sr-only" accept="image/*" onChange={handleImageUpload} />
+                            </label>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {formData.src && uploadMethod === 'file' && !isUploading && (
+                  <p className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Image uploaded successfully
+                  </p>
+                )}
               </div>
 
               <div>
@@ -148,7 +222,7 @@ export default function AdminGallery() {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary flex items-center gap-2">
+                <button type="submit" disabled={isUploading} className="btn-primary flex items-center gap-2 disabled:opacity-50">
                   <Check className="w-4 h-4" />
                   Add
                 </button>
