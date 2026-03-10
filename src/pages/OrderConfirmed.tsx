@@ -1,190 +1,117 @@
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { CheckCircle, Clock, MapPin, Phone, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, Phone, Mail, ArrowRight, Loader2, Package } from 'lucide-react';
 
 interface OrderData {
-    id: string;
-    orderNumber: string;
-    customer: {
-        name: string;
-        email: string;
-        phone: string;
-        address?: string;
-        city?: string;
-        zip?: string;
-    };
+    id: string; orderNumber: string;
+    customer: { name: string; email: string; phone: string; address?: string; city?: string; zip?: string };
     items: { name: string; price: number; quantity: number }[];
-    subtotal: number;
-    tax: number;
-    deliveryFee: number;
-    total: number;
-    orderType: string;
-    paymentMethod: string;
-    paymentStatus: string;
-    cardLast4?: string;
-    createdAt: string;
+    subtotal: number; tax: number; deliveryFee: number; discount: number; total: number;
+    orderType: string; paymentMethod: string; paymentStatus: string; cardLast4?: string; createdAt: string;
 }
 
 export default function OrderConfirmed() {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
-    const state = location.state as {
-        orderNumber?: string;
-        total?: number;
-        paymentMethod?: string;
-        cardLast4?: string;
-    } | null;
-
+    const st = location.state as { orderNumber?: string; total?: number; paymentMethod?: string; cardLast4?: string } | null;
     const [order, setOrder] = useState<OrderData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showConfetti, setShowConfetti] = useState(true);
 
     useEffect(() => {
-        if (id) {
-            fetch(`/api/orders/${id}`)
-                .then((res) => (res.ok ? res.json() : null))
-                .then((data) => {
-                    if (data) setOrder(data);
-                    setLoading(false);
-                })
-                .catch(() => setLoading(false));
-        } else {
-            setLoading(false);
-        }
+        if (id) fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null).then(d => { if (d) setOrder(d); setLoading(false); }).catch(() => setLoading(false));
+        else setLoading(false);
+        setTimeout(() => setShowConfetti(false), 3000);
     }, [id]);
 
-    const orderNumber = order?.orderNumber || state?.orderNumber || 'N/A';
-    const total = order?.total || state?.total || 0;
-    const paymentMethod = order?.paymentMethod || state?.paymentMethod || 'cash';
-    const cardLast4 = order?.cardLast4 || state?.cardLast4 || '';
+    const orderNumber = order?.orderNumber || st?.orderNumber || 'N/A';
+    const total = order?.total || st?.total || 0;
+    const pm = order?.paymentMethod || st?.paymentMethod || 'cash';
+    const last4 = order?.cardLast4 || st?.cardLast4 || '';
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-24">
-                <Loader2 className="w-8 h-8 animate-spin text-[#F97316]" />
-            </div>
-        );
-    }
+    if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-[#F97316]" /></div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
-            <div className="max-w-lg mx-auto text-center">
-                {/* Success Animation */}
+        <div className="min-h-screen bg-gradient-to-b from-green-50 to-gray-50 pt-28 pb-16 px-4 relative overflow-hidden">
+            {/* Confetti particles */}
+            {showConfetti && (
+                <div className="absolute inset-0 pointer-events-none">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                        <div key={i} className="absolute animate-bounce" style={{
+                            left: `${Math.random() * 100}%`, top: `${Math.random() * 60}%`,
+                            animationDuration: `${1 + Math.random() * 2}s`, animationDelay: `${Math.random() * 0.5}s`,
+                            width: 8, height: 8, borderRadius: '50%',
+                            backgroundColor: ['#F97316', '#10b981', '#3b82f6', '#f59e0b', '#ef4444'][i % 5],
+                            opacity: 0.7,
+                        }} />
+                    ))}
+                </div>
+            )}
+
+            <div className="max-w-lg mx-auto text-center relative z-10">
                 <div className="mb-6">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto animate-bounce">
-                        <CheckCircle className="w-10 h-10 text-green-600" />
+                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-200/50" style={{ animation: 'pulse 2s ease-in-out infinite' }}>
+                        <CheckCircle className="w-12 h-12 text-green-600" />
                     </div>
                 </div>
 
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
-                <p className="text-gray-600 mb-2">Thank you for your order</p>
-                <p className="text-sm text-gray-500 mb-8">
-                    Order #{orderNumber}
-                </p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed! 🎉</h1>
+                <p className="text-gray-600 mb-1">Thank you for your order</p>
+                <p className="text-sm font-mono bg-gray-100 inline-block px-4 py-1.5 rounded-full text-gray-700 mb-8">#{orderNumber}</p>
 
-                {/* Payment Status Card */}
-                <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 text-left">
-                    {paymentMethod === 'card' ? (
+                {/* Payment Card */}
+                <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 text-left border border-gray-100">
+                    {pm === 'card' ? (
                         <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center shrink-0">
-                                <CheckCircle className="w-6 h-6 text-green-600" />
-                            </div>
-                            <div>
-                                <p className="font-bold text-gray-900 text-lg">Payment of ${total.toFixed(2)} confirmed</p>
-                                {cardLast4 && (
-                                    <p className="text-sm text-gray-500 mt-0.5">Charged to card ending in {cardLast4}</p>
-                                )}
-                            </div>
+                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center shrink-0"><CheckCircle className="w-6 h-6 text-green-600" /></div>
+                            <div><p className="font-bold text-gray-900 text-lg">Payment of ${total.toFixed(2)} confirmed</p>{last4 && <p className="text-sm text-gray-500 mt-0.5">Charged to card ending in {last4}</p>}</div>
                         </div>
                     ) : (
                         <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
-                                <span className="text-2xl">💵</span>
-                            </div>
-                            <div>
-                                <p className="font-bold text-gray-900 text-lg">Pay ${total.toFixed(2)} cash on delivery</p>
-                                <p className="text-sm text-gray-500 mt-0.5">Please have exact change ready</p>
-                            </div>
+                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center shrink-0"><span className="text-2xl">💵</span></div>
+                            <div><p className="font-bold text-gray-900 text-lg">Pay ${total.toFixed(2)} cash on delivery</p><p className="text-sm text-gray-500 mt-0.5">Please have exact change ready</p></div>
                         </div>
                     )}
                 </div>
 
-                {/* Order Details */}
+                {/* ETA */}
+                <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 text-left border border-gray-100">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center"><Clock className="w-5 h-5 text-[#F97316]" /></div>
+                        <div>
+                            <p className="font-bold text-gray-900">Estimated Time</p>
+                            <p className="text-sm text-gray-600">{order?.orderType === 'delivery' ? '30–45 minutes' : '15–20 minutes'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Order Items */}
                 {order && (
-                    <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 text-left space-y-4">
-                        <h3 className="font-bold text-gray-900">Order Details</h3>
-
-                        <div className="space-y-2">
-                            {order.items.map((item, i) => (
-                                <div key={i} className="flex justify-between text-sm">
-                                    <span className="text-gray-600">{item.name} x{item.quantity}</span>
-                                    <span className="text-gray-900">${(item.price * item.quantity).toFixed(2)}</span>
-                                </div>
-                            ))}
-                        </div>
-
+                    <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 text-left border border-gray-100 space-y-4">
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2"><Package className="w-5 h-5 text-[#F97316]" /> Order Details</h3>
+                        <div className="space-y-2">{order.items.map((item, i) => (<div key={i} className="flex justify-between text-sm"><span className="text-gray-600">{item.name} x{item.quantity}</span><span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span></div>))}</div>
                         <div className="border-t pt-3 space-y-1 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Subtotal</span>
-                                <span>${order.subtotal.toFixed(2)}</span>
-                            </div>
-                            {order.deliveryFee > 0 && (
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">Delivery</span>
-                                    <span>${order.deliveryFee.toFixed(2)}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Tax</span>
-                                <span>${order.tax.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between font-bold text-base pt-1 border-t">
-                                <span>Total</span>
-                                <span className="text-[#F97316]">${order.total.toFixed(2)}</span>
-                            </div>
+                            <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>${order.subtotal.toFixed(2)}</span></div>
+                            {order.deliveryFee > 0 && <div className="flex justify-between"><span className="text-gray-500">Delivery</span><span>${order.deliveryFee.toFixed(2)}</span></div>}
+                            <div className="flex justify-between"><span className="text-gray-500">Tax</span><span>${order.tax.toFixed(2)}</span></div>
+                            {order.discount > 0 && <div className="flex justify-between text-[#F97316]"><span>Discount</span><span>-${order.discount.toFixed(2)}</span></div>}
+                            <div className="flex justify-between font-bold text-base pt-1 border-t"><span>Total</span><span className="text-[#F97316]">${order.total.toFixed(2)}</span></div>
                         </div>
-
-                        {/* Delivery Info */}
-                        <div className="border-t pt-3 space-y-2 text-sm">
-                            <div className="flex items-center gap-2 text-gray-600">
-                                <Clock className="w-4 h-4 text-[#F97316]" />
-                                <span>Estimated: 25-35 minutes</span>
+                        {order.customer && (
+                            <div className="border-t pt-3 space-y-2 text-sm">
+                                <div className="flex items-center gap-2 text-gray-600"><Mail className="w-4 h-4 text-gray-400" />{order.customer.email}</div>
+                                <div className="flex items-center gap-2 text-gray-600"><Phone className="w-4 h-4 text-gray-400" />{order.customer.phone}</div>
+                                {order.orderType === 'delivery' && order.customer.address && <div className="flex items-center gap-2 text-gray-600"><MapPin className="w-4 h-4 text-gray-400" />{order.customer.address}, {order.customer.city} {order.customer.zip}</div>}
                             </div>
-                            {order.customer && (
-                                <>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                        <Mail className="w-4 h-4 text-gray-400" />
-                                        <span>{order.customer.email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                        <Phone className="w-4 h-4 text-gray-400" />
-                                        <span>{order.customer.phone}</span>
-                                    </div>
-                                    {order.orderType === 'delivery' && order.customer.address && (
-                                        <div className="flex items-center gap-2 text-gray-600">
-                                            <MapPin className="w-4 h-4 text-gray-400" />
-                                            <span>{order.customer.address}, {order.customer.city} {order.customer.zip}</span>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
+                        )}
                     </div>
                 )}
 
-                {/* Actions */}
                 <div className="space-y-3">
-                    <Link
-                        to="/menu"
-                        className="w-full py-3 bg-[#F97316] text-white font-semibold rounded-lg hover:bg-[#ea6c10] transition-colors flex items-center justify-center gap-2"
-                    >
-                        Order Again <ArrowRight className="w-5 h-5" />
+                    <Link to={`/order/${id}/track`} className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all flex items-center justify-center gap-2">
+                        Track Order <ArrowRight className="w-5 h-5" />
                     </Link>
-                    <Link
-                        to="/"
-                        className="w-full py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                    >
-                        Back to Home
-                    </Link>
+                    <Link to="/" className="w-full py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all flex items-center justify-center gap-2">Back to Home</Link>
                 </div>
             </div>
         </div>
