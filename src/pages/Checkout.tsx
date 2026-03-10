@@ -321,5 +321,5 @@ function CheckoutInner() {
 }
 
 export default function Checkout() {
-    return stripePromise ? <Elements stripe={stripePromise}><CheckoutInner /></Elements> : <CheckoutInner />;
+    return <Elements stripe={stripePromise}><CheckoutInner /></Elements>;
 }
