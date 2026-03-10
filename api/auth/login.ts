@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import clientPromise from '../lib/db';
+import clientPromise from '../lib/db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 

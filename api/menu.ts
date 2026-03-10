@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import clientPromise from './lib/db';
+import clientPromise from './lib/db.js';
 import { ObjectId } from 'mongodb';
 import jwt from 'jsonwebtoken';
 
