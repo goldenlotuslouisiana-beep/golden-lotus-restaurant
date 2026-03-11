@@ -7,11 +7,51 @@ const DB_NAME = 'goldenlotus';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const action = req.query.action as string;
+  // DEBUG - log everything coming in
+  console.log('METHOD:', req.method);
+  console.log('QUERY:', req.query);
+  console.log('BODY:', req.body);
+  console.log('HEADERS:', req.headers['content-type']);
+
+  // Parse body if it's a string
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      return res.status(400).json({ error: 'Invalid JSON body' });
+    }
+  } else if (!body) {
+    body = {};
+  }
+
+  const action = req.query.action as string || body?.action || body?.type;
+
+  console.log('Received action:', action);
+  console.log('Received body:', body);
+
+  if (!action) {
+    return res.status(400).json({ 
+      error: 'No action provided',
+      receivedQuery: req.query,
+      receivedBody: req.body,
+      tip: 'Send action in body or query string'
+    });
+  }
+
+  // Set the parsed body onto req so handles can read it
+  req.body = body;
 
   switch (action) {
     case 'login':
