@@ -18,6 +18,8 @@ interface Stats {
   totalOrders: number;
   todayOrders: number;
   pendingOrders: number;
+  preparingOrders: number;
+  readyOrders: number;
   todayRevenue: number;
   totalRevenue: number;
   totalUsers: number;
@@ -40,7 +42,8 @@ interface UnavailableItem {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats>({
     menuItems: 0, totalOrders: 0, todayOrders: 0,
-    pendingOrders: 0, todayRevenue: 0, totalRevenue: 0, totalUsers: 0,
+    pendingOrders: 0, preparingOrders: 0, readyOrders: 0,
+    todayRevenue: 0, totalRevenue: 0, totalUsers: 0,
   });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [unavailable, setUnavailable] = useState<UnavailableItem[]>([]);
@@ -57,6 +60,8 @@ export default function AdminDashboard() {
             totalOrders: data.totalOrders || 0,
             todayOrders: data.todayOrders || 0,
             pendingOrders: data.pendingOrders || 0,
+            preparingOrders: data.preparingOrders || 0,
+            readyOrders: data.readyOrders || 0,
             todayRevenue: data.todayRevenue || 0,
             totalRevenue: data.totalRevenue || 0,
             totalUsers: data.totalUsers || 0,
@@ -76,10 +81,12 @@ export default function AdminDashboard() {
   const statCards = [
     { name: "Today's Orders", value: stats.todayOrders, icon: ShoppingBag, href: '/admin/orders', color: 'bg-orange-500' },
     { name: "Today's Revenue", value: `$${stats.todayRevenue.toFixed(0)}`, icon: DollarSign, href: '/admin/analytics', color: 'bg-green-500' },
-    { name: 'Pending Orders', value: stats.pendingOrders, icon: Clock, href: '/admin/orders', color: 'bg-yellow-500' },
+    { name: 'Pending', value: stats.pendingOrders, icon: Clock, href: '/admin/orders', color: 'bg-yellow-500' },
+    { name: 'Preparing', value: stats.preparingOrders, icon: Package, href: '/admin/orders', color: 'bg-purple-500' },
+    { name: 'Ready', value: stats.readyOrders, icon: UtensilsCrossed, href: '/admin/orders', color: 'bg-indigo-500' },
     { name: 'Total Orders', value: stats.totalOrders, icon: Package, href: '/admin/orders', color: 'bg-blue-500' },
-    { name: 'Menu Items', value: stats.menuItems, icon: UtensilsCrossed, href: '/admin/menu', color: 'bg-purple-500' },
-    { name: 'Total Users', value: stats.totalUsers, icon: Users, href: '/admin/users', color: 'bg-indigo-500' },
+    { name: 'Menu Items', value: stats.menuItems, icon: UtensilsCrossed, href: '/admin/menu', color: 'bg-pink-500' },
+    { name: 'Total Users', value: stats.totalUsers, icon: Users, href: '/admin/users', color: 'bg-indigo-600' },
     { name: 'Total Revenue', value: `$${stats.totalRevenue.toFixed(0)}`, icon: TrendingUp, href: '/admin/analytics', color: 'bg-emerald-500' },
   ];
 
@@ -176,33 +183,41 @@ export default function AdminDashboard() {
           {recentOrders.length === 0 ? (
             <p className="text-gray-500 text-center py-4">No recent orders</p>
           ) : (
-            recentOrders.map((order) => (
-              <Link
-                key={order.id}
-                to={`/admin/orders/${order.id}`}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div>
-                  <p className="font-medium text-lotus-dark">{order.orderNumber}</p>
-                  <p className="text-sm text-gray-500">{order.customer?.name || 'Customer'}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-lotus-gold">${order.total?.toFixed(2) || '0.00'}</p>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${order.status === 'delivered'
-                        ? 'bg-green-100 text-green-700'
-                        : order.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : order.status === 'cancelled'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-blue-100 text-blue-700'
-                      }`}
-                  >
-                    {order.status}
-                  </span>
-                </div>
-              </Link>
-            ))
+            recentOrders.map((order) => {
+              const d = new Date(order.createdAt);
+              const formattedDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              const formattedTime = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+              
+              let statusCls = 'bg-gray-100 text-gray-700';
+              if (order.status === 'confirmed') statusCls = 'bg-blue-100 text-blue-700';
+              else if (order.status === 'preparing') statusCls = 'bg-purple-100 text-purple-700';
+              else if (order.status === 'ready') statusCls = 'bg-indigo-100 text-indigo-700';
+              else if (order.status === 'out_for_delivery') statusCls = 'bg-orange-100 text-orange-700';
+              else if (order.status === 'delivered') statusCls = 'bg-green-100 text-green-700';
+              else if (order.status === 'cancelled') statusCls = 'bg-red-100 text-red-700';
+
+              return (
+                <Link
+                  key={order.id}
+                  to={`/admin/orders/${order.id}`}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-lotus-dark">{order.orderNumber}</p>
+                      <span className="text-xs text-gray-500">{formattedDate}, {formattedTime}</span>
+                    </div>
+                    <p className="text-sm text-gray-500">{order.customer?.name || 'Customer'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-lotus-gold">${order.total?.toFixed(2) || '0.00'}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusCls}`}>
+                      {order.status.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })
           )}
         </div>
       </div>

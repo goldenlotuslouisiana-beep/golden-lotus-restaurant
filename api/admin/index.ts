@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 db.collection('users').countDocuments({}),
                 db.collection('orders').countDocuments({}),
                 db.collection('orders').countDocuments({ createdAt: { $gte: todayStart.toISOString() } }),
-                db.collection('menuItems').countDocuments({}),
+                db.collection('menu').countDocuments({}),
                 db.collection('orders').find({}).project({ total: 1, status: 1, paymentStatus: 1, createdAt: 1 }).toArray(),
                 db.collection('users').countDocuments({ status: 'blocked' }),
                 db.collection('users').countDocuments({ createdAt: { $gte: todayStart.toISOString() } }),
@@ -48,17 +48,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             const todayRevenue = allOrders.filter(o => o.createdAt >= todayStart.toISOString() && o.paymentStatus === 'paid').reduce((s, o) => s + (o.total || 0), 0);
             const totalRevenue = allOrders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + (o.total || 0), 0);
-            const pendingOrders = allOrders.filter(o => ['pending', 'confirmed', 'preparing'].includes(o.status)).length;
+            const pendingOrders = allOrders.filter(o => o.status === 'confirmed').length;
+            const preparingOrders = allOrders.filter(o => ['preparing', 'ready'].includes(o.status)).length;
+            const readyOrders = allOrders.filter(o => o.status === 'ready').length;
 
-            // Unavailable menu items
-            const unavailableItems = await db.collection('menuItems').find({ available: false }).project({ name: 1 }).toArray();
+            // Unavailable menu items (from correct collection 'menu', matching 'available' or 'isAvailable' logic if any)
+            const unavailableItems = await db.collection('menu').find({ available: false }).project({ name: 1 }).toArray();
 
             // Recent orders
             const recentOrders = await db.collection('orders').find({}).sort({ createdAt: -1 }).limit(5).toArray();
 
             return res.status(200).json({
                 totalUsers, totalOrders, todayOrders, menuItems, todayRevenue, totalRevenue,
-                pendingOrders, blockedUsers, newUsersToday, activeUsersWeek,
+                pendingOrders, preparingOrders, readyOrders, blockedUsers, newUsersToday, activeUsersWeek,
                 unavailableItems: unavailableItems.map(i => ({ id: i._id.toString(), name: i.name })),
                 recentOrders: recentOrders.map(o => ({ id: o._id.toString(), orderNumber: o.orderNumber, customer: o.customer, total: o.total, status: o.status, createdAt: o.createdAt, paymentMethod: o.paymentMethod, paymentStatus: o.paymentStatus })),
             });

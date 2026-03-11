@@ -19,7 +19,6 @@ import { DataStore } from '@/data/store';
 import type { Order, OrderStatus } from '@/types';
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-  pending: { label: 'Pending', color: 'text-yellow-700', bgColor: 'bg-yellow-100', icon: Clock },
   confirmed: { label: 'Confirmed', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: CheckCircle },
   preparing: { label: 'Preparing', color: 'text-purple-700', bgColor: 'bg-purple-100', icon: Package },
   ready: { label: 'Ready', color: 'text-indigo-700', bgColor: 'bg-indigo-100', icon: CheckCircle },
@@ -72,7 +71,7 @@ export default function AdminOrderDetail() {
   const status = statusConfig[order.status];
   const StatusIcon = status.icon;
 
-  const statusFlow: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
+  const statusFlow: OrderStatus[] = ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
   const currentStepIndex = statusFlow.indexOf(order.status);
 
   return (

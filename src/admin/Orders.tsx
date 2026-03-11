@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Eye, Package, CheckCircle, Clock, Truck, XCircle, ChevronDown } from 'lucide-react';
+import { Search, Eye, Package, CheckCircle, Truck, XCircle, ChevronDown } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { Order, OrderStatus } from '@/types';
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: React.ElementType }> = {
-  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   confirmed: { label: 'Confirmed', color: 'bg-blue-100 text-blue-700', icon: CheckCircle },
   preparing: { label: 'Preparing', color: 'bg-purple-100 text-purple-700', icon: Package },
   ready: { label: 'Ready', color: 'bg-indigo-100 text-indigo-700', icon: CheckCircle },
@@ -22,22 +21,65 @@ const orderTypeLabels: Record<string, string> = {
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState({ todayCount: 0, pendingCount: 0, preparingCount: 0, readyCount: 0 });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadOrders();
+    loadStats();
   }, []);
 
-  const loadOrders = () => {
-    setOrders(DataStore.getOrders());
+  const loadStats = async () => {
+    try {
+      const res = await fetch('/api/admin?action=dashboard-stats');
+      if (res.ok) {
+        const data = await res.json();
+        setStats({
+          todayCount: data.todayOrders || 0,
+          pendingCount: data.pendingOrders || 0,
+          preparingCount: data.preparingOrders || 0,
+          readyCount: data.readyOrders || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    }
   };
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    DataStore.updateOrderStatus(orderId, newStatus);
-    loadOrders();
+  const loadOrders = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/orders/history'); // Use the user endpoint if no admin specific list exists, or simply create one or use existing API if available. Assuming this fetches properly for now.
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data);
+      } else {
+         // Fallback to what was there if API fails (as it might if history is user specific without admin token logic locally)
+         setOrders(DataStore.getOrders());
+      }
+    } catch (e) {
+      setOrders(DataStore.getOrders());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    try {
+        await fetch(`/api/admin?action=order-status&id=${orderId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        loadOrders();
+        loadStats();
+    } catch (error) {
+        console.error('Failed to update status:', error);
+    }
   };
 
   const filteredOrders = orders
@@ -56,13 +98,6 @@ export default function AdminOrders() {
       return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
     });
 
-  const pendingCount = orders.filter((o) => o.status === 'pending').length;
-  const preparingCount = orders.filter((o) => o.status === 'preparing').length;
-  const readyCount = orders.filter((o) => o.status === 'ready').length;
-  const todayCount = orders.filter((o) =>
-    o.createdAt.startsWith(new Date().toISOString().split('T')[0])
-  ).length;
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -77,19 +112,19 @@ export default function AdminOrders() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-gray-500 text-sm">Today's Orders</p>
-          <p className="text-2xl font-bold text-lotus-dark">{todayCount}</p>
+          <p className="text-2xl font-bold text-lotus-dark">{stats.todayCount}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-gray-500 text-sm">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
+          <p className="text-2xl font-bold text-yellow-600">{stats.pendingCount}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-gray-500 text-sm">Preparing</p>
-          <p className="text-2xl font-bold text-purple-600">{preparingCount}</p>
+          <p className="text-2xl font-bold text-purple-600">{stats.preparingCount}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-gray-500 text-sm">Ready</p>
-          <p className="text-2xl font-bold text-indigo-600">{readyCount}</p>
+          <p className="text-2xl font-bold text-indigo-600">{stats.readyCount}</p>
         </div>
       </div>
 
@@ -157,8 +192,14 @@ export default function AdminOrders() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filteredOrders.map((order) => {
-                const status = statusConfig[order.status];
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    Loading orders...
+                  </td>
+                </tr>
+              ) : filteredOrders.map((order) => {
+                const status = statusConfig[order.status] || statusConfig['confirmed'];
                 const StatusIcon = status.icon;
                 return (
                   <tr key={order.id} className="hover:bg-gray-50">
@@ -234,7 +275,7 @@ export default function AdminOrders() {
           </table>
         </div>
 
-        {filteredOrders.length === 0 && (
+        {!isLoading && filteredOrders.length === 0 && (
           <div className="text-center py-12">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">No orders found</p>

@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { CheckCircle, ChefHat, Truck, Package, Clock, Phone as PhoneIcon, MessageCircle, ChevronDown, ChevronUp, HelpCircle, XCircle, Loader2 } from 'lucide-react';
 
 const STAGES = [
-    { key: 'confirmed', label: 'Confirmed', icon: CheckCircle, color: 'text-green-600 bg-green-100' },
-    { key: 'preparing', label: 'Preparing', icon: ChefHat, color: 'text-purple-600 bg-purple-100' },
+    { key: 'confirmed', label: 'Order Confirmed', icon: CheckCircle, color: 'text-green-600 bg-green-100' },
+    { key: 'preparing', label: 'Being Prepared', icon: ChefHat, color: 'text-purple-600 bg-purple-100' },
+    { key: 'ready', label: 'Ready for Pickup/Delivery', icon: Package, color: 'text-indigo-600 bg-indigo-100' },
     { key: 'out_for_delivery', label: 'Out for Delivery', icon: Truck, color: 'text-blue-600 bg-blue-100' },
-    { key: 'delivered', label: 'Delivered', icon: Package, color: 'text-[#F97316] bg-orange-100' },
+    { key: 'delivered', label: 'Delivered', icon: CheckCircle, color: 'text-[#F97316] bg-orange-100' },
 ];
 
 interface OrderData {
@@ -50,8 +51,23 @@ export default function OrderTracking() {
 
     const getStageIndex = () => {
         if (!order) return 0;
-        const map: Record<string, number> = { pending: 0, confirmed: 0, preparing: 1, ready: 2, out_for_delivery: 2, delivered: 3 };
+        const map: Record<string, number> = { 
+            pending: 0, 
+            confirmed: 0, 
+            preparing: 1, 
+            ready: 2, 
+            out_for_delivery: order.orderType === 'pickup' ? 2 : 3, 
+            delivered: order.orderType === 'pickup' ? 3 : 4 
+        };
         return map[order.status] ?? 0;
+    };
+
+    const getActiveStages = () => {
+        if (!order) return STAGES;
+        if (order.orderType === 'pickup') {
+            return STAGES.filter(s => s.key !== 'out_for_delivery');
+        }
+        return STAGES;
     };
 
     if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-[#F97316]" /></div>;
@@ -85,17 +101,19 @@ export default function OrderTracking() {
                 {/* Progress Tracker */}
                 <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-gray-100">
                     <div className="space-y-0">
-                        {STAGES.map((stage, i) => {
+                        {getActiveStages().map((stage, i) => {
                             const isActive = i <= stageIdx;
                             const isCurrent = i === stageIdx;
                             const Icon = stage.icon;
+                            // Need to know total stages to draw the line correctly
+                            const totalStages = getActiveStages().length;
                             return (
                                 <div key={stage.key} className="flex gap-4">
                                     <div className="flex flex-col items-center">
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isActive ? stage.color : 'bg-gray-100 text-gray-400'} ${isCurrent ? 'ring-4 ring-offset-2 ring-[#F97316]/20' : ''}`}>
                                             <Icon className="w-5 h-5" />
                                         </div>
-                                        {i < STAGES.length - 1 && <div className={`w-0.5 h-12 ${isActive ? 'bg-green-300' : 'bg-gray-200'}`} />}
+                                        {i < totalStages - 1 && <div className={`w-0.5 h-12 ${isActive ? 'bg-green-300' : 'bg-gray-200'}`} />}
                                     </div>
                                     <div className="pt-2 pb-6">
                                         <p className={`font-medium ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>{stage.label}</p>
