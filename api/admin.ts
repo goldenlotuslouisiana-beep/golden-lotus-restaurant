@@ -41,18 +41,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'delete-promo': return handleDeletePromo(req, res);
         case 'loyalty-settings': return handleLoyaltySettings(req, res);
         case 'loyalty-adjust': return handleLoyaltyAdjust(req, res);
-        case 'riders': return handleRiders(req, res);
-        case 'add-rider': return handleAddRider(req, res);
-        case 'edit-rider': return handleEditRider(req, res);
-        case 'zones': return handleZones(req, res);
         case 'loyalty-leaderboard': return handleLoyaltyLeaderboard(req, res);
         case 'new-orders': return handleNewOrders(req, res);
         case 'send-email': return handleSendEmail(req, res);
         default:
             // Fallback for old route payloads like method based deletions or updates
             if (action === 'user-detail' && req.method === 'DELETE') return handleUserDetail(req, res);
-            if (action === 'riders' && req.method === 'POST') return handleAddRider(req, res);
-            if (action === 'riders' && req.method === 'PATCH') return handleEditRider(req, res);
             if (action === 'promos' && req.method === 'POST') return handleAddPromo(req, res);
             if (action === 'promos' && req.method === 'PATCH') return handleEditPromo(req, res);
             if (action === 'promos' && req.method === 'DELETE') return handleDeletePromo(req, res);
@@ -165,9 +159,9 @@ async function handleOrderStatus(req: VercelRequest, res: VercelResponse) {
     const emailMessages: Record<string, string> = {
         confirmed: "Your Golden Lotus order has been confirmed!",
         preparing: "Good news! We're preparing your order right now.",
-        ready: "Your order is ready for pickup/delivery!",
-        out_for_delivery: "Your order is on its way to you!",
-        delivered: "Your order has been delivered. Enjoy!",
+        ready: "Your order is ready for pickup!",
+        picked_up: "Your order has been picked up. Enjoy!",
+        completed: "Your order is complete. Thank you!",
         cancelled: "Unfortunately your order has been cancelled."
     };
 
@@ -177,8 +171,8 @@ async function handleOrderStatus(req: VercelRequest, res: VercelResponse) {
             const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
             let subjectMap: Record<string, string> = {
                 confirmed: "Your order has been confirmed! 🎉", preparing: "Your food is being prepared! 👨‍🍳",
-                ready: "Your order is ready! 🎁", out_for_delivery: "Your order is on the way! 🛵",
-                delivered: "Order delivered! Enjoy your meal! 🍜", cancelled: "Your order was cancelled. We're sorry."
+        ready: "Your order is ready! 🎁", picked_up: "Your order was picked up! 🛍️",
+        completed: "Order completed! Enjoy your meal! 🍜", cancelled: "Your order was cancelled. We're sorry."
             };
             await transporter.sendMail({
                 from: `"Golden Lotus Delivery" <${process.env.GMAIL_USER}>`,
@@ -339,53 +333,6 @@ async function handleDeletePromo(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ success: true });
 }
 
-async function handleRiders(req: VercelRequest, res: VercelResponse) {
-    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-    const client = await clientPromise;
-    const riders = await client.db(DB).collection('riders').find({}).toArray();
-    return res.status(200).json(riders.map(r => ({ ...r, id: r._id.toString() })));
-}
-
-async function handleAddRider(req: VercelRequest, res: VercelResponse) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-    const client = await clientPromise;
-    const { name, phone, photo, status: riderStatus } = req.body;
-    const result = await client.db(DB).collection('riders').insertOne({ name, phone, photo: photo || '', status: riderStatus || 'available', totalDeliveries: 0, todayDeliveries: 0, createdAt: new Date().toISOString() });
-    return res.status(201).json({ id: result.insertedId.toString(), name, phone });
-}
-
-async function handleEditRider(req: VercelRequest, res: VercelResponse) {
-    if (req.method !== 'PATCH') return res.status(405).json({ error: 'Method not allowed' });
-    const client = await clientPromise;
-    const riderId = req.query.id as string;
-    const updates = req.body; delete updates.id; delete updates._id;
-    await client.db(DB).collection('riders').updateOne({ _id: new ObjectId(riderId) }, { $set: updates });
-    return res.status(200).json({ success: true });
-}
-
-async function handleZones(req: VercelRequest, res: VercelResponse) {
-    const client = await clientPromise;
-    const db = client.db(DB);
-    if (req.method === 'GET') {
-        const zones = await db.collection('deliveryZones').find({}).toArray();
-        return res.status(200).json(zones.map(z => ({ ...z, id: z._id.toString() })));
-    }
-    if (req.method === 'POST') {
-        const result = await db.collection('deliveryZones').insertOne({ ...req.body, createdAt: new Date().toISOString() });
-        return res.status(201).json({ id: result.insertedId.toString(), ...req.body });
-    }
-    if (req.method === 'PATCH') {
-        const zoneId = req.query.id as string;
-        const updates = req.body; delete updates.id; delete updates._id;
-        await db.collection('deliveryZones').updateOne({ _id: new ObjectId(zoneId) }, { $set: updates });
-        return res.status(200).json({ success: true });
-    }
-    if (req.method === 'DELETE') {
-        await db.collection('deliveryZones').deleteOne({ _id: new ObjectId(req.query.id as string) });
-        return res.status(200).json({ success: true });
-    }
-    return res.status(405).json({ error: 'Method not allowed' });
-}
 
 async function handleLoyaltySettings(req: VercelRequest, res: VercelResponse) {
     const client = await clientPromise;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Plus, Minus, X, Tag, Heart } from 'lucide-react';
+import { toast } from 'sonner';
 import { DataStore } from '@/data/store';
 import type { MenuItem, MenuCategory, Coupon } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -18,10 +19,10 @@ export default function Menu() {
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [orderType, setOrderType] = useState<'pickup' | 'delivery'>('pickup');
+  const [orderType] = useState<'pickup'>('pickup');
   const [isLoading, setIsLoading] = useState(true);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [favToast, setFavToast] = useState('');
+  const [favToast] = useState('');
   const { isLoggedIn, token } = useAuth();
   useEffect(() => {
     const fetchMenu = async () => {
@@ -43,6 +44,69 @@ export default function Menu() {
     setCategories(DataStore.getMenuCategories());
     setCoupons(DataStore.getCoupons().filter(c => c.active));
   }, []);
+
+  const loadFavorites = async () => {
+    const res = await fetch('/api/users?action=favorites', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const ids = (data.favorites || []).map((f: any) => f._id || f.id);
+      setFavorites(ids);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadFavorites();
+    }
+  }, [isLoggedIn, token]);
+
+  const toggleFavorite = async (itemId: string) => {
+    if (!isLoggedIn) {
+      toast.error('Please sign in to save favorites');
+      navigate('/login');
+      return;
+    }
+    
+    const isFav = favorites.includes(itemId);
+    
+    if (isFav) {
+      setFavorites(prev => prev.filter(id => id !== itemId));
+    } else {
+      setFavorites(prev => [...prev, itemId]);
+    }
+    
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          action: isFav ? 'remove-favorite' : 'add-favorite',
+          itemId: itemId
+        })
+      });
+      
+      if (!res.ok) {
+        if (isFav) {
+          setFavorites(prev => [...prev, itemId]);
+        } else {
+          setFavorites(prev => prev.filter(id => id !== itemId));
+        }
+        toast.error('Failed to update favorites');
+      }
+    } catch (error) {
+      console.error('Favorite error:', error);
+      if (isFav) {
+        setFavorites(prev => [...prev, itemId]);
+      } else {
+        setFavorites(prev => prev.filter(id => id !== itemId));
+      }
+    }
+  };
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory = activeCategory === 'Popular'
@@ -104,27 +168,6 @@ export default function Menu() {
                 />
               </div>
 
-              {/* Order Type */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setOrderType('pickup')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${orderType === 'pickup'
-                    ? 'bg-lotus-gold text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                >
-                  Pickup
-                </button>
-                <button
-                  onClick={() => setOrderType('delivery')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${orderType === 'delivery'
-                    ? 'bg-lotus-gold text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                >
-                  Delivery
-                </button>
-              </div>
 
               {/* Cart Button */}
               <button
@@ -227,19 +270,15 @@ export default function Menu() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (!isLoggedIn) { setFavToast('Sign in to save favorites'); setTimeout(() => setFavToast(''), 2500); return; }
-                          const isFav = favorites.includes(item.id);
-                          if (isFav) {
-                            fetch('/api/users?action=favorites', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ menuItemId: item.id }) });
-                            setFavorites(f => f.filter(id => id !== item.id));
-                          } else {
-                            fetch('/api/users?action=favorites', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ menuItemId: item.id }) });
-                            setFavorites(f => [...f, item.id]);
-                          }
+                          toggleFavorite(item.id);
                         }}
-                        className={`absolute bottom-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all ${favorites.includes(item.id) ? 'bg-[#F97316] text-white' : 'bg-white/80 text-gray-400 hover:text-[#F97316]'} shadow-sm`}
+                        className="absolute top-2 right-2 p-2 rounded-full bg-white shadow-md transition-all"
                       >
-                        <Heart className={`w-4 h-4 ${favorites.includes(item.id) ? 'fill-current' : ''}`} />
+                        {favorites.includes(item.id) ? (
+                            <Heart className="w-5 h-5 text-orange-500 fill-orange-500" />
+                          ) : (
+                            <Heart className="w-5 h-5 text-gray-400" />
+                          )}
                       </button>
                     </div>
 

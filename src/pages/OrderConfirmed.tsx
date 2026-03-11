@@ -1,12 +1,12 @@
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { CheckCircle, Clock, MapPin, Phone, Mail, ArrowRight, Loader2, Package } from 'lucide-react';
+import { CheckCircle, Phone, Mail, ArrowRight, Loader2, Package } from 'lucide-react';
 
 interface OrderData {
     id: string; orderNumber: string;
     customer: { name: string; email: string; phone: string; address?: string; city?: string; zip?: string };
     items: { name: string; price: number; quantity: number }[];
-    subtotal: number; tax: number; deliveryFee: number; discount: number; total: number;
+    subtotal: number; tax: number; discount: number; total: number;
     orderType: string; paymentMethod: string; paymentStatus: string; cardLast4?: string; createdAt: string;
 }
 
@@ -75,13 +75,37 @@ export default function OrderConfirmed() {
                 </div>
 
                 {/* ETA */}
-                <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 text-left border border-gray-100">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center"><Clock className="w-5 h-5 text-[#F97316]" /></div>
-                        <div>
-                            <p className="font-bold text-gray-900">Estimated Time</p>
-                            <p className="text-sm text-gray-600">{order?.orderType === 'delivery' ? '30–45 minutes' : '15–20 minutes'}</p>
-                        </div>
+                <div className="bg-orange-50 rounded-xl p-5 text-center shadow-sm border border-orange-100 mb-4">
+                    <p className="text-2xl mb-1">🎉</p>
+                    <h3 className="font-bold text-lg text-gray-900">Ready in 15-20 minutes!</h3>
+                    <p className="text-gray-600 mt-1">Please pick up your order at:</p>
+                    <p className="font-semibold text-gray-900 mt-2">Golden Lotus Restaurant</p>
+                    <p className="text-gray-600 text-sm">168 Dragon Blvd, Los Angeles, CA 90012</p>
+                    <a href="https://maps.google.com?q=168+Dragon+Blvd+Los+Angeles+CA"
+                       target="_blank"
+                       className="mt-3 inline-block bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors">
+                      📌 Get Directions
+                    </a>
+                </div>
+
+                {/* Third-party Delivery */}
+                <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100 mb-6">
+                    <h3 className="font-semibold text-gray-700 text-center mb-4 text-sm">
+                      Need someone to pick it up for you? 🛵
+                    </h3>
+                    <div className="flex gap-3 justify-center flex-wrap">
+                      <a href="https://www.ubereats.com" target="_blank"
+                         className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+                        🚗 Uber Eats
+                      </a>
+                      <a href="https://www.doordash.com" target="_blank"
+                         className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors">
+                        🍕 DoorDash
+                      </a>
+                      <a href="https://www.grubhub.com" target="_blank"
+                         className="flex items-center gap-2 bg-orange-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-500 transition-colors">
+                        🛵 Grubhub
+                      </a>
                     </div>
                 </div>
 
@@ -92,7 +116,6 @@ export default function OrderConfirmed() {
                         <div className="space-y-2">{order.items.map((item, i) => (<div key={i} className="flex justify-between text-sm"><span className="text-gray-600">{item.name} x{item.quantity}</span><span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span></div>))}</div>
                         <div className="border-t pt-3 space-y-1 text-sm">
                             <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>${order.subtotal.toFixed(2)}</span></div>
-                            {order.deliveryFee > 0 && <div className="flex justify-between"><span className="text-gray-500">Delivery</span><span>${order.deliveryFee.toFixed(2)}</span></div>}
                             <div className="flex justify-between"><span className="text-gray-500">Tax</span><span>${order.tax.toFixed(2)}</span></div>
                             {order.discount > 0 && <div className="flex justify-between text-[#F97316]"><span>Discount</span><span>-${order.discount.toFixed(2)}</span></div>}
                             <div className="flex justify-between font-bold text-base pt-1 border-t"><span>Total</span><span className="text-[#F97316]">${order.total.toFixed(2)}</span></div>
@@ -101,7 +124,6 @@ export default function OrderConfirmed() {
                             <div className="border-t pt-3 space-y-2 text-sm">
                                 <div className="flex items-center gap-2 text-gray-600"><Mail className="w-4 h-4 text-gray-400" />{order.customer.email}</div>
                                 <div className="flex items-center gap-2 text-gray-600"><Phone className="w-4 h-4 text-gray-400" />{order.customer.phone}</div>
-                                {order.orderType === 'delivery' && order.customer.address && <div className="flex items-center gap-2 text-gray-600"><MapPin className="w-4 h-4 text-gray-400" />{order.customer.address}, {order.customer.city} {order.customer.zip}</div>}
                             </div>
                         )}
                     </div>

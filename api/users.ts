@@ -29,6 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'add-address': return handleAddAddress(req, res, userId);
         case 'edit-address': return handleEditAddress(req, res, userId);
         case 'delete-address': return handleDeleteAddress(req, res, userId);
+        case 'set-default-address': return handleSetDefaultAddress(req, res, userId);
         
         case 'favorites': return handleGetFavorites(req, res, userId);
         case 'add-favorite': return handleAddFavorite(req, res, userId);
@@ -101,78 +102,173 @@ async function handleGetAddresses(req: VercelRequest, res: VercelResponse, userI
 
 async function handleAddAddress(req: VercelRequest, res: VercelResponse, userId: string) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-    const { label, street, apt, city, state, zip, isDefault } = req.body;
-    const address = { id: new ObjectId().toString(), label: label || 'Home', street, apt: apt || '', city, state, zip, isDefault: isDefault || false };
+    const { label, fullName, phone, street, apt, city, state, zip, landmark } = req.body;
     
     const client = await clientPromise;
-    const users = client.db(DB_NAME).collection('users');
-
-    if (address.isDefault) {
-        await users.updateOne({ _id: new ObjectId(userId) }, { $set: { 'savedAddresses.$[].isDefault': false } });
+    const db = client.db(DB_NAME);
+    
+    const newAddress = {
+        _id: new ObjectId(),
+        label: label || 'Home',
+        fullName,
+        phone,
+        street,
+        apt: apt || '',
+        city,
+        state,
+        zip,
+        landmark: landmark || '',
+        isDefault: false,
+        createdAt: new Date()
+    };
+    
+    // Check if this is first address — make it default
+    const user = await db.collection('users').findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { savedAddresses: 1 } }
+    );
+    
+    if (!user?.savedAddresses?.length) {
+        newAddress.isDefault = true;
     }
-    await users.updateOne({ _id: new ObjectId(userId) }, { $push: { savedAddresses: address } } as any);
-    return res.status(201).json(address);
+    
+    await db.collection('users').updateOne(
+        { _id: new ObjectId(userId) },
+        { $push: { savedAddresses: newAddress } } as any
+    );
+    
+    return res.status(200).json({ 
+        success: true, 
+        address: { ...newAddress, _id: newAddress._id.toString() }
+    });
 }
 
 async function handleEditAddress(req: VercelRequest, res: VercelResponse, userId: string) {
     if (req.method !== 'PATCH') return res.status(405).json({ error: 'Method not allowed' });
-    const { id } = req.query;
-    if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Address ID is required' });
-
+    const addressId = req.query.id as string;
     const updates = req.body;
+    
     const client = await clientPromise;
-    const users = client.db(DB_NAME).collection('users');
-
-    const user = await users.findOne({ _id: new ObjectId(userId) });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    const addresses = user.savedAddresses || [];
-    const index = addresses.findIndex((a: any) => a.id === id);
-    if (index === -1) return res.status(404).json({ error: 'Address not found' });
-
-    if (updates.isDefault) {
-        addresses.forEach((a: any) => a.isDefault = false);
-    }
-    addresses[index] = { ...addresses[index], ...updates };
-
-    await users.updateOne({ _id: new ObjectId(userId) }, { $set: { savedAddresses: addresses } });
-    return res.status(200).json({ success: true, address: addresses[index] });
+    const db = client.db(DB_NAME);
+    
+    await db.collection('users').updateOne(
+        { 
+            _id: new ObjectId(userId),
+            'savedAddresses._id': new ObjectId(addressId)
+        },
+        { 
+            $set: {
+                'savedAddresses.$.label': updates.label,
+                'savedAddresses.$.fullName': updates.fullName,
+                'savedAddresses.$.phone': updates.phone,
+                'savedAddresses.$.street': updates.street,
+                'savedAddresses.$.apt': updates.apt,
+                'savedAddresses.$.city': updates.city,
+                'savedAddresses.$.state': updates.state,
+                'savedAddresses.$.zip': updates.zip,
+                'savedAddresses.$.landmark': updates.landmark,
+            }
+        } as any
+    );
+    
+    return res.status(200).json({ success: true });
 }
 
 async function handleDeleteAddress(req: VercelRequest, res: VercelResponse, userId: string) {
     if (req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' });
-    const { id } = req.query;
-    if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Address ID is required' });
-
+    const addressId = req.query.id as string;
+    
     const client = await clientPromise;
-    const users = client.db(DB_NAME).collection('users');
+    const db = client.db(DB_NAME);
+    
+    await db.collection('users').updateOne(
+        { _id: new ObjectId(userId) },
+        { 
+            $pull: { 
+                savedAddresses: { _id: new ObjectId(addressId) } 
+            } 
+        } as any
+    );
+    
+    return res.status(200).json({ success: true });
+}
 
-    await users.updateOne({ _id: new ObjectId(userId) }, { $pull: { savedAddresses: { id } } } as any);
+async function handleSetDefaultAddress(req: VercelRequest, res: VercelResponse, userId: string) {
+    if (req.method !== 'PATCH') return res.status(405).json({ error: 'Method not allowed' });
+    const addressId = req.query.id as string;
+    
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+    
+    // First set all to false
+    await db.collection('users').updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { 'savedAddresses.$[].isDefault': false } }
+    );
+    
+    // Then set selected one to true
+    await db.collection('users').updateOne(
+        { 
+            _id: new ObjectId(userId),
+            'savedAddresses._id': new ObjectId(addressId)
+        },
+        { $set: { 'savedAddresses.$.isDefault': true } } as any
+    );
+    
     return res.status(200).json({ success: true });
 }
 
 async function handleGetFavorites(req: VercelRequest, res: VercelResponse, userId: string) {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
     const client = await clientPromise;
-    const user = await client.db(DB_NAME).collection('users').findOne({ _id: new ObjectId(userId) });
-    return res.status(200).json(user?.favoriteItems || []);
+    const db = client.db(DB_NAME);
+    
+    // Get user's favorite item IDs
+    const user = await db.collection('users').findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { favoriteItems: 1 } }
+    );
+    
+    if (!user?.favoriteItems?.length) {
+        return res.status(200).json({ favorites: [] });
+    }
+    
+    // Fetch full item details for each favorite
+    const favorites = await db.collection('menuItems').find({
+        _id: { 
+            $in: user.favoriteItems.map((id: string) => {
+                try { return new ObjectId(id); } 
+                catch { return id; }
+            })
+        }
+    }).toArray();
+    
+    return res.status(200).json(
+        favorites.map(f => ({ ...f, _id: f._id.toString(), id: f.id || f._id.toString() }))
+    );
 }
 
 async function handleAddFavorite(req: VercelRequest, res: VercelResponse, userId: string) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-    const { menuItemId } = req.body;
+    const { itemId } = req.body;
     const client = await clientPromise;
-    await client.db(DB_NAME).collection('users').updateOne({ _id: new ObjectId(userId) }, { $addToSet: { favoriteItems: menuItemId } } as any);
+    const db = client.db(DB_NAME);
+    await db.collection('users').updateOne(
+        { _id: new ObjectId(userId) },
+        { $addToSet: { favoriteItems: itemId } } as any
+    );
     return res.status(200).json({ success: true });
 }
 
 async function handleRemoveFavorite(req: VercelRequest, res: VercelResponse, userId: string) {
     if (req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' });
-    const id = req.query.id as string || req.body.menuItemId;
-    if (!id) return res.status(400).json({ error: 'menuItemId is required' });
-
+    const itemId = req.body?.itemId || req.query?.itemId;
     const client = await clientPromise;
-    await client.db(DB_NAME).collection('users').updateOne({ _id: new ObjectId(userId) }, { $pull: { favoriteItems: id } } as any);
+    const db = client.db(DB_NAME);
+    await db.collection('users').updateOne(
+        { _id: new ObjectId(userId) },
+        { $pull: { favoriteItems: itemId } } as any
+    );
     return res.status(200).json({ success: true });
 }
 

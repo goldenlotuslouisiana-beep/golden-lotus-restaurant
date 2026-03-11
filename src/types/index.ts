@@ -165,8 +165,8 @@ export interface Feature {
 }
 
 // Order Types
-export type OrderStatus = 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
-export type OrderType = 'pickup' | 'delivery' | 'dine_in';
+export type OrderStatus = 'confirmed' | 'preparing' | 'ready' | 'picked_up' | 'completed' | 'cancelled';
+export type OrderType = 'pickup' | 'dine_in';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type PaymentMethod = 'cash' | 'card' | 'online';
 

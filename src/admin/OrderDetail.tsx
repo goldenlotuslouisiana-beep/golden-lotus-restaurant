@@ -6,11 +6,9 @@ import {
   Printer,
   Phone,
   Mail,
-  MapPin,
   Clock,
   CheckCircle,
   Package,
-  Truck,
   XCircle,
   CreditCard,
   Banknote,
@@ -22,14 +20,13 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; bgColor:
   confirmed: { label: 'Confirmed', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: CheckCircle },
   preparing: { label: 'Preparing', color: 'text-purple-700', bgColor: 'bg-purple-100', icon: Package },
   ready: { label: 'Ready', color: 'text-indigo-700', bgColor: 'bg-indigo-100', icon: CheckCircle },
-  out_for_delivery: { label: 'Out for Delivery', color: 'text-orange-700', bgColor: 'bg-orange-100', icon: Truck },
-  delivered: { label: 'Delivered', color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle },
+  picked_up: { label: 'Picked Up', color: 'text-orange-700', bgColor: 'bg-orange-100', icon: CheckCircle },
+  completed: { label: 'Completed', color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle },
   cancelled: { label: 'Cancelled', color: 'text-red-700', bgColor: 'bg-red-100', icon: XCircle },
 };
 
 const orderTypeLabels: Record<string, string> = {
   pickup: 'Pickup',
-  delivery: 'Delivery',
   dine_in: 'Dine In',
 };
 
@@ -90,8 +87,7 @@ export default function AdminOrderDetail() {
 
   const status = statusConfig[order.status as OrderStatus] || statusConfig['confirmed'];
   const StatusIcon = status.icon;
-
-  const statusFlow: OrderStatus[] = ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
+  const statusFlow: OrderStatus[] = ['confirmed', 'preparing', 'ready', 'picked_up', 'completed'];
   const currentStepIndex = statusFlow.indexOf(order.status as OrderStatus);
 
   const name = (order as any).customerName || order.customer?.name || (order as any).fullName || (order as any).name || 'Unknown';
@@ -286,21 +282,7 @@ export default function AdminOrderDetail() {
             </div>
           </div>
 
-          {/* Delivery Info */}
-          {order.orderType === 'delivery' && order.customer.address && (
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-bold text-lotus-dark mb-4">Delivery Address</h2>
-              <div className="flex items-start gap-2 text-gray-600">
-                <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p>{order.customer.address}</p>
-                  <p>
-                    {order.customer.city}, {order.customer.zip}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* Order Info */}
           <div className="bg-white rounded-xl shadow-sm p-6">

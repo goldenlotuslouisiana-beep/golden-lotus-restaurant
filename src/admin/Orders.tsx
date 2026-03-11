@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Search, Eye, Package, CheckCircle, Truck, XCircle, ChevronDown, Trash2 } from 'lucide-react';
+import { Search, Eye, Package, CheckCircle, XCircle, ChevronDown, Trash2 } from 'lucide-react';
 import type { Order, OrderStatus } from '@/types';
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: React.ElementType }> = {
   confirmed: { label: 'Confirmed', color: 'bg-blue-100 text-blue-700', icon: CheckCircle },
   preparing: { label: 'Preparing', color: 'bg-purple-100 text-purple-700', icon: Package },
   ready: { label: 'Ready', color: 'bg-indigo-100 text-indigo-700', icon: CheckCircle },
-  out_for_delivery: { label: 'Out for Delivery', color: 'bg-orange-100 text-orange-700', icon: Truck },
-  delivered: { label: 'Delivered', color: 'bg-green-100 text-green-700', icon: CheckCircle },
+  picked_up: { label: 'Picked Up', color: 'bg-orange-100 text-orange-700', icon: CheckCircle },
+  completed: { label: 'Completed', color: 'bg-green-100 text-green-700', icon: CheckCircle },
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700', icon: XCircle },
 };
 
 const orderTypeLabels: Record<string, string> = {
   pickup: 'Pickup',
-  delivery: 'Delivery',
   dine_in: 'Dine In',
 };
 
@@ -215,7 +214,6 @@ export default function AdminOrders() {
             >
               <option value="all">All Types</option>
               <option value="pickup">Pickup</option>
-              <option value="delivery">Delivery</option>
               <option value="dine_in">Dine In</option>
             </select>
             <select

@@ -1,14 +1,13 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle, ChefHat, Truck, Package, Clock, Phone as PhoneIcon, MessageCircle, ChevronDown, ChevronUp, HelpCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, ChefHat, Package, Clock, ChevronDown, ChevronUp, HelpCircle, XCircle, Loader2 } from 'lucide-react';
 
 const STAGES = [
     { key: 'confirmed', label: 'Order Confirmed', icon: CheckCircle, color: 'text-green-600 bg-green-100' },
     { key: 'preparing', label: 'Being Prepared', icon: ChefHat, color: 'text-purple-600 bg-purple-100' },
-    { key: 'ready', label: 'Ready for Pickup/Delivery', icon: Package, color: 'text-indigo-600 bg-indigo-100' },
-    { key: 'out_for_delivery', label: 'Out for Delivery', icon: Truck, color: 'text-blue-600 bg-blue-100' },
-    { key: 'delivered', label: 'Delivered', icon: CheckCircle, color: 'text-[#F97316] bg-orange-100' },
+    { key: 'ready', label: 'Ready for Pickup', icon: Package, color: 'text-indigo-600 bg-indigo-100' },
+    { key: 'picked_up', label: 'Picked Up / Completed', icon: CheckCircle, color: 'text-[#F97316] bg-orange-100' },
 ];
 
 interface OrderData {
@@ -60,7 +59,7 @@ export default function OrderTracking() {
     useEffect(() => {
         if (!order) return;
         const created = new Date(order.createdAt).getTime();
-        const eta = created + (order.orderType === 'delivery' ? 40 : 18) * 60 * 1000;
+        const eta = created + 18 * 60 * 1000;
         const cancelDeadline = created + 2 * 60 * 1000;
 
         const interval = setInterval(() => {
@@ -82,19 +81,13 @@ export default function OrderTracking() {
             confirmed: 0, 
             preparing: 1, 
             ready: 2, 
-            out_for_delivery: order.orderType === 'pickup' ? 2 : 3, 
-            delivered: order.orderType === 'pickup' ? 3 : 4 
+            picked_up: 3,
+            completed: 3 
         };
         return map[order.status] ?? 0;
     };
 
-    const getActiveStages = () => {
-        if (!order) return STAGES;
-        if (order.orderType === 'pickup') {
-            return STAGES.filter(s => s.key !== 'out_for_delivery');
-        }
-        return STAGES;
-    };
+    const getActiveStages = () => STAGES;
 
     if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-[#F97316]" /></div>;
     if (!order) return <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-24"><p className="text-gray-500">Order not found</p></div>;
@@ -151,25 +144,25 @@ export default function OrderTracking() {
                     </div>
                 </div>
 
-                {/* Rider Card (when out for delivery) */}
-                {order.status === 'out_for_delivery' && (
-                    <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-gray-100">
-                        <h3 className="font-bold text-gray-900 mb-3">Your Delivery Driver</h3>
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-gradient-to-br from-[#F97316] to-[#ea6c10] rounded-full flex items-center justify-center text-white font-bold text-xl">M</div>
-                            <div className="flex-1">
-                                <p className="font-medium text-gray-900">Mike R.</p>
-                                <p className="text-sm text-gray-500">5 min away</p>
-                            </div>
-                            <div className="flex gap-2">
-                                <a href="tel:+15551234567" className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600 hover:bg-green-200 transition-colors"><PhoneIcon className="w-5 h-5" /></a>
-                                <button className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 hover:bg-blue-200 transition-colors"><MessageCircle className="w-5 h-5" /></button>
-                            </div>
-                        </div>
-                    </div>
+                {/* Pickup Instructions */}
+                {order.status === 'ready' && (
+                  <div className="mt-8 bg-orange-500 text-white rounded-xl p-5 text-center shadow-lg">
+                    <p className="text-3xl mb-2">🎁</p>
+                    <h3 className="text-xl font-bold">Your order is ready!</h3>
+                    <p className="mt-1 text-white/90">
+                      Please come pick it up at Golden Lotus
+                    </p>
+                    <p className="mt-1 text-white/80 text-sm">
+                      168 Dragon Blvd, Los Angeles, CA 90012
+                    </p>
+                    <a href="https://maps.google.com?q=168+Dragon+Blvd+Los+Angeles+CA"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="mt-3 inline-block bg-white text-orange-500 px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-orange-50 transition-colors">
+                      📌 Get Directions
+                    </a>
+                  </div>
                 )}
-
-                {/* Order Details */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
                     <button onClick={() => setShowDetails(!showDetails)} className="w-full p-4 flex items-center justify-between">
                         <span className="font-medium text-gray-900">Order Details ({order.items.length} items)</span>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { ArrowLeft, ArrowRight, MapPin, Phone, Mail, User, CreditCard, DollarSign, ShoppingBag, Lock, Check, Loader2, Tag, Clock, Store } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Phone, Mail, User, CreditCard, DollarSign, ShoppingBag, Lock, Check, Loader2, Tag, Clock} from 'lucide-react';
 import { stripePromise } from '@/lib/stripe';
 import { useAuth } from '@/context/AuthContext';
 
@@ -61,12 +61,10 @@ function CheckoutInner() {
     const elements = useElements();
     const { user, token } = useAuth();
 
-    const state = location.state as { cart: CartItem[]; orderType: 'pickup' | 'delivery' } | null;
+    const state = location.state as { cart: CartItem[]; orderType: 'pickup' } | null;
     const cart: CartItem[] = state?.cart || [];
-    const initialType = state?.orderType || 'pickup';
-
+    const orderType = 'pickup';
     const [step, setStep] = useState(1);
-    const [orderType, setOrderType] = useState<'pickup' | 'delivery'>(initialType);
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'paypal'>('cash');
     const [cardName, setCardName] = useState('');
     const [cardError, setCardError] = useState('');
@@ -86,11 +84,9 @@ function CheckoutInner() {
     useEffect(() => { if (cart.length === 0) navigate('/menu'); }, [cart, navigate]);
 
     const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
-    const rawDeliveryFee = orderType === 'delivery' ? (subtotal >= 40 ? 0 : 3.99) : 0;
-    const deliveryFee = appliedPromo?.type === 'freeDelivery' ? 0 : rawDeliveryFee;
     const discountAmount = appliedPromo ? (appliedPromo.type === 'percent' ? subtotal * (appliedPromo.value / 100) : appliedPromo.type === 'fixed' ? appliedPromo.value : 0) : 0;
     const tax = (subtotal - discountAmount) * 0.08875;
-    const total = subtotal + deliveryFee + tax - discountAmount;
+    const total = subtotal + tax - discountAmount;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setCust((p) => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -104,7 +100,7 @@ function CheckoutInner() {
         setAppliedPromo({ code, ...promo });
     };
 
-    const isStep1Valid = cust.name && cust.email && cust.phone && (orderType === 'pickup' || (cust.street && cust.city && cust.stateAddr && cust.zip));
+    const isStep1Valid = cust.name && cust.email && cust.phone;
 
     const placeOrder = async () => {
         setIsProcessing(true);
@@ -113,13 +109,13 @@ function CheckoutInner() {
             const orderPayload = {
                 customer: { id: user?.id || `guest_${Date.now()}`, name: cust.name, email: cust.email, phone: cust.phone, address: cust.street, city: cust.city, zip: cust.zip },
                 items: cart.map((i) => ({ id: i.id, menuItemId: i.id, name: i.name, price: i.price, quantity: i.quantity })),
-                subtotal, tax, deliveryFee, discount: discountAmount, total, orderType,
+                subtotal, tax, discount: discountAmount, total, orderType,
                 specialInstructions: cust.instructions, couponCode: appliedPromo?.code || '',
             };
 
             if (paymentMethod === 'card') {
                 if (!stripe || !elements) { setGeneralError('Stripe is loading...'); setIsProcessing(false); return; }
-                const piRes = await fetch('/api/stripe?action=create-payment-intent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: cart.map((i) => ({ price: i.price, quantity: i.quantity })), deliveryFee, discount: discountAmount }) });
+                const piRes = await fetch('/api/stripe?action=create-payment-intent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: cart.map((i) => ({ price: i.price, quantity: i.quantity })), discount: discountAmount }) });
                 if (!piRes.ok) { const e = await piRes.json(); setGeneralError(e.error || 'Payment setup failed'); setIsProcessing(false); return; }
                 const { clientSecret, paymentIntentId } = await piRes.json();
                 const cardEl = elements.getElement(CardElement);
@@ -162,45 +158,32 @@ function CheckoutInner() {
                         {/* STEP 1 */}
                         {step === 1 && (
                             <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-gray-100">
-                                <h2 className="text-xl font-bold text-gray-900">Delivery Information</h2>
-                                <div className="flex gap-3">
-                                    {(['pickup', 'delivery'] as const).map((t) => (
-                                        <button key={t} onClick={() => setOrderType(t)} className={`flex-1 py-3 rounded-xl font-medium transition-all border-2 flex items-center justify-center gap-2 ${orderType === t ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-                                            {t === 'pickup' ? <><Store className="w-4 h-4" /> Pickup</> : <><MapPin className="w-4 h-4" /> Delivery</>}
-                                        </button>
-                                    ))}
+                                <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                        📍 Pickup Location
+                                    </h3>
+                                    <p className="text-gray-600 mt-1">Golden Lotus Restaurant</p>
+                                    <p className="text-gray-600">168 Dragon Blvd, Los Angeles, CA 90012</p>
+                                    <p className="text-gray-600">(213) 555-1688</p>
+                                    <a 
+                                      href="https://maps.google.com?q=168+Dragon+Blvd+Los+Angeles+CA"
+                                      target="_blank"
+                                      className="text-orange-500 text-sm mt-2 inline-block font-medium"
+                                    >
+                                      📌 Get Directions →
+                                    </a>
                                 </div>
-
-                                {orderType === 'pickup' && (
-                                    <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
-                                        <p className="font-medium text-gray-900 flex items-center gap-2"><Store className="w-4 h-4 text-[#F97316]" /> Golden Lotus Restaurant</p>
-                                        <p className="text-sm text-gray-600 mt-1">123 Main Street, New York, NY 10001</p>
-                                        <p className="text-sm text-gray-600">Mon-Sun: 11:00 AM - 10:00 PM</p>
-                                    </div>
-                                )}
-
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label><div className="relative"><User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input name="name" value={cust.name} onChange={handleChange} placeholder="John Doe" className={inputCls} /></div></div>
                                     <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label><div className="relative"><Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input name="email" type="email" value={cust.email} onChange={handleChange} placeholder="john@email.com" className={inputCls} /></div></div>
                                     <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label><div className="relative"><Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input name="phone" value={cust.phone} onChange={handleChange} placeholder="(555) 123-4567" className={inputCls} /></div></div>
                                 </div>
 
-                                {orderType === 'delivery' && (
-                                    <div className="grid sm:grid-cols-2 gap-4 pt-2 border-t">
-                                        <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1.5">Street Address *</label><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input name="street" value={cust.street} onChange={handleChange} placeholder="123 Main St" className={inputCls} /></div></div>
-                                        <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Apt / Suite</label><input name="apt" value={cust.apt} onChange={handleChange} placeholder="Apt 4B" className={inputNoCls} /></div>
-                                        <div><label className="block text-sm font-medium text-gray-700 mb-1.5">City *</label><input name="city" value={cust.city} onChange={handleChange} placeholder="New York" className={inputNoCls} /></div>
-                                        <div><label className="block text-sm font-medium text-gray-700 mb-1.5">State *</label><input name="stateAddr" value={cust.stateAddr} onChange={handleChange} placeholder="NY" className={inputNoCls} /></div>
-                                        <div><label className="block text-sm font-medium text-gray-700 mb-1.5">ZIP *</label><input name="zip" value={cust.zip} onChange={handleChange} placeholder="10001" className={inputNoCls} /></div>
-                                        <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1.5">Delivery Instructions</label><textarea name="instructions" value={cust.instructions} onChange={handleChange} placeholder="Ring doorbell, leave at door..." rows={2} className={inputNoCls + ' resize-none'} /></div>
-                                    </div>
-                                )}
-
                                 {/* Schedule */}
                                 <div className="pt-2 border-t space-y-3">
                                     <label className="block text-sm font-medium text-gray-700">When do you want it?</label>
                                     <div className="flex gap-3">
-                                        <button onClick={() => setScheduleType('asap')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'asap' ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500'}`}><Clock className="w-4 h-4" /> ASAP</button>
+                                        <button onClick={() => setScheduleType('asap')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'asap' ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500'}`}><Clock className="w-4 h-4" /> ASAP — Ready in 15-20 min</button>
                                         <button onClick={() => setScheduleType('schedule')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'schedule' ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500'}`}><Clock className="w-4 h-4" /> Schedule</button>
                                     </div>
                                     {scheduleType === 'schedule' && <input type="datetime-local" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className={inputNoCls} />}
@@ -268,8 +251,7 @@ function CheckoutInner() {
                                 <div className="bg-gray-50 rounded-xl p-4 space-y-1">
                                     <p className="font-medium text-gray-900">{cust.name}</p>
                                     <p className="text-sm text-gray-600">{cust.email} · {cust.phone}</p>
-                                    {orderType === 'delivery' && <p className="text-sm text-gray-600">{cust.street}{cust.apt ? `, ${cust.apt}` : ''}, {cust.city}, {cust.stateAddr} {cust.zip}</p>}
-                                    <p className="text-sm text-[#F97316] font-medium mt-1">{orderType === 'pickup' ? '🏪 Pickup' : '🚗 Delivery'} · {scheduleType === 'asap' ? 'ASAP' : scheduleTime}</p>
+                                    <p className="text-sm text-[#F97316] font-medium mt-1">🏪 Pickup · {scheduleType === 'asap' ? 'ASAP' : scheduleTime}</p>
                                 </div>
                                 <div className="space-y-3">
                                     {cart.map((item) => (
@@ -282,7 +264,6 @@ function CheckoutInner() {
                                 </div>
                                 <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
                                     <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-                                    {orderType === 'delivery' && <div className="flex justify-between"><span className="text-gray-500">Delivery</span><span>{deliveryFee === 0 ? <span className="text-green-600 font-medium">FREE</span> : `$${deliveryFee.toFixed(2)}`}</span></div>}
                                     <div className="flex justify-between"><span className="text-gray-500">Tax (8.875%)</span><span>${tax.toFixed(2)}</span></div>
                                     {discountAmount > 0 && <div className="flex justify-between text-[#F97316] font-medium"><span>Discount ({appliedPromo?.code})</span><span>-${discountAmount.toFixed(2)}</span></div>}
                                     <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Total</span><span className="text-[#F97316]">${total.toFixed(2)}</span></div>
@@ -307,7 +288,6 @@ function CheckoutInner() {
                             </div>
                             <div className="border-t pt-3 space-y-2">
                                 <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-                                {orderType === 'delivery' && <div className="flex justify-between text-sm"><span className="text-gray-500">Delivery</span><span>{deliveryFee === 0 ? <span className="text-green-600">FREE</span> : `$${deliveryFee.toFixed(2)}`}</span></div>}
                                 <div className="flex justify-between text-sm"><span className="text-gray-500">Tax</span><span>${tax.toFixed(2)}</span></div>
                                 {discountAmount > 0 && <div className="flex justify-between text-sm text-[#F97316]"><span>Discount</span><span>-${discountAmount.toFixed(2)}</span></div>}
                                 <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Total</span><span className="text-[#F97316]">${total.toFixed(2)}</span></div>
