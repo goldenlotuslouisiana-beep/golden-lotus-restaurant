@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, ShoppingBag, User } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const navLinks = [
   { name: 'Menu', href: '/menu' },
@@ -20,7 +21,10 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isLoggedIn, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,13 +99,56 @@ export default function Navbar() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              to="/login"
-              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-lotus-dark hover:text-lotus-gold transition-colors"
-            >
-              <User className="w-4 h-4" />
-              Sign in
-            </Link>
+            {isLoggedIn && user ? (
+              <div className="relative hidden md:block">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2"
+                >
+                  <div className="w-9 h-9 rounded-full bg-lotus-gold flex items-center justify-center text-white font-bold text-sm">
+                    {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                  <span className="hidden md:block text-sm font-medium text-lotus-dark">
+                    {user.name || 'Account'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-lotus-dark" />
+                </button>
+
+                {dropdownOpen && (
+                  <>
+                    <div className="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="font-medium text-sm text-gray-900">{user.name}</p>
+                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      </div>
+                      <button onClick={() => { navigate('/profile'); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-lotus-cream hover:text-lotus-gold flex items-center gap-2">
+                        👤 My Profile
+                      </button>
+                      <button onClick={() => { navigate('/profile?tab=orders'); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-lotus-cream hover:text-lotus-gold flex items-center gap-2">
+                        📦 My Orders
+                      </button>
+                      <button onClick={() => { navigate('/profile?tab=loyalty'); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-lotus-cream hover:text-lotus-gold flex items-center gap-2">
+                        ⭐ Loyalty Points
+                      </button>
+                      <div className="border-t border-gray-100 mt-1 pt-1">
+                        <button onClick={() => { logout(); setDropdownOpen(false); navigate('/'); }} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2">
+                          🚪 Sign Out
+                        </button>
+                      </div>
+                    </div>
+                    <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                  </>
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-lotus-dark hover:text-lotus-gold transition-colors"
+              >
+                <User className="w-4 h-4" />
+                Sign in
+              </Link>
+            )}
 
             <Link
               to="/menu?order=true"
