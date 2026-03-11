@@ -29,14 +29,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'item': return handleGetItem(req, res);
         case 'search': return handleSearch(req, res);
         // Admin CRUD actions preserved for existing functionality
-        case 'add-item': return handleAddItem(req, res);
-        case 'edit-item': return handleEditItem(req, res);
-        case 'delete-item': return handleDeleteItem(req, res);
+        case 'add': return handleAddItem(req, res);
+        case 'edit': return handleEditItem(req, res);
+        case 'delete': return handleDeleteItem(req, res);
         default:
             // Fallback for older frontend routes if any
             if (req.method === 'GET') return handleGetItems(req, res);
             if (req.method === 'POST') return handleAddItem(req, res);
-            if (req.method === 'PUT') return handleEditItem(req, res);
+            if (req.method === 'PUT' || req.method === 'PATCH') return handleEditItem(req, res);
             if (req.method === 'DELETE') return handleDeleteItem(req, res);
             return res.status(400).json({ error: 'Invalid action' });
     }

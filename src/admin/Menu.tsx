@@ -33,7 +33,7 @@ export default function AdminMenu() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/menu');
+      const res = await fetch('/api/menu?action=items');
       if (res.ok) {
         const items = await res.json();
         setMenuItems(items);
@@ -82,7 +82,7 @@ export default function AdminMenu() {
     if (confirm('Are you sure you want to delete this item?')) {
       try {
         const token = localStorage.getItem('admin_jwt');
-        await fetch(`/api/menu?id=${id}`, {
+        await fetch(`/api/menu?action=delete&id=${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -101,8 +101,8 @@ export default function AdminMenu() {
 
     try {
       if (editingItem) {
-        await fetch('/api/menu', {
-          method: 'PUT',
+        await fetch(`/api/menu?action=edit&id=${editingItem.id}`, {
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -110,7 +110,7 @@ export default function AdminMenu() {
           body: JSON.stringify({ ...formData, id: editingItem.id })
         });
       } else {
-        await fetch('/api/menu', {
+        await fetch('/api/menu?action=add', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -25,7 +25,7 @@ export default function Home() {
 
     const fetchFeatured = async () => {
       try {
-        const res = await fetch('/api/menu');
+        const res = await fetch('/api/menu?action=items');
         if (res.ok) {
           const items = await res.json();
           const featured = items

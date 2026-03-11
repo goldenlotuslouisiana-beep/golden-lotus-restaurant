@@ -26,7 +26,7 @@ export default function Menu() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await fetch('/api/menu');
+        const res = await fetch('/api/menu?action=items');
         if (res.ok) {
           const items = await res.json();
           setMenuItems(items);
