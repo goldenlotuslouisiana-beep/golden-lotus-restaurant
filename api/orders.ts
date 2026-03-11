@@ -27,69 +27,169 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     try {
+        console.log('=== CREATE ORDER START ===')
+        console.log('Body received:', JSON.stringify(req.body, null, 2))
+        
         const {
-            customer, items, subtotal, tax, deliveryFee, discount, total,
-            orderType, paymentMethod, specialInstructions, couponCode,
-            stripePaymentIntentId, cardLast4,
-        } = req.body;
-
-        if (!customer || !items || items.length === 0) {
-            return res.status(400).json({ error: 'Customer info and items are required' });
-        }
-
-        const client = await clientPromise;
-        const db = client.db(DB_NAME);
-        const ordersCollection = db.collection('orders');
-
-        const count = await ordersCollection.countDocuments();
-        const orderNumber = `GL-${String(count + 1001).padStart(5, '0')}`;
-        const now = new Date().toISOString();
-
-        const order = {
-            orderNumber,
-            customer: {
-                id: customer.id || `cust_${Date.now()}`,
-                name: customer.name,
-                email: customer.email,
-                phone: customer.phone,
-                address: customer.address || '',
-                city: customer.city || '',
-                zip: customer.zip || '',
-            },
             items,
-            subtotal: parseFloat(subtotal.toFixed(2)),
-            tax: parseFloat(tax.toFixed(2)),
-            deliveryFee: parseFloat(deliveryFee.toFixed(2)),
-            discount: parseFloat(discount.toFixed(2)),
-            total: parseFloat(total.toFixed(2)),
-            totalAmountCents: Math.round(total * 100),
-            orderType: orderType || 'pickup',
-            status: paymentMethod === 'cash' ? 'pending' : 'confirmed',
-            paymentStatus: paymentMethod === 'cash' ? 'pending' : paymentMethod === 'card' ? 'paid' : 'pending',
-            paymentMethod: paymentMethod || 'cash',
-            stripePaymentIntentId: stripePaymentIntentId || null,
-            stripeChargeId: null,
-            cardLast4: cardLast4 || null,
-            paidAt: paymentMethod === 'card' ? now : null,
-            couponCode: couponCode || null,
+            customerName,
+            customerEmail,
+            customerPhone,
+            pickupTime,
+            paymentMethod,
+            subtotal,
+            tax,
+            total,
+            promoCode,
+            discount,
+            specialInstructions,
+            stripePaymentIntentId,
+            cardLast4
+        } = req.body
+        
+        // Log each field
+        console.log('items:', items)
+        console.log('customerName:', customerName)
+        console.log('customerEmail:', customerEmail)
+        console.log('paymentMethod:', paymentMethod)
+        console.log('total:', total)
+        
+        // Validate required fields
+        if (!items || !items.length) {
+            return res.status(400).json({ error: 'No items in order' })
+        }
+        if (!customerName) {
+            return res.status(400).json({ error: 'Customer name required' })
+        }
+        if (!paymentMethod) {
+            return res.status(400).json({ error: 'Payment method required' })
+        }
+        if (!total) {
+            return res.status(400).json({ error: 'Total amount required' })
+        }
+        
+        const client = await clientPromise
+        console.log('MongoDB connected ✓')
+        
+        const db = client.db(DB_NAME)
+        
+        // Get next order number
+        const lastOrder = await db.collection('orders')
+            .findOne({}, { sort: { createdAt: -1 } })
+        
+        console.log('Last order:', lastOrder?.orderNumber)
+        
+        // Generate order number
+        let orderNum = 1
+        if (lastOrder?.orderNumber) {
+            const lastNum = parseInt(
+                lastOrder.orderNumber.replace('GL-0', '').replace('GL-', '')
+            )
+            if (!isNaN(lastNum)) orderNum = lastNum + 1
+        }
+        
+        const orderNumber = `GL-${String(orderNum).padStart(5, '0')}`
+        console.log('New order number:', orderNumber)
+        
+        // Get userId from token if logged in
+        let userId = null
+        const authHeader = req.headers.authorization
+        if (authHeader?.startsWith('Bearer ')) {
+            try {
+                const token = authHeader.replace('Bearer ', '')
+                const decoded = jwt.verify(token, JWT_SECRET) as any
+                userId = decoded.userId || decoded.id || decoded._id
+                console.log('UserId from token:', userId)
+            } catch {
+                console.log('No valid token - guest order')
+            }
+        }
+        
+        // Build order object
+        const newOrder = {
+            orderNumber,
+            userId: userId ? userId.toString() : null,
+            customerName: customerName || 'Guest',
+            customerEmail: customerEmail || '',
+            customerPhone: customerPhone || '',
+            items: items.map((item: any) => ({
+                id: item._id || item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity || 1,
+                specialInstructions: item.specialInstructions || ''
+            })),
+            subtotal: parseFloat(subtotal) || 0,
+            tax: parseFloat(tax) || 0,
+            discount: parseFloat(discount) || 0,
+            total: parseFloat(total) || 0,
+            promoCode: promoCode || null,
+            paymentMethod: paymentMethod || 'cod',
+            paymentStatus: paymentMethod === 'cash' || paymentMethod === 'cod' ? 'pending' : 'paid',
+            status: 'pending',
+            orderType: 'pickup',
+            pickupTime: pickupTime || 'asap',
             specialInstructions: specialInstructions || '',
-            createdAt: now,
-            updatedAt: now,
-            estimatedReadyTime: null,
-            assignedDriver: null,
-        };
-
-        const result = await ordersCollection.insertOne(order);
-
+            stripePaymentIntentId: stripePaymentIntentId || null,
+            cardLast4: cardLast4 || null,
+            statusHistory: {
+                pending: new Date().toISOString()
+            },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        }
+        
+        console.log('Order object built ✓')
+        
+        const result = await db.collection('orders').insertOne(newOrder)
+        console.log('Order inserted:', result.insertedId)
+        
+        // Award loyalty points if user logged in
+        if (userId) {
+            try {
+                const points = Math.floor(parseFloat(total))
+                await db.collection('users').updateOne(
+                    { _id: new ObjectId(userId) },
+                    { 
+                        $inc: { loyaltyPoints: points },
+                        $push: {
+                            loyaltyHistory: {
+                                date: new Date().toISOString(),
+                                orderId: result.insertedId.toString(),
+                                orderNumber,
+                                action: 'earned',
+                                points
+                            }
+                        }
+                    } as any
+                )
+                console.log('Loyalty points awarded:', points)
+            } catch (loyaltyError) {
+                console.error('Loyalty points error (non-critical):', loyaltyError)
+            }
+        }
+        
+        console.log('=== CREATE ORDER SUCCESS ===')
+        
         return res.status(201).json({
+            success: true,
             orderId: result.insertedId.toString(),
             orderNumber,
-            status: order.status,
-            paymentStatus: order.paymentStatus,
-        });
-    } catch (error) {
-        console.error('Create order error:', error);
-        return res.status(500).json({ error: 'Failed to create order' });
+            status: newOrder.status,
+            paymentStatus: newOrder.paymentStatus,
+            message: 'Order created successfully'
+        })
+        
+    } catch (error: any) {
+        console.error('=== CREATE ORDER FAILED ===')
+        console.error('Error name:', error.name)
+        console.error('Error message:', error.message)
+        console.error('Error stack:', error.stack)
+        
+        return res.status(500).json({ 
+            error: 'Failed to create order',
+            details: error.message,
+        })
     }
 }
 

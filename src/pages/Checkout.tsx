@@ -63,7 +63,6 @@ function CheckoutInner() {
 
     const state = location.state as { cart: CartItem[]; orderType: 'pickup' } | null;
     const cart: CartItem[] = state?.cart || [];
-    const orderType = 'pickup';
     const [step, setStep] = useState(1);
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'paypal'>('cash');
     const [cardName, setCardName] = useState('');
@@ -106,11 +105,34 @@ function CheckoutInner() {
         setIsProcessing(true);
         setGeneralError('');
         try {
-            const orderPayload = {
-                customer: { id: user?.id || `guest_${Date.now()}`, name: cust.name, email: cust.email, phone: cust.phone, address: cust.street, city: cust.city, zip: cust.zip },
-                items: cart.map((i) => ({ id: i.id, menuItemId: i.id, name: i.name, price: i.price, quantity: i.quantity })),
-                subtotal, tax, discount: discountAmount, total, orderType,
-                specialInstructions: cust.instructions, couponCode: appliedPromo?.code || '',
+            const localUser: any = user || {};
+            const orderData = {
+                // Items from cart
+                items: cart.map(item => ({
+                    _id: item.id,
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    specialInstructions: cust.instructions || ''
+                })),
+                
+                // Customer info
+                customerName: cust.name || localUser.fullName || localUser.name || '',
+                customerEmail: cust.email || localUser.email || '',
+                customerPhone: cust.phone || localUser.phone || '',
+                
+                // Order details
+                orderType: 'pickup',
+                pickupTime: scheduleType === 'schedule' ? scheduleTime : 'asap',
+                
+                // Pricing
+                subtotal: subtotal,
+                tax: tax,
+                discount: discountAmount || 0,
+                total: total,
+                promoCode: appliedPromo?.code || null,
+                specialInstructions: cust.instructions || ''
             };
 
             if (paymentMethod === 'card') {
@@ -123,14 +145,16 @@ function CheckoutInner() {
                 const result = await stripe.confirmCardPayment(clientSecret, { payment_method: { card: cardEl, billing_details: { name: cardName || cust.name } } });
                 if (result.error) { setCardError(result.error.message || 'Payment failed'); setIsProcessing(false); return; }
                 if (result.paymentIntent?.status === 'succeeded') {
-                    const oRes = await fetch('/api/orders?action=create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...orderPayload, paymentMethod: 'card', stripePaymentIntentId: paymentIntentId, cardLast4: '' }) });
+                    const finalOrderData = { ...orderData, stripePaymentIntentId: paymentIntentId, paymentMethod: 'card', cardLast4: '' };
+                    const oRes = await fetch('/api/orders?action=create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(finalOrderData) });
                     if (!oRes.ok) { setGeneralError('Payment OK but order creation failed. Contact support.'); setIsProcessing(false); return; }
                     const od = await oRes.json();
                     if (user && token) { try { await fetch('/api/users?action=loyalty', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ orderId: od.orderId, amount: Math.floor(total), action: 'earned' }) }); } catch { } }
                     navigate(`/order/${od.orderId}/confirmed`, { state: { orderNumber: od.orderNumber, total, paymentMethod: 'card' } });
                 }
             } else {
-                const oRes = await fetch('/api/orders?action=create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...orderPayload, paymentMethod: 'cash' }) });
+                const finalOrderData = { ...orderData, paymentMethod: paymentMethod === 'cash' ? 'cod' : paymentMethod };
+                const oRes = await fetch('/api/orders?action=create', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }, body: JSON.stringify(finalOrderData) });
                 if (!oRes.ok) { setGeneralError('Failed to place order'); setIsProcessing(false); return; }
                 const od = await oRes.json();
                 if (user && token) { try { await fetch('/api/users?action=loyalty', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ orderId: od.orderId, amount: Math.floor(total), action: 'earned' }) }); } catch { } }
