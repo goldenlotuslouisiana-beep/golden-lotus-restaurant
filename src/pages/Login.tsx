@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -15,11 +15,16 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+
+
   // If already logged in, redirect
-  if (isLoggedIn) {
-    navigate(redirect, { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate(redirect, { replace: true });
+    }
+  }, [isLoggedIn, navigate, redirect]);
+
+  if (isLoggedIn) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

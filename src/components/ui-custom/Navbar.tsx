@@ -198,14 +198,45 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="border-t border-gray-100 my-2" />
-              <Link
-                to="/login"
-                className="px-4 py-2 text-sm font-medium text-lotus-dark hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <User className="w-4 h-4" />
-                Sign in
-              </Link>
+              {isLoggedIn && user ? (
+                <div className="mt-2 bg-gray-50 rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+                    <div className="w-10 h-10 rounded-full bg-lotus-gold flex items-center justify-center text-white font-bold text-lg">
+                      {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-gray-900">{user.name}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-2 text-sm text-gray-700 hover:text-lotus-gold flex items-center gap-2">
+                      👤 My Profile
+                    </Link>
+                    <Link to="/profile?tab=orders" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-2 text-sm text-gray-700 hover:text-lotus-gold flex items-center gap-2">
+                      📦 My Orders
+                    </Link>
+                    <Link to="/profile?tab=addresses" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-2 text-sm text-gray-700 hover:text-lotus-gold flex items-center gap-2">
+                      📍 My Addresses
+                    </Link>
+                    <Link to="/profile?tab=loyalty" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-2 text-sm text-gray-700 hover:text-lotus-gold flex items-center gap-2">
+                      ⭐ Loyalty Points
+                    </Link>
+                    <button onClick={() => { logout(); setIsMobileMenuOpen(false); navigate('/'); }} className="w-full text-left px-2 py-2 mt-2 text-sm text-red-500 hover:bg-red-50 rounded-lg flex items-center gap-2">
+                      🚪 Sign Out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-sm font-medium text-lotus-dark hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <User className="w-4 h-4" />
+                  Sign in
+                </Link>
+              )}
             </nav>
           </div>
         )}
