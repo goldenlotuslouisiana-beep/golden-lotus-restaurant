@@ -12,6 +12,7 @@ export default function AdminMenu() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [formData, setFormData] = useState<Partial<MenuItem>>({
     name: '',
@@ -60,18 +61,20 @@ export default function AdminMenu() {
       description: '',
       price: 0,
       category: categories[0] || '',
-      image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500',
+      image: '',
       popular: false,
       isVegetarian: false,
       isVegan: false,
       isGlutenFree: false,
     });
+    setImagePreview(null);
     setIsModalOpen(true);
   };
 
   const handleEdit = (item: MenuItem) => {
     setEditingItem(item);
     setFormData({ ...item });
+    setImagePreview(item.image || null);
     setIsModalOpen(true);
   };
 
@@ -135,12 +138,18 @@ export default function AdminMenu() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Show local preview immediately
+    const objectUrl = URL.createObjectURL(file);
+    setImagePreview(objectUrl);
+
     setIsUploading(true);
     try {
       const url = await uploadImage(file);
       setFormData(prev => ({ ...prev, image: url }));
+      setImagePreview(url); // Update preview with permanent URL
     } catch (error) {
       alert('Failed to upload image. Please try again or use a URL.');
+      setImagePreview(null);
     } finally {
       setIsUploading(false);
     }
@@ -350,46 +359,75 @@ export default function AdminMenu() {
                     </div>
                   </div>
 
-                  {uploadMethod === 'url' ? (
-                    <input
-                      type="url"
-                      name="image"
-                      value={formData.image}
-                      onChange={handleChange}
-                      required
-                      placeholder="https://example.com/image.jpg"
-                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
-                    />
-                  ) : (
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-lotus-gold transition-colors">
-                      <div className="space-y-1 text-center">
-                        {isUploading ? (
-                          <div className="flex flex-col items-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lotus-gold mb-2"></div>
-                            <p className="text-sm text-gray-500">Uploading...</p>
-                          </div>
-                        ) : (
-                          <>
-                            <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-                            <div className="flex text-sm text-gray-600 justify-center">
-                              <label
-                                htmlFor="file-upload"
-                                className="relative cursor-pointer bg-white rounded-md font-medium text-lotus-gold hover:text-lotus-gold-dark focus-within:outline-none"
-                              >
-                                <span>Upload a file</span>
-                                <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleImageUpload} />
-                              </label>
-                            </div>
-                            <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                          </>
-                        )}
-                      </div>
+                  {imagePreview ? (
+                    <div className="mt-2">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                        onError={() => setImagePreview(null)}
+                      />
+                      {formData.image && uploadMethod === 'file' && !isUploading && (
+                        <p className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Image uploaded successfully
+                        </p>
+                      )}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setImagePreview(null);
+                          if (uploadMethod === 'file') {
+                            setFormData(prev => ({ ...prev, image: '' }));
+                          }
+                        }}
+                        className="mt-3 text-sm text-orange-500 border border-orange-500 rounded px-3 py-1.5 hover:bg-orange-50 transition-colors"
+                      >
+                        Change Image
+                      </button>
                     </div>
-                  )}
-                  {formData.image && uploadMethod === 'file' && !isUploading && (
-                    <p className="mt-2 text-xs text-green-600 flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Image uploaded successfully
-                    </p>
+                  ) : (
+                    <>
+                      {uploadMethod === 'url' ? (
+                        <input
+                          type="url"
+                          name="image"
+                          value={formData.image}
+                          onChange={(e) => {
+                            handleChange(e);
+                            // Debounce could be added here, but direct setting is fine for simple URLs
+                            setTimeout(() => setImagePreview(e.target.value), 500);
+                          }}
+                          required
+                          placeholder="https://example.com/image.jpg"
+                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold mt-2"
+                        />
+                      ) : (
+                        <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-lotus-gold transition-colors">
+                          <div className="space-y-1 text-center">
+                            {isUploading ? (
+                              <div className="flex flex-col items-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lotus-gold mb-2"></div>
+                                <p className="text-sm text-gray-500">Uploading...</p>
+                              </div>
+                            ) : (
+                              <>
+                                <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                                <div className="flex text-sm text-gray-600 justify-center">
+                                  <label
+                                    htmlFor="file-upload"
+                                    className="relative cursor-pointer bg-white rounded-md font-medium text-lotus-gold hover:text-lotus-gold-dark focus-within:outline-none"
+                                  >
+                                    <span>Upload a file</span>
+                                    <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleImageUpload} />
+                                  </label>
+                                </div>
+                                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
