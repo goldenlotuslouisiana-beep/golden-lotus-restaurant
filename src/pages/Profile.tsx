@@ -179,7 +179,7 @@ function OrderHistory({ token }: { token: string | null }) {
     const fetchOrderHistory = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/orders/history', {
+        const res = await fetch('/api/orders?action=history', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

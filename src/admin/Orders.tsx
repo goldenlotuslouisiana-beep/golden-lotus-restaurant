@@ -53,7 +53,7 @@ export default function AdminOrders() {
   const loadOrders = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/orders');
+      const res = await fetch('/api/admin?action=orders');
       if (res.ok) {
         let data = await res.json();
         data = data.map((o: any) => ({
@@ -73,7 +73,7 @@ export default function AdminOrders() {
   const deleteOrder = async (id: string) => {
     if (!confirm('Are you sure you want to delete this order?')) return;
     try {
-      const res = await fetch(`/api/admin/orders?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin?action=orders&id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         toast.success('Order deleted');
         loadOrders();
@@ -87,7 +87,7 @@ export default function AdminOrders() {
   const clearTestData = async () => {
     if (!confirm('Are you sure you want to delete all test/seed data?')) return;
     try {
-      const res = await fetch('/api/admin/orders?action=clear-test', { method: 'DELETE' });
+      const res = await fetch('/api/admin?action=clear-test', { method: 'DELETE' });
       if (res.ok) {
         toast.success('Test data cleared');
         loadOrders();

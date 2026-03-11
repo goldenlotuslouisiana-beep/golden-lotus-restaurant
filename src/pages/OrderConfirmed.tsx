@@ -19,7 +19,7 @@ export default function OrderConfirmed() {
     const [showConfetti, setShowConfetti] = useState(true);
 
     useEffect(() => {
-        if (id) fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null).then(d => { if (d) setOrder(d); setLoading(false); }).catch(() => setLoading(false));
+        if (id) fetch(`/api/orders?action=single&id=${id}`).then(r => r.ok ? r.json() : null).then(d => { if (d) setOrder(d); setLoading(false); }).catch(() => setLoading(false));
         else setLoading(false);
         setTimeout(() => setShowConfetti(false), 3000);
     }, [id]);

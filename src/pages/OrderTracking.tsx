@@ -34,7 +34,7 @@ export default function OrderTracking() {
 
         const fetchStatus = async () => {
             try {
-                const res = await fetch(`/api/orders/${id}`);
+                const res = await fetch(`/api/orders?action=single&id=${id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setOrder(prev => {

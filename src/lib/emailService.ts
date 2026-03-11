@@ -16,7 +16,7 @@ export async function sendCateringEmails(
     data: CateringFormData,
 ): Promise<{ customerSent: boolean; adminSent: boolean; error?: string }> {
     try {
-        const response = await fetch('/api/send-email', {
+        const response = await fetch('/api/admin?action=send-email', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -48,7 +48,7 @@ export default function AdminOrderDetail() {
   useEffect(() => {
     if (id) {
       setLoading(true);
-      fetch(`/api/orders/${id}`)
+      fetch(`/api/orders?action=single&id=${id}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (data) setOrder(data);

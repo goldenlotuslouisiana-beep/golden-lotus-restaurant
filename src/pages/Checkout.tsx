@@ -119,7 +119,7 @@ function CheckoutInner() {
 
             if (paymentMethod === 'card') {
                 if (!stripe || !elements) { setGeneralError('Stripe is loading...'); setIsProcessing(false); return; }
-                const piRes = await fetch('/api/stripe/create-payment-intent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: cart.map((i) => ({ price: i.price, quantity: i.quantity })), deliveryFee, discount: discountAmount }) });
+                const piRes = await fetch('/api/stripe?action=create-payment-intent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: cart.map((i) => ({ price: i.price, quantity: i.quantity })), deliveryFee, discount: discountAmount }) });
                 if (!piRes.ok) { const e = await piRes.json(); setGeneralError(e.error || 'Payment setup failed'); setIsProcessing(false); return; }
                 const { clientSecret, paymentIntentId } = await piRes.json();
                 const cardEl = elements.getElement(CardElement);
@@ -127,14 +127,14 @@ function CheckoutInner() {
                 const result = await stripe.confirmCardPayment(clientSecret, { payment_method: { card: cardEl, billing_details: { name: cardName || cust.name } } });
                 if (result.error) { setCardError(result.error.message || 'Payment failed'); setIsProcessing(false); return; }
                 if (result.paymentIntent?.status === 'succeeded') {
-                    const oRes = await fetch('/api/orders/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...orderPayload, paymentMethod: 'card', stripePaymentIntentId: paymentIntentId, cardLast4: '' }) });
+                    const oRes = await fetch('/api/orders?action=create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...orderPayload, paymentMethod: 'card', stripePaymentIntentId: paymentIntentId, cardLast4: '' }) });
                     if (!oRes.ok) { setGeneralError('Payment OK but order creation failed. Contact support.'); setIsProcessing(false); return; }
                     const od = await oRes.json();
                     if (user && token) { try { await fetch('/api/users?action=loyalty', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ orderId: od.orderId, amount: Math.floor(total), action: 'earned' }) }); } catch { } }
                     navigate(`/order/${od.orderId}/confirmed`, { state: { orderNumber: od.orderNumber, total, paymentMethod: 'card' } });
                 }
             } else {
-                const oRes = await fetch('/api/orders/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...orderPayload, paymentMethod: 'cash' }) });
+                const oRes = await fetch('/api/orders?action=create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...orderPayload, paymentMethod: 'cash' }) });
                 if (!oRes.ok) { setGeneralError('Failed to place order'); setIsProcessing(false); return; }
                 const od = await oRes.json();
                 if (user && token) { try { await fetch('/api/users?action=loyalty', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ orderId: od.orderId, amount: Math.floor(total), action: 'earned' }) }); } catch { } }
