@@ -16,10 +16,33 @@ function getUserId(req: VercelRequest): string | null {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    // Handle preflight
+    if (req.method === 'OPTIONS') return res.status(200).end();
+
+    // Parse body for POST/PATCH requests
+    let body = req.body;
+    if (typeof body === 'string') {
+        try { body = JSON.parse(body); } catch {}
+    }
+    req.body = body; // Attach parsed body back to req so existing functions work
+
     const userId = getUserId(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const action = req.query.action as string || req.body?.action;
+    // Read action from query OR body
+    const action = (req.query.action as string) || body?.action;
+
+    if (!action) {
+        return res.status(400).json({ 
+            error: 'action required',
+            received: { query: req.query, body }
+        });
+    }
 
     switch (action) {
         case 'profile': return handleProfile(req, res, userId);
@@ -39,12 +62,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'redeem-points': return handleRedeemPoints(req, res, userId);
         
         default:
-            // Fallback to older nested method routing based on previous functionality
-            if (action === 'addresses' && req.method === 'POST') return handleAddAddress(req, res, userId);
-            if (action === 'favorites' && req.method === 'POST') return handleAddFavorite(req, res, userId);
-            if (action === 'favorites' && req.method === 'DELETE') return handleRemoveFavorite(req, res, userId);
-            if (action === 'loyalty' && req.method === 'POST') return handleLoyalty(req, res, userId);
-            return res.status(400).json({ error: 'Invalid action' });
+            return res.status(400).json({ 
+                error: `Unknown action: ${action}`,
+                validActions: [
+                    'profile', 'addresses', 'favorites', 'loyalty',
+                    'add-favorite', 'remove-favorite', 'add-address',
+                    'update-profile', 'edit-address', 'delete-address', 'set-default-address', 'redeem-points'
+                ]
+            });
     }
 }
 
