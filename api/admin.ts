@@ -21,7 +21,7 @@ function getAdminId(req: VercelRequest): string | null {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    const action = req.query.action as string || req.body?.action as string;
+    const action = req.query.action as string || req.body?.action;
     if (!action) return res.status(400).json({ error: 'Missing action parameter' });
 
     // Global db catch here but handled per isolated function as user requested

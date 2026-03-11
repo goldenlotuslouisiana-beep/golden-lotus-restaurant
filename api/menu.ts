@@ -21,7 +21,7 @@ const authenticate = (req: VercelRequest) => {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    const action = req.query.action as string;
+    const action = req.query.action as string || req.body?.action;
 
     switch (action) {
         case 'items': return handleGetItems(req, res);

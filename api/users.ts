@@ -19,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userId = getUserId(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const action = req.query.action as string;
+    const action = req.query.action as string || req.body?.action;
 
     switch (action) {
         case 'profile': return handleProfile(req, res, userId);

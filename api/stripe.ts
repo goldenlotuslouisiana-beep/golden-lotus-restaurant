@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const action = req.query.action as string;
+    const action = req.query.action as string || (await parseJsonBody(req)).action;
 
     switch (action) {
         case 'create-payment-intent':

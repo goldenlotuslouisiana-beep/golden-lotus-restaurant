@@ -7,7 +7,7 @@ const DB_NAME = 'goldenlotus';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    const action = req.query.action as string;
+    const action = req.query.action as string || req.body?.action;
 
     switch (action) {
         case 'create':

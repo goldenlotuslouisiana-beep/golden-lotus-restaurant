@@ -51,10 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = async (email: string, password: string) => {
         try {
-            const res = await fetch('/api/auth?action=login?action=user-login', {
+            const res = await fetch('/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ action: 'login', email, password }),
             });
             const data = await res.json();
             if (!res.ok) return { success: false, error: data.error || 'Login failed' };
@@ -71,10 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signup = async (info: { name: string; email: string; phone: string; password: string }) => {
         try {
-            const res = await fetch('/api/auth?action=login?action=signup', {
+            const res = await fetch('/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(info),
+                body: JSON.stringify({ action: 'signup', ...info }),
             });
             const data = await res.json();
             if (!res.ok) return { success: false, error: data.error || 'Signup failed' };
