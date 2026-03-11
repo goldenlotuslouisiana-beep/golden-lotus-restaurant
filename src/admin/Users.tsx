@@ -120,14 +120,18 @@ export default function AdminUsers() {
                 <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Actions</th>
               </tr></thead>
               <tbody>
-                {users.map(u => (
+                {users.map((u: any) => {
+                  const displayName = u.fullName || u.name || u.displayName || u.email?.split('@')[0] || 'Unknown User';
+                  const initials = displayName.slice(0, 2).toUpperCase();
+                  
+                  return (
                   <tr key={u.id} className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3"><div className="flex items-center gap-3"><div className="w-9 h-9 bg-gradient-to-br from-lotus-gold to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">{u.name?.[0]?.toUpperCase() || '?'}</div><div><p className="font-medium text-lotus-dark text-sm">{u.name}</p><p className="text-xs text-gray-500">{u.email}</p></div></div></td>
+                    <td className="px-4 py-3"><div className="flex items-center gap-3"><div className="w-9 h-9 bg-gradient-to-br from-lotus-gold to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">{initials}</div><div><p className="font-medium text-lotus-dark text-sm">{displayName}</p><p className="text-xs text-gray-500">{u.email}</p></div></div></td>
                     <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{u.phone || '—'}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{new Date(u.createdAt).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-lotus-dark">{u.totalOrders}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-lotus-dark hidden md:table-cell">${u.totalSpent.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm text-lotus-gold font-medium hidden lg:table-cell">{u.loyaltyPoints}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-lotus-dark">{u.totalOrders || 0}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-lotus-dark hidden md:table-cell">${(u.totalSpent || 0).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm text-lotus-gold font-medium hidden lg:table-cell">{u.loyaltyPoints || 0}</td>
                     <td className="px-4 py-3"><span className={`text-xs px-2 py-1 rounded-full font-medium ${statusBadge(u.status)}`}>{u.status === 'blocked' ? 'Blocked' : 'Active'}</span></td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
@@ -138,7 +142,7 @@ export default function AdminUsers() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
@@ -173,11 +177,13 @@ export default function AdminUsers() {
                 {/* User Header */}
                 <div className="p-6 border-b">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-gradient-to-br from-lotus-gold to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-xl">{detail.user.name?.[0]?.toUpperCase()}</div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-lotus-gold to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                      {((detail.user as any).fullName || detail.user.name || (detail.user as any).displayName || detail.user.email?.split('@')[0] || 'Unknown').slice(0, 2).toUpperCase()}
+                    </div>
                     <div>
-                      <h3 className="text-lg font-bold text-lotus-dark">{detail.user.name}</h3>
+                      <h3 className="text-lg font-bold text-lotus-dark">{(detail.user as any).fullName || detail.user.name || (detail.user as any).displayName || detail.user.email?.split('@')[0] || 'Unknown User'}</h3>
                       <p className="text-sm text-gray-500">{detail.user.email}</p>
-                      <p className="text-sm text-gray-500">{detail.user.phone}</p>
+                      <p className="text-sm text-gray-500">{detail.user.phone || '—'}</p>
                     </div>
                     <span className={`ml-auto text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(detail.user.status)}`}>{detail.user.status === 'blocked' ? 'Blocked' : 'Active'}</span>
                   </div>

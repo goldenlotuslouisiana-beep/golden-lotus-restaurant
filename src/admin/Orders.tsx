@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Search, Eye, Package, CheckCircle, Truck, XCircle, ChevronDown } from 'lucide-react';
-import { DataStore } from '@/data/store';
+import { Search, Eye, Package, CheckCircle, Truck, XCircle, ChevronDown, Trash2 } from 'lucide-react';
 import type { Order, OrderStatus } from '@/types';
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: React.ElementType }> = {
@@ -54,18 +53,43 @@ export default function AdminOrders() {
   const loadOrders = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/orders/history'); // Use the user endpoint if no admin specific list exists, or simply create one or use existing API if available. Assuming this fetches properly for now.
+      const res = await fetch('/api/admin/orders');
       if (res.ok) {
         const data = await res.json();
         setOrders(data);
-      } else {
-         // Fallback to what was there if API fails (as it might if history is user specific without admin token logic locally)
-         setOrders(DataStore.getOrders());
       }
     } catch (e) {
-      setOrders(DataStore.getOrders());
+      console.error('Failed to load orders', e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const deleteOrder = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this order?')) return;
+    try {
+      const res = await fetch(`/api/admin/orders?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Order deleted');
+        loadOrders();
+        loadStats();
+      }
+    } catch (e) {
+      toast.error('Failed to delete order');
+    }
+  };
+
+  const clearTestData = async () => {
+    if (!confirm('Are you sure you want to delete all test/seed data?')) return;
+    try {
+      const res = await fetch('/api/admin/orders?action=clear-test', { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Test data cleared');
+        loadOrders();
+        loadStats();
+      }
+    } catch (e) {
+      toast.error('Failed to clear test data');
     }
   };
 
@@ -94,11 +118,15 @@ export default function AdminOrders() {
   };
 
   const filteredOrders = orders
-    .filter((order) => {
+    .filter((order: any) => {
+      const name = order.customerName || order.customer?.name || order.fullName || order.name || 'Unknown';
+      const phone = order.customerPhone || order.customer?.phone || order.phone || '';
+      const orderNum = order.orderNumber || order.order_number || order._id?.toString()?.slice(-6).toUpperCase() || order.id?.toString()?.slice(-6).toUpperCase() || 'UNKNOWN';
+
       const matchesSearch =
-        order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.customer.phone.includes(searchQuery);
+        orderNum.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        phone.includes(searchQuery);
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
       const matchesType = typeFilter === 'all' || order.orderType === typeFilter;
       return matchesSearch && matchesStatus && matchesType;
@@ -117,6 +145,13 @@ export default function AdminOrders() {
           <h1 className="text-2xl font-bold text-lotus-dark">Orders</h1>
           <p className="text-gray-600">Manage and track customer orders</p>
         </div>
+        <button 
+          onClick={clearTestData}
+          className="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+        >
+          <Trash2 className="w-4 h-4" />
+          Clear Test Data
+        </button>
       </div>
 
       {/* Stats */}
@@ -209,9 +244,14 @@ export default function AdminOrders() {
                     Loading orders...
                   </td>
                 </tr>
-              ) : filteredOrders.map((order) => {
-                const status = statusConfig[order.status] || statusConfig['confirmed'];
+              ) : filteredOrders.map((order: any) => {
+                const status = statusConfig[order.status as OrderStatus] || statusConfig['confirmed'] || { label: 'Unknown', color: 'bg-gray-100 text-gray-700', icon: Package };
                 const StatusIcon = status.icon;
+
+                const name = order.customerName || order.customer?.name || order.fullName || order.name || 'Unknown';
+                const phone = order.customerPhone || order.customer?.phone || order.phone || '—';
+                const orderNum = order.orderNumber || order.order_number || order._id?.toString()?.slice(-6).toUpperCase() || order.id?.toString()?.slice(-6).toUpperCase() || 'UNKNOWN';
+
                 return (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
@@ -219,13 +259,13 @@ export default function AdminOrders() {
                         to={`/admin/orders/${order.id}`}
                         className="font-medium text-lotus-gold hover:underline"
                       >
-                        {order.orderNumber}
+                        {orderNum}
                       </Link>
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <p className="font-medium text-lotus-dark">{order.customer.name}</p>
-                        <p className="text-sm text-gray-500">{order.customer.phone}</p>
+                        <p className="font-medium text-lotus-dark">{name}</p>
+                        <p className="text-sm text-gray-500">{phone}</p>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -271,13 +311,22 @@ export default function AdminOrders() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link
-                        to={`/admin/orders/${order.id}`}
-                        className="p-2 text-lotus-gold hover:bg-lotus-gold/10 rounded-lg transition-colors inline-flex items-center gap-1"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          to={`/admin/orders/${order.id}`}
+                          className="p-2 text-lotus-gold hover:bg-lotus-gold/10 rounded-lg transition-colors inline-flex items-center gap-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View
+                        </Link>
+                        <button
+                          onClick={() => deleteOrder(order.id)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Order"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

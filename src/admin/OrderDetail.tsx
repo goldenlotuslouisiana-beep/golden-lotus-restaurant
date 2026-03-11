@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Printer,
@@ -15,7 +16,6 @@ import {
   Banknote,
   Receipt,
 } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { Order, OrderStatus } from '@/types';
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
@@ -43,22 +43,41 @@ export default function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (id) {
-      const found = DataStore.getOrderById(id);
-      if (found) {
-        setOrder(found);
-      } else {
-        navigate('/admin/orders');
-      }
+      setLoading(true);
+      fetch(`/api/orders/${id}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data) setOrder(data);
+          else navigate('/admin/orders');
+        })
+        .catch(() => navigate('/admin/orders'))
+        .finally(() => setLoading(false));
     }
   }, [id, navigate]);
 
-  const handleStatusChange = (newStatus: OrderStatus) => {
-    if (order) {
-      DataStore.updateOrderStatus(order.id, newStatus);
-      setOrder({ ...order, status: newStatus });
+  const handleStatusChange = async (newStatus: OrderStatus) => {
+    if (!order) return;
+    const originalStatus = order.status;
+    setOrder({ ...order, status: newStatus });
+    
+    try {
+        const res = await fetch(`/api/admin?action=order-status&id=${(order as any)._id || order.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        if (res.ok) {
+            toast.success('Order status updated');
+        } else {
+            throw new Error('Failed to update');
+        }
+    } catch (error) {
+        toast.error('Failed to update status');
+        setOrder({ ...order, status: originalStatus });
     }
   };
 
@@ -66,13 +85,18 @@ export default function AdminOrderDetail() {
     window.print();
   };
 
+  if (loading) return <div className="p-12 text-center text-gray-500">Loading order...</div>;
   if (!order) return null;
 
-  const status = statusConfig[order.status];
+  const status = statusConfig[order.status as OrderStatus] || statusConfig['confirmed'];
   const StatusIcon = status.icon;
 
   const statusFlow: OrderStatus[] = ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
-  const currentStepIndex = statusFlow.indexOf(order.status);
+  const currentStepIndex = statusFlow.indexOf(order.status as OrderStatus);
+
+  const name = (order as any).customerName || order.customer?.name || (order as any).fullName || (order as any).name || 'Unknown';
+  const phone = (order as any).customerPhone || order.customer?.phone || (order as any).phone || '—';
+  const orderNum = order.orderNumber || (order as any).order_number || ((order as any)._id || order.id)?.toString()?.slice(-6).toUpperCase() || 'UNKNOWN';
 
   return (
     <div className="space-y-6">
@@ -86,7 +110,7 @@ export default function AdminOrderDetail() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-lotus-dark">{order.orderNumber}</h1>
+            <h1 className="text-2xl font-bold text-lotus-dark">{orderNum}</h1>
             <p className="text-gray-600">
               Placed on {new Date(order.createdAt).toLocaleString()}
             </p>
@@ -242,14 +266,15 @@ export default function AdminOrderDetail() {
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-bold text-lotus-dark mb-4">Customer</h2>
             <div className="space-y-3">
-              <p className="font-medium text-lotus-dark">{order.customer.name}</p>
+              <p className="font-medium text-lotus-dark">{name}</p>
               <a
-                href={`tel:${order.customer.phone}`}
+                href={`tel:${phone}`}
                 className="flex items-center gap-2 text-gray-600 hover:text-lotus-gold transition-colors"
               >
                 <Phone className="w-4 h-4" />
-                {order.customer.phone}
+                {phone}
               </a>
+              {order.customer?.email && (
               <a
                 href={`mailto:${order.customer.email}`}
                 className="flex items-center gap-2 text-gray-600 hover:text-lotus-gold transition-colors"
@@ -257,6 +282,7 @@ export default function AdminOrderDetail() {
                 <Mail className="w-4 h-4" />
                 {order.customer.email}
               </a>
+              )}
             </div>
           </div>
 
@@ -306,6 +332,11 @@ export default function AdminOrderDetail() {
                   {order.paymentStatus === 'paid' ? 'Paid' : 'Payment Pending'}
                 </span>
               </div>
+              {(order as any).stripePaymentIntentId && (
+                <div className="flex items-center gap-2 text-gray-600 break-all text-xs">
+                  <span className="font-medium">Stripe ID:</span> {(order as any).stripePaymentIntentId}
+                </div>
+              )}
               {order.couponCode && (
                 <div className="flex items-center gap-2 text-gray-600">
                   <span className="px-2 py-1 bg-lotus-gold/10 text-lotus-gold text-xs rounded">
@@ -328,6 +359,33 @@ export default function AdminOrderDetail() {
                     minute: '2-digit',
                   })}
                 </span>
+              </div>
+            </div>
+          )}
+
+          {/* Timeline History */}
+          {(order as any).statusHistoryLog && (order as any).statusHistoryLog.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-bold text-lotus-dark mb-4 border-b pb-2">Timeline History</h2>
+              <div className="space-y-4">
+                {((order as any).statusHistoryLog || []).map((entry: any, i: number) => (
+                  <div key={i} className="flex gap-3 text-sm">
+                    <div className="mt-1">
+                      <div className="w-2 h-2 rounded-full bg-lotus-gold" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800 capitalize">
+                        {statusConfig[entry.status as OrderStatus]?.label || entry.status}
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        {new Date(entry.timestamp).toLocaleString()}
+                      </p>
+                      {entry.reason && (
+                        <p className="text-gray-600 text-xs mt-1 italic">Note: {entry.reason}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

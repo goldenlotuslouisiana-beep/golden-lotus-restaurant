@@ -34,17 +34,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (action === 'dashboard-stats') {
             const now = new Date();
             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
             const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
             const [totalUsers, totalOrders, todayOrders, menuItems, allOrders, blockedUsers, newUsersToday, activeUsersWeek] = await Promise.all([
                 db.collection('users').countDocuments({}),
                 db.collection('orders').countDocuments({}),
-                db.collection('orders').countDocuments({ createdAt: { $gte: todayStart.toISOString() } }),
+                db.collection('orders').countDocuments({ createdAt: { $gte: yesterday.toISOString() } }),
                 db.collection('menu').countDocuments({}),
                 db.collection('orders').find({}).project({ total: 1, status: 1, paymentStatus: 1, createdAt: 1 }).toArray(),
                 db.collection('users').countDocuments({ status: 'blocked' }),
                 db.collection('users').countDocuments({ createdAt: { $gte: todayStart.toISOString() } }),
-                db.collection('users').countDocuments({ lastLogin: { $gte: weekAgo.toISOString() } }),
+                db.collection('orders').distinct('customer.email', { createdAt: { $gte: weekAgo.toISOString() } }).then((emails: any[]) => emails.length),
             ]);
 
             const todayRevenue = allOrders.filter(o => o.createdAt >= todayStart.toISOString() && o.paymentStatus === 'paid').reduce((s, o) => s + (o.total || 0), 0);
