@@ -61,7 +61,7 @@ export default function Profile() {
                     <div className="lg:col-span-3">
                         {tab === 'personal' && <PersonalInfo user={user} token={token} updateUser={updateUser} />}
                         {tab === 'addresses' && <Addresses token={token} />}
-                        {tab === 'orders' && <OrderHistory userId={user.id} />}
+                        {tab === 'orders' && <OrderHistory token={token} />}
                         {tab === 'favorites' && <Favorites token={token} />}
                         {tab === 'loyalty' && <LoyaltyPoints token={token} userPoints={user.loyaltyPoints || 0} />}
                     </div>
@@ -171,14 +171,36 @@ function Addresses({ token }: { token: string | null }) {
 }
 
 // ─── ORDER HISTORY TAB ───
-function OrderHistory({ userId }: { userId: string }) {
+function OrderHistory({ token }: { token: string | null }) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState<string | null>(null);
 
+    const fetchOrderHistory = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/orders/history', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) {
+          setOrders([]);
+          return;
+        }
+        const data = await res.json();
+        setOrders(data.orders || []);
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     useEffect(() => {
-        fetch(`/api/orders/user/${userId}`).then(r => r.json()).then(setOrders).catch(() => { }).finally(() => setLoading(false));
-    }, [userId]);
+        fetchOrderHistory();
+    }, []);
 
     const statusColors: Record<string, string> = {
         pending: 'bg-yellow-100 text-yellow-700', confirmed: 'bg-blue-100 text-blue-700', preparing: 'bg-purple-100 text-purple-700',

@@ -55,7 +55,12 @@ export default function AdminOrders() {
     try {
       const res = await fetch('/api/admin/orders');
       if (res.ok) {
-        const data = await res.json();
+        let data = await res.json();
+        data = data.map((o: any) => ({
+          ...o,
+          id: o._id?.toString() || o.id,
+          _id: o._id?.toString() || o.id
+        }));
         setOrders(data);
       }
     } catch (e) {
@@ -98,10 +103,13 @@ export default function AdminOrders() {
     setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
 
     try {
-        const res = await fetch(`/api/admin?action=order-status&id=${orderId}`, {
+        const targetOrder = orders.find(o => o.id === orderId);
+        const objectId = (targetOrder as any)?._id?.toString() || orderId;
+
+        const res = await fetch(`/api/admin?action=order-status`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify({ id: objectId, status: newStatus })
         });
         
         if (res.ok) {

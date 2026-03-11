@@ -140,32 +140,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // ─── UPDATE ORDER STATUS ───
         if (action === 'order-status') {
             if (req.method !== 'PATCH') return res.status(405).json({ error: 'Method not allowed' });
-            const orderId = req.query.id as string;
-            const { status: newStatus, cancelReason } = req.body;
-            if (!orderId || !newStatus) return res.status(400).json({ error: 'Missing id or status' });
+            const orderId = req.query.id as string || req.body?.id?.toString();
+            const { status, cancelReason } = req.body;
+            const parsedStatus = status || req.query?.status;
+            if (!orderId || !parsedStatus) return res.status(400).json({ error: 'Missing id or status' });
 
-            const validStatuses = ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'];
-            if (!validStatuses.includes(newStatus)) {
+            const validStatuses = ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled', 'pending'];
+            if (!validStatuses.includes(parsedStatus)) {
                 return res.status(400).json({ error: 'Invalid status' });
             }
 
             const update: any = { 
                 $set: { 
-                    status: newStatus, 
+                    status: parsedStatus, 
                     updatedAt: new Date().toISOString(),
-                    [`statusHistory.${newStatus}`]: new Date().toISOString()
+                    [`statusHistory.${parsedStatus}`]: new Date().toISOString()
                 } 
             };
             if (cancelReason) update.$set.cancelReason = cancelReason;
 
             // Add timeline entry
-            const timelineEntry = { status: newStatus, timestamp: new Date().toISOString(), ...(cancelReason ? { reason: cancelReason } : {}) };
+            const timelineEntry = { status: parsedStatus, timestamp: new Date().toISOString(), ...(cancelReason ? { reason: cancelReason } : {}) };
             update.$push = { statusHistoryLog: timelineEntry };
 
-            await db.collection('orders').updateOne({ _id: new ObjectId(orderId) }, update);
+            const orQuery: any[] = [
+                { id: parseInt(orderId) },
+                { id: orderId?.toString() },
+                { orderNumber: orderId?.toString() },
+            ];
+            if (ObjectId.isValid(orderId)) {
+                orQuery.push({ _id: new ObjectId(orderId) });
+            }
+
+            const result = await db.collection('orders').updateOne({ $or: orQuery }, update);
+
+            if (result.matchedCount === 0) {
+                return res.status(404).json({ error: 'Order not found', searchedId: orderId });
+            }
 
             // Fetch order for email notification
-            const order = await db.collection('orders').findOne({ _id: new ObjectId(orderId) });
+            const order = await db.collection('orders').findOne({ $or: orQuery });
             const emailMessages: Record<string, string> = {
                 confirmed: "Your Golden Lotus order has been confirmed!",
                 preparing: "Good news! We're preparing your order right now.",
@@ -175,8 +189,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 cancelled: "Unfortunately your order has been cancelled."
             };
 
-            const customerEmail = order?.customer?.email;
-            if (emailMessages[newStatus] && customerEmail && process.env.GMAIL_USER) {
+            const customerEmail = order?.customerEmail || order?.customer?.email || order?.email;
+            if (emailMessages[parsedStatus] && customerEmail && process.env.GMAIL_USER) {
                 try {
                     const transporter = nodemailer.createTransport({
                         service: 'gmail',
@@ -195,8 +209,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     await transporter.sendMail({
                         from: `"Golden Lotus Delivery" <${process.env.GMAIL_USER}>`,
                         to: customerEmail,
-                        subject: subjectMap[newStatus] || `Order ${order.orderNumber} — Status Update`,
-                        text: emailMessages[newStatus]
+                        subject: subjectMap[parsedStatus] || `Order ${order?.orderNumber || ''} — Status Update`,
+                        text: emailMessages[parsedStatus]
                     });
                 } catch (e) {
                     console.error("Failed to send order status email:", e);
