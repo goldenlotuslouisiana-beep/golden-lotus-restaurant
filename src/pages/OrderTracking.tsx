@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { CheckCircle, ChefHat, Truck, Package, Clock, Phone as PhoneIcon, MessageCircle, ChevronDown, ChevronUp, HelpCircle, XCircle, Loader2 } from 'lucide-react';
 
 const STAGES = [
@@ -26,8 +27,33 @@ export default function OrderTracking() {
     const [canCancel, setCanCancel] = useState(false);
 
     useEffect(() => {
-        if (id) fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null).then(d => { if (d) setOrder(d); setLoading(false); }).catch(() => setLoading(false));
-        else setLoading(false);
+        if (!id) {
+            setLoading(false);
+            return;
+        }
+
+        const fetchStatus = async () => {
+            try {
+                const res = await fetch(`/api/orders/${id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setOrder(prev => {
+                        if (prev && prev.status !== data.status) {
+                            toast.success('Your order status has been updated!');
+                        }
+                        return data;
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to fetch order', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStatus();
+        const interval = setInterval(fetchStatus, 15000);
+        return () => clearInterval(interval);
     }, [id]);
 
     // Countdown timer

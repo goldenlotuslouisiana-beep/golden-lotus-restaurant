@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Search, Eye, Package, CheckCircle, Truck, XCircle, ChevronDown } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { Order, OrderStatus } from '@/types';
@@ -69,16 +70,26 @@ export default function AdminOrders() {
   };
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    const originalOrders = [...orders];
+    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+
     try {
-        await fetch(`/api/admin?action=order-status&id=${orderId}`, {
+        const res = await fetch(`/api/admin?action=order-status&id=${orderId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: newStatus })
         });
-        loadOrders();
-        loadStats();
+        
+        if (res.ok) {
+            toast.success('Order status updated');
+            loadStats();
+        } else {
+            throw new Error('Failed to update');
+        }
     } catch (error) {
         console.error('Failed to update status:', error);
+        toast.error('Failed to update status');
+        setOrders(originalOrders);
     }
   };
 

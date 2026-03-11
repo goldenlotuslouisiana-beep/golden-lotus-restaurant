@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import clientPromise from '../lib/db.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
+import nodemailer from 'nodemailer';
 
 const DB = 'goldenlotus';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
@@ -48,8 +49,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             const todayRevenue = allOrders.filter(o => o.createdAt >= todayStart.toISOString() && o.paymentStatus === 'paid').reduce((s, o) => s + (o.total || 0), 0);
             const totalRevenue = allOrders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + (o.total || 0), 0);
-            const pendingOrders = allOrders.filter(o => o.status === 'confirmed').length;
-            const preparingOrders = allOrders.filter(o => ['preparing', 'ready'].includes(o.status)).length;
+            const pendingOrders = allOrders.filter(o => ['pending', 'confirmed'].includes(o.status)).length;
+            const preparingOrders = allOrders.filter(o => o.status === 'preparing').length;
             const readyOrders = allOrders.filter(o => o.status === 'ready').length;
 
             // Unavailable menu items (from correct collection 'menu', matching 'available' or 'isAvailable' logic if any)
@@ -142,14 +143,65 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const { status: newStatus, cancelReason } = req.body;
             if (!orderId || !newStatus) return res.status(400).json({ error: 'Missing id or status' });
 
-            const update: any = { $set: { status: newStatus, updatedAt: new Date().toISOString() } };
+            const validStatuses = ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'];
+            if (!validStatuses.includes(newStatus)) {
+                return res.status(400).json({ error: 'Invalid status' });
+            }
+
+            const update: any = { 
+                $set: { 
+                    status: newStatus, 
+                    updatedAt: new Date().toISOString(),
+                    [`statusHistory.${newStatus}`]: new Date().toISOString()
+                } 
+            };
             if (cancelReason) update.$set.cancelReason = cancelReason;
 
             // Add timeline entry
             const timelineEntry = { status: newStatus, timestamp: new Date().toISOString(), ...(cancelReason ? { reason: cancelReason } : {}) };
-            update.$push = { statusHistory: timelineEntry };
+            update.$push = { statusHistoryLog: timelineEntry };
 
-            await db.collection('orders').updateOne({ _id: new ObjectId(orderId) }, update as any);
+            await db.collection('orders').updateOne({ _id: new ObjectId(orderId) }, update);
+
+            // Fetch order for email notification
+            const order = await db.collection('orders').findOne({ _id: new ObjectId(orderId) });
+            const emailMessages: Record<string, string> = {
+                confirmed: "Your Golden Lotus order has been confirmed!",
+                preparing: "Good news! We're preparing your order right now.",
+                ready: "Your order is ready for pickup/delivery!",
+                out_for_delivery: "Your order is on its way to you!",
+                delivered: "Your order has been delivered. Enjoy!",
+                cancelled: "Unfortunately your order has been cancelled."
+            };
+
+            const customerEmail = order?.customer?.email;
+            if (emailMessages[newStatus] && customerEmail && process.env.GMAIL_USER) {
+                try {
+                    const transporter = nodemailer.createTransport({
+                        service: 'gmail',
+                        auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+                    });
+                    
+                    let subjectMap: Record<string, string> = {
+                        confirmed: "Your order has been confirmed! 🎉",
+                        preparing: "Your food is being prepared! 👨‍🍳",
+                        ready: "Your order is ready! 🎁",
+                        out_for_delivery: "Your order is on the way! 🛵",
+                        delivered: "Order delivered! Enjoy your meal! 🍜",
+                        cancelled: "Your order was cancelled. We're sorry."
+                    };
+
+                    await transporter.sendMail({
+                        from: `"Golden Lotus Delivery" <${process.env.GMAIL_USER}>`,
+                        to: customerEmail,
+                        subject: subjectMap[newStatus] || `Order ${order.orderNumber} — Status Update`,
+                        text: emailMessages[newStatus]
+                    });
+                } catch (e) {
+                    console.error("Failed to send order status email:", e);
+                }
+            }
+
             return res.status(200).json({ success: true });
         }
 
