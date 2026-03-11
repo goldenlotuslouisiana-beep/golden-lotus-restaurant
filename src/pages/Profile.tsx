@@ -19,13 +19,75 @@ interface Order { id: string; orderNumber: string; createdAt: string; items: Ord
 interface LoyaltyEntry { date: string; orderId: string; action: string; points: number }
 
 export default function Profile() {
-    const { user, token, isLoggedIn, logout, updateUser } = useAuth();
+    const { user: authUser, token, isLoggedIn, logout, updateUser } = useAuth();
     const navigate = useNavigate();
     const [tab, setTab] = useState<Tab>('personal');
+    const [profileData, setProfileData] = useState({
+        fullName: authUser?.name || '',
+        email: authUser?.email || '',
+        phone: authUser?.phone || '',
+        dateOfBirth: '',
+        avatar: authUser?.avatar || ''
+    });
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => { if (!isLoggedIn) navigate('/login?redirect=/profile'); }, [isLoggedIn, navigate]);
 
-    if (!isLoggedIn || !user) return null;
+    useEffect(() => {
+        if (isLoggedIn && token) {
+            fetchProfile();
+        }
+    }, [isLoggedIn, token]);
+
+    const fetchProfile = async () => {
+        try {
+            const res = await fetch('/api/users?action=profile', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const user = data.user || data;
+                setProfileData({
+                    fullName: user.fullName || user.name || user.full_name || '',
+                    email: user.email || '',
+                    phone: user.phone || user.phoneNumber || user.phone_number || '',
+                    dateOfBirth: user.dateOfBirth || user.dob || '',
+                    avatar: user.avatar || user.photo || ''
+                });
+            }
+        } catch (error) {
+            console.error('Failed to fetch profile:', error);
+            const saved = localStorage.getItem('user_data');
+            if (saved) {
+                const user = JSON.parse(saved);
+                setProfileData({
+                    fullName: user.fullName || user.name || '',
+                    email: user.email || '',
+                    phone: user.phone || '',
+                    dateOfBirth: user.dateOfBirth || '',
+                    avatar: user.avatar || ''
+                });
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!isLoggedIn || !authUser) return null;
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
+                <div className="max-w-5xl mx-auto animate-pulse">
+                    <div className="h-32 bg-orange-200 rounded-2xl mb-6" />
+                    <div className="grid lg:grid-cols-4 gap-6">
+                        <div className="lg:col-span-1 h-64 bg-gray-200 rounded-2xl" />
+                        <div className="lg:col-span-3 h-96 bg-gray-200 rounded-2xl" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
@@ -33,10 +95,12 @@ export default function Profile() {
                 {/* Profile Header */}
                 <div className="bg-gradient-to-r from-[#F97316] to-[#ea6c10] rounded-2xl p-6 mb-6 text-white shadow-lg shadow-orange-200/50">
                     <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">{user.name?.[0]?.toUpperCase() || 'U'}</div>
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
+                            {profileData.fullName?.charAt(0).toUpperCase() || profileData.email?.charAt(0).toUpperCase() || 'U'}
+                        </div>
                         <div className="flex-1">
-                            <h1 className="text-2xl font-bold">{user.name}</h1>
-                            <p className="opacity-90 text-sm">{user.email}</p>
+                            <h1 className="text-2xl font-bold">{profileData.fullName || 'Welcome!'}</h1>
+                            <p className="opacity-90 text-sm">{profileData.email}</p>
                         </div>
                         <button onClick={() => { logout(); navigate('/'); }} className="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors"><LogOut className="w-5 h-5" /></button>
                     </div>
@@ -59,11 +123,11 @@ export default function Profile() {
 
                     {/* Content */}
                     <div className="lg:col-span-3">
-                        {tab === 'personal' && <PersonalInfo user={user} token={token} updateUser={updateUser} />}
+                        {tab === 'personal' && <PersonalInfo profileData={profileData} setProfileData={setProfileData} token={token} updateUser={updateUser} />}
                         {tab === 'addresses' && <Addresses token={token} />}
                         {tab === 'orders' && <OrderHistory token={token} />}
                         {tab === 'favorites' && <Favorites token={token} />}
-                        {tab === 'loyalty' && <LoyaltyPoints token={token} userPoints={user.loyaltyPoints || 0} />}
+                        {tab === 'loyalty' && <LoyaltyPoints token={token} userPoints={authUser.loyaltyPoints || 0} />}
                     </div>
                 </div>
             </div>
@@ -72,19 +136,33 @@ export default function Profile() {
 }
 
 // ─── PERSONAL INFO TAB ───
-function PersonalInfo({ user, token, updateUser }: { user: { name: string; email: string; phone?: string }; token: string | null; updateUser: (d: Record<string, string>) => void }) {
-    const [form, setForm] = useState({ name: user.name || '', phone: user.phone || '', dateOfBirth: '' });
+function PersonalInfo({ profileData, setProfileData, token, updateUser }: { profileData: any; setProfileData: any; token: string | null; updateUser: (d: Record<string, string>) => void }) {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
     const save = async () => {
         setSaving(true);
         try {
-            await fetch('/api/users?action=profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
-            updateUser({ name: form.name, phone: form.phone });
-            setSaved(true);
-            setTimeout(() => setSaved(false), 2000);
-        } catch { } finally { setSaving(false); }
+            const res = await fetch('/api/users?action=update-profile', { 
+                method: 'PATCH', 
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, 
+                body: JSON.stringify({
+                    fullName: profileData.fullName,
+                    phone: profileData.phone,
+                    dateOfBirth: profileData.dateOfBirth
+                }) 
+            });
+            
+            if (res.ok) {
+                updateUser({ name: profileData.fullName, fullName: profileData.fullName, phone: profileData.phone } as any);
+                setSaved(true);
+                setTimeout(() => setSaved(false), 2000);
+            }
+        } catch { 
+            console.error('Failed to update profile');
+        } finally { 
+            setSaving(false); 
+        }
     };
 
     const inputCls = "w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all";
@@ -94,15 +172,29 @@ function PersonalInfo({ user, token, updateUser }: { user: { name: string; email
             <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
 
             <div className="flex items-center gap-4">
-                <div className="w-20 h-20 bg-gradient-to-br from-[#F97316] to-[#ea6c10] rounded-full flex items-center justify-center text-white text-3xl font-bold">{user.name?.[0]?.toUpperCase()}</div>
+                <div className="w-20 h-20 bg-gradient-to-br from-[#F97316] to-[#ea6c10] rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                    {profileData.fullName?.charAt(0).toUpperCase() || profileData.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
                 <button className="text-sm text-[#F97316] hover:underline font-medium">Upload Photo</button>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label><input value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} className={inputCls} /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label><input value={user.email} disabled className={inputCls + ' opacity-60 cursor-not-allowed'} /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label><input value={form.phone} onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="(555) 123-4567" className={inputCls} /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Date of Birth</label><input type="date" value={form.dateOfBirth} onChange={(e) => setForm(p => ({ ...p, dateOfBirth: e.target.value }))} className={inputCls} /></div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                    <input type="text" value={profileData.fullName} onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })} placeholder="Enter your full name" className={inputCls} />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                    <input type="email" value={profileData.email} disabled className={inputCls + ' opacity-60 cursor-not-allowed bg-gray-50'} />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+                    <input type="tel" value={profileData.phone} onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} placeholder="(555) 123-4567" className={inputCls} />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Date of Birth</label>
+                    <input type="date" value={profileData.dateOfBirth} onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })} className={inputCls} />
+                </div>
             </div>
 
             <button onClick={save} disabled={saving} className="px-8 py-3 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all disabled:opacity-50 flex items-center gap-2">

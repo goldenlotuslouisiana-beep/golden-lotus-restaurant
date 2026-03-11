@@ -23,6 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     switch (action) {
         case 'profile': return handleProfile(req, res, userId);
+        case 'update-profile': return handleProfile(req, res, userId);
         
         case 'addresses': return handleGetAddresses(req, res, userId);
         case 'add-address': return handleAddAddress(req, res, userId);
@@ -52,25 +53,39 @@ async function handleProfile(req: VercelRequest, res: VercelResponse, userId: st
     const users = db.collection('users');
 
     if (req.method === 'GET') {
-        const user = await users.findOne({ _id: new ObjectId(userId) });
+        const user = await users.findOne({ _id: new ObjectId(userId) }, { projection: { password: 0 } });
         if (!user) return res.status(404).json({ error: 'User not found' });
         return res.status(200).json({
-            id: user._id.toString(), name: user.name, email: user.email,
-            phone: user.phone || '', avatar: user.avatar || '', dateOfBirth: user.dateOfBirth || '',
-            loyaltyPoints: user.loyaltyPoints || 0,
+            user: {
+                ...user,
+                _id: user._id.toString(),
+                fullName: user.fullName || user.name || '',
+                phone: user.phone || user.phoneNumber || '',
+                dateOfBirth: user.dateOfBirth || user.dob || '',
+                avatar: user.avatar || '',
+            }
         });
     }
 
     if (req.method === 'PATCH') {
-        const { name, phone, avatar, dateOfBirth } = req.body;
-        const update: Record<string, string> = {};
-        if (name !== undefined) update.name = name;
-        if (phone !== undefined) update.phone = phone;
-        if (avatar !== undefined) update.avatar = avatar;
+        const { fullName, phone, dateOfBirth, avatar } = req.body;
+        const update: Record<string, string | Date> = {};
+        
+        if (fullName !== undefined) {
+             update.fullName = fullName;
+             update.name = fullName;
+        }
+        if (phone !== undefined) {
+             update.phone = phone;
+             update.phoneNumber = phone;
+        }
         if (dateOfBirth !== undefined) update.dateOfBirth = dateOfBirth;
+        if (avatar !== undefined) update.avatar = avatar;
+        
+        update.updatedAt = new Date();
         
         await users.updateOne({ _id: new ObjectId(userId) }, { $set: update });
-        return res.status(200).json({ success: true });
+        return res.status(200).json({ success: true, message: 'Profile updated successfully' });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

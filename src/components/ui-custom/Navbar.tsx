@@ -106,10 +106,10 @@ export default function Navbar() {
                   className="flex items-center gap-2"
                 >
                   <div className="w-9 h-9 rounded-full bg-lotus-gold flex items-center justify-center text-white font-bold text-sm">
-                    {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                    {user?.fullName?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                   </div>
                   <span className="hidden md:block text-sm font-medium text-lotus-dark">
-                    {user.name || 'Account'}
+                    {user?.fullName || user?.name || user?.full_name || user?.email?.split('@')[0] || 'Account'}
                   </span>
                   <ChevronDown className="w-4 h-4 text-lotus-dark" />
                 </button>
@@ -118,7 +118,7 @@ export default function Navbar() {
                   <>
                     <div className="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2">
                       <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="font-medium text-sm text-gray-900">{user.name}</p>
+                        <p className="font-medium text-sm text-gray-900">{user?.fullName || user?.name || user?.full_name || user?.email?.split('@')[0] || 'Account'}</p>
                         <p className="text-xs text-gray-500 truncate">{user.email}</p>
                       </div>
                       <button onClick={() => { navigate('/profile'); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-lotus-cream hover:text-lotus-gold flex items-center gap-2">
@@ -202,10 +202,10 @@ export default function Navbar() {
                 <div className="mt-2 bg-gray-50 rounded-xl p-4">
                   <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
                     <div className="w-10 h-10 rounded-full bg-lotus-gold flex items-center justify-center text-white font-bold text-lg">
-                      {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                      {user?.fullName?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                     </div>
                     <div>
-                      <p className="font-medium text-sm text-gray-900">{user.name}</p>
+                      <p className="font-medium text-sm text-gray-900">{user?.fullName || user?.name || user?.full_name || user?.email?.split('@')[0] || 'Account'}</p>
                       <p className="text-xs text-gray-500">{user.email}</p>
                     </div>
                   </div>
