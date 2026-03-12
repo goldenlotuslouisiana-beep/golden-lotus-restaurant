@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingBag, Plus, Minus, X, Tag, Heart } from 'lucide-react';
-import { toast } from 'sonner';
+import { Search, ShoppingBag, Plus, Minus, X, Tag } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { MenuItem, MenuCategory, Coupon } from '@/types';
-import { useAuth } from '@/context/AuthContext';
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -21,9 +19,7 @@ export default function Menu() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [orderType] = useState<'pickup'>('pickup');
   const [isLoading, setIsLoading] = useState(true);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [favToast] = useState('');
-  const { isLoggedIn, token } = useAuth();
+
   useEffect(() => {
     const fetchMenu = async () => {
       try {
@@ -45,68 +41,7 @@ export default function Menu() {
     setCoupons(DataStore.getCoupons().filter(c => c.active));
   }, []);
 
-  const loadFavorites = async () => {
-    const res = await fetch('/api/users?action=favorites', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const ids = (data.favorites || []).map((f: any) => f._id || f.id);
-      setFavorites(ids);
-    }
-  };
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      loadFavorites();
-    }
-  }, [isLoggedIn, token]);
-
-  const toggleFavorite = async (itemId: string) => {
-    if (!isLoggedIn) {
-      toast.error('Please sign in to save favorites');
-      navigate('/login');
-      return;
-    }
-    
-    const isFav = favorites.includes(itemId);
-    
-    if (isFav) {
-      setFavorites(prev => prev.filter(id => id !== itemId));
-    } else {
-      setFavorites(prev => [...prev, itemId]);
-    }
-    
-    try {
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ 
-          action: isFav ? 'remove-favorite' : 'add-favorite',
-          itemId: itemId
-        })
-      });
-      
-      if (!res.ok) {
-        if (isFav) {
-          setFavorites(prev => [...prev, itemId]);
-        } else {
-          setFavorites(prev => prev.filter(id => id !== itemId));
-        }
-        toast.error('Failed to update favorites');
-      }
-    } catch (error) {
-      console.error('Favorite error:', error);
-      if (isFav) {
-        setFavorites(prev => [...prev, itemId]);
-      } else {
-        setFavorites(prev => prev.filter(id => id !== itemId));
-      }
-    }
-  };
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory = activeCategory === 'Popular'
@@ -267,19 +202,7 @@ export default function Menu() {
                           Veg
                         </span>
                       )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(item.id);
-                        }}
-                        className="absolute top-2 right-2 p-2 rounded-full bg-white shadow-md transition-all"
-                      >
-                        {favorites.includes(item.id) ? (
-                            <Heart className="w-5 h-5 text-orange-500 fill-orange-500" />
-                          ) : (
-                            <Heart className="w-5 h-5 text-gray-400" />
-                          )}
-                      </button>
+
                     </div>
 
                     <div className="p-4">
@@ -431,12 +354,6 @@ export default function Menu() {
           )
         }
       </div>
-      {/* Favorites Toast */}
-      {favToast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-lg text-sm font-medium">
-          {favToast}
-        </div>
-      )}
     </>
   );
 }

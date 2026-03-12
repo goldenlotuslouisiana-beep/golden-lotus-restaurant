@@ -54,10 +54,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'delete-address': return handleDeleteAddress(req, res, userId);
         case 'set-default-address': return handleSetDefaultAddress(req, res, userId);
         
-        case 'favorites': return handleGetFavorites(req, res, userId);
-        case 'add-favorite': return handleAddFavorite(req, res, userId);
-        case 'remove-favorite': return handleRemoveFavorite(req, res, userId);
-        
         case 'loyalty': return handleLoyalty(req, res, userId);
         case 'redeem-points': return handleRedeemPoints(req, res, userId);
         
@@ -65,8 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ 
                 error: `Unknown action: ${action}`,
                 validActions: [
-                    'profile', 'addresses', 'favorites', 'loyalty',
-                    'add-favorite', 'remove-favorite', 'add-address',
+                    'profile', 'addresses', 'loyalty',
+                    'add-address',
                     'update-profile', 'edit-address', 'delete-address', 'set-default-address', 'redeem-points'
                 ]
             });
@@ -243,60 +239,7 @@ async function handleSetDefaultAddress(req: VercelRequest, res: VercelResponse, 
     return res.status(200).json({ success: true });
 }
 
-async function handleGetFavorites(req: VercelRequest, res: VercelResponse, userId: string) {
-    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-    const client = await clientPromise;
-    const db = client.db(DB_NAME);
-    
-    // Get user's favorite item IDs
-    const user = await db.collection('users').findOne(
-        { _id: new ObjectId(userId) },
-        { projection: { favoriteItems: 1 } }
-    );
-    
-    if (!user?.favoriteItems?.length) {
-        return res.status(200).json({ favorites: [] });
-    }
-    
-    // Fetch full item details for each favorite
-    const favorites = await db.collection('menuItems').find({
-        _id: { 
-            $in: user.favoriteItems.map((id: string) => {
-                try { return new ObjectId(id); } 
-                catch { return id; }
-            })
-        }
-    }).toArray();
-    
-    return res.status(200).json(
-        favorites.map(f => ({ ...f, _id: f._id.toString(), id: f.id || f._id.toString() }))
-    );
-}
-
-async function handleAddFavorite(req: VercelRequest, res: VercelResponse, userId: string) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-    const { itemId } = req.body;
-    const client = await clientPromise;
-    const db = client.db(DB_NAME);
-    await db.collection('users').updateOne(
-        { _id: new ObjectId(userId) },
-        { $addToSet: { favoriteItems: itemId } } as any
-    );
-    return res.status(200).json({ success: true });
-}
-
-async function handleRemoveFavorite(req: VercelRequest, res: VercelResponse, userId: string) {
-    if (req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' });
-    const itemId = req.body?.itemId || req.query?.itemId;
-    const client = await clientPromise;
-    const db = client.db(DB_NAME);
-    await db.collection('users').updateOne(
-        { _id: new ObjectId(userId) },
-        { $pull: { favoriteItems: itemId } } as any
-    );
-    return res.status(200).json({ success: true });
-}
-
+// ─── LOYALTY POINTS TAB (Handlers) ───
 async function handleLoyalty(req: VercelRequest, res: VercelResponse, userId: string) {
     const client = await clientPromise;
     const users = client.db(DB_NAME).collection('users');

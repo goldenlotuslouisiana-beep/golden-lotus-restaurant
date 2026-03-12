@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, MapPin, ShoppingBag, Heart, Star, Loader2, Plus, Trash2, Edit, Check, Package, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
+import { User, MapPin, ShoppingBag, Star, Loader2, Plus, Trash2, Edit, Check, Package, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-type Tab = 'personal' | 'addresses' | 'orders' | 'favorites' | 'loyalty';
+type Tab = 'personal' | 'addresses' | 'orders' | 'loyalty';
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: 'personal', label: 'Personal Info', icon: User },
     { key: 'addresses', label: 'My Addresses', icon: MapPin },
     { key: 'orders', label: 'Order History', icon: ShoppingBag },
-    { key: 'favorites', label: 'Favorites', icon: Heart },
     { key: 'loyalty', label: 'Loyalty Points', icon: Star },
 ];
 
@@ -126,7 +125,6 @@ export default function Profile() {
                         {tab === 'personal' && <PersonalInfo profileData={profileData} setProfileData={setProfileData} token={token} updateUser={updateUser} />}
                         {tab === 'addresses' && <Addresses token={token} />}
                         {tab === 'orders' && <OrderHistory token={token} />}
-                        {tab === 'favorites' && <Favorites token={token} />}
                         {tab === 'loyalty' && <LoyaltyPoints token={token} userPoints={authUser.loyaltyPoints || 0} />}
                     </div>
                 </div>
@@ -323,51 +321,6 @@ function OrderHistory({ token }: { token: string | null }) {
                                 <button className="mt-2 px-4 py-2 bg-[#F97316] text-white rounded-lg text-sm font-medium hover:bg-[#ea6c10] transition-colors">Reorder</button>
                             </div>
                         )}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-// ─── FAVORITES TAB ───
-function Favorites({ token }: { token: string | null }) {
-    const [favorites, setFavorites] = useState<string[]>([]);
-    const [menuItems, setMenuItems] = useState<{ id: string; name: string; price: number; image: string }[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        Promise.all([
-            fetch('/api/users?action=favorites', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-            fetch('/api/menu').then(r => r.json()),
-        ]).then(([favs, items]) => { setFavorites(favs); setMenuItems(items); }).catch(() => { }).finally(() => setLoading(false));
-    }, [token]);
-
-    const removeFav = async (id: string) => {
-        await fetch('/api/users?action=favorites', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ menuItemId: id }) });
-        setFavorites(p => p.filter(f => f !== id));
-    };
-
-    const favItems = menuItems.filter(i => favorites.includes(i.id));
-
-    if (loading) return <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100"><Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" /></div>;
-
-    return (
-        <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 space-y-5">
-            <h2 className="text-xl font-bold text-gray-900">Favorites</h2>
-            {favItems.length === 0 && <div className="text-center py-8"><Heart className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">No favorites yet</p><p className="text-sm text-gray-400 mt-1">Heart items on the menu to save them here</p></div>}
-            <div className="grid sm:grid-cols-2 gap-4">
-                {favItems.map((item) => (
-                    <div key={item.id} className="flex gap-3 p-3 border border-gray-200 rounded-xl">
-                        <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
-                        <div className="flex-1">
-                            <p className="font-medium text-gray-900 text-sm">{item.name}</p>
-                            <p className="text-[#F97316] font-bold text-sm">${item.price.toFixed(2)}</p>
-                            <div className="flex gap-2 mt-1">
-                                <button className="text-xs text-[#F97316] hover:underline font-medium">Add to Cart</button>
-                                <button onClick={() => removeFav(item.id)} className="text-xs text-red-500 hover:underline">Remove</button>
-                            </div>
-                        </div>
                     </div>
                 ))}
             </div>
