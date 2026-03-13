@@ -539,7 +539,9 @@ export default function AdminContent() {
                   setContent({
                     ...content,
                     orderCTA: {
-                      ...content.orderCTA,
+                      title: content.orderCTA?.title || 'Order From Our Website!',
+                      description: content.orderCTA?.description || '',
+                      buttonText: content.orderCTA?.buttonText || 'Order Now',
                       enabled: e.target.checked
                     }
                   });
@@ -558,7 +560,12 @@ export default function AdminContent() {
                 onChange={(e) => {
                   setContent({
                     ...content,
-                    orderCTA: { ...content.orderCTA, title: e.target.value }
+                    orderCTA: { 
+                      title: e.target.value,
+                      description: content.orderCTA?.description || '',
+                      buttonText: content.orderCTA?.buttonText || 'Order Now',
+                      enabled: content.orderCTA?.enabled !== false
+                    }
                   });
                 }}
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
@@ -571,7 +578,12 @@ export default function AdminContent() {
                 onChange={(e) => {
                   setContent({
                     ...content,
-                    orderCTA: { ...content.orderCTA, description: e.target.value }
+                    orderCTA: { 
+                      title: content.orderCTA?.title || 'Order From Our Website!',
+                      description: e.target.value,
+                      buttonText: content.orderCTA?.buttonText || 'Order Now',
+                      enabled: content.orderCTA?.enabled !== false
+                    }
                   });
                 }}
                 rows={4}
@@ -586,7 +598,12 @@ export default function AdminContent() {
                 onChange={(e) => {
                   setContent({
                     ...content,
-                    orderCTA: { ...content.orderCTA, buttonText: e.target.value }
+                    orderCTA: { 
+                      title: content.orderCTA?.title || 'Order From Our Website!',
+                      description: content.orderCTA?.description || '',
+                      buttonText: e.target.value,
+                      enabled: content.orderCTA?.enabled !== false
+                    }
                   });
                 }}
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
