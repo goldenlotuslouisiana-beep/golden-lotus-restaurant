@@ -1,10 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import clientPromise from '../src/lib/db.js';
 
 const DB_NAME = 'goldenlotus';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '';
+
+const oauthClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -187,8 +191,98 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleGoogle(req: VercelRequest, res: VercelResponse) {
-  // Placeholder for Google OAuth
-  return res.status(501).json({ error: 'Not implemented yet' });
+  try {
+    const { credential } = req.body;
+    
+    if (!credential) {
+      return res.status(400).json({ error: 'Google credential is required' });
+    }
+
+    if (!GOOGLE_CLIENT_ID) {
+      console.error('GOOGLE_CLIENT_ID not configured');
+      return res.status(500).json({ error: 'Google OAuth not configured' });
+    }
+
+    // Verify the Google ID token
+    const ticket = await oauthClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    
+    if (!payload) {
+      return res.status(400).json({ error: 'Invalid Google token' });
+    }
+
+    const { email, name, picture, sub: googleId } = payload;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email not provided by Google' });
+    }
+
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+    const users = db.collection('users');
+
+    // Check if user already exists
+    let user = await users.findOne({ email: email.toLowerCase() });
+
+    if (user) {
+      // Existing user - update Google info if not set
+      if (!user.googleId) {
+        await users.updateOne(
+          { _id: user._id },
+          { 
+            $set: { 
+              googleId,
+              avatar: user.avatar || picture || null,
+            } 
+          }
+        );
+      }
+    } else {
+      // Create new user from Google data
+      const newUser = {
+        name: name || email.split('@')[0],
+        email: email.toLowerCase(),
+        googleId,
+        avatar: picture || null,
+        phone: '',
+        password: null, // No password for Google users
+        dateOfBirth: null,
+        savedAddresses: [],
+        favoriteItems: [],
+        loyaltyPoints: 0,
+        loyaltyHistory: [],
+        createdAt: new Date(),
+      };
+
+      const result = await users.insertOne(newUser);
+      user = { ...newUser, _id: result.insertedId };
+    }
+
+    const token = jwt.sign(
+      { userId: user._id.toString(), email: user.email, role: 'user' },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return res.status(200).json({
+      token,
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone || '',
+        avatar: user.avatar || '',
+        loyaltyPoints: user.loyaltyPoints || 0,
+      },
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    return res.status(500).json({ error: 'Google authentication failed' });
+  }
 }
 
 async function handleForgotPassword(req: VercelRequest, res: VercelResponse) {

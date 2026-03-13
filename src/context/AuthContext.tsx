@@ -18,6 +18,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     signup: (data: { name: string; email: string; phone: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+    googleLogin: (credential: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => void;
     updateUser: (data: Partial<User>) => void;
 }
@@ -92,6 +93,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const googleLogin = async (credential: string) => {
+        try {
+            const res = await fetch('/api/auth?action=google', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential }),
+            });
+            const data = await res.json();
+            if (!res.ok) return { success: false, error: data.error || 'Google login failed' };
+
+            setToken(data.token);
+            setUser(data.user);
+            localStorage.setItem('user_jwt', data.token);
+            localStorage.setItem('user_data', JSON.stringify(data.user));
+            return { success: true };
+        } catch {
+            return { success: false, error: 'Network error. Please try again.' };
+        }
+    };
+
     const logout = () => {
         setToken(null);
         setUser(null);
@@ -109,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, isLoggedIn: !!user, isLoading, login, signup, logout, updateUser }}>
+        <AuthContext.Provider value={{ user, token, isLoggedIn: !!user, isLoading, login, signup, googleLogin, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );
