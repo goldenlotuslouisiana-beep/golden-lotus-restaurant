@@ -12,6 +12,8 @@ import type {
   Feature,
   Order,
   Analytics,
+  Event,
+  EventPackage,
 } from '@/types';
 
 // Default Admin User
@@ -200,18 +202,21 @@ const defaultTestimonials: Testimonial[] = [
     name: 'Wei C.',
     rating: 5,
     text: 'Best soup dumplings outside of Shanghai! The broth was rich and the wrappers were perfectly thin. I\'ll definitely be coming back for Dim Sum weekend.',
+    published: true,
   },
   {
     id: '2',
     name: 'Sarah M.',
     rating: 5,
     text: 'A friend recommended Golden Lotus for Peking Duck and it did not disappoint. The duck was carved tableside and the skin was incredibly crispy. Fantastic service too.',
+    published: true,
   },
   {
     id: '3',
     name: 'David L.',
     rating: 5,
     text: 'I ordered the Mapo Tofu and Dan Dan Noodles. The flavors were completely authentic, bringing that signature mala (numbing and spicy) flavor that you want in Szechuan cuisine. Highly recommend this spot for authentic Chinese food.',
+    published: true,
   },
 ];
 
@@ -316,7 +321,7 @@ const defaultSiteContent: SiteContent = {
     image: 'https://images.unsplash.com/photo-1546250328-7bef2f3b9e42?w=800',
   },
   bar: {
-    title: 'Tea & Cocktails',
+    title: 'Full Bar',
     description: 'Pair your meal with our carefully curated selection of premium teas sourced directly from Asia, signature Boba milk teas, or Asian-inspired craft cocktails.',
     image: 'https://images.unsplash.com/photo-1558855567-1a3af1b54a37?w=800',
   },
@@ -336,8 +341,8 @@ const defaultSiteContent: SiteContent = {
   },
   events: {
     hennaParty: {
-      title: 'Lunar New Year Celebrations',
-      description: 'Join us for special seasonal events celebrating the Lunar New Year and other cultural festivals, complete with special limited-time menus, lion dances, and festive decor.',
+      title: 'Henna Party Events',
+      description: 'Host a memorable celebration with our exclusive Henna Party experience. Enjoy beautiful henna art, authentic Indian cuisine, live music, and a festive atmosphere perfect for birthdays, bridal showers, or any special occasion.',
       image: 'https://images.unsplash.com/photo-1548142723-aae7678afa53?w=800',
     },
   },
@@ -369,6 +374,12 @@ const defaultSiteContent: SiteContent = {
       },
     ],
   },
+  settings: {
+    showTestimonials: true,
+    showFeatures: true,
+    showFAQ: true,
+    showGallery: true,
+  },
 };
 
 // Features list
@@ -380,6 +391,61 @@ const defaultFeatures: Feature[] = [
   { id: '5', name: 'Vegan/Vegetarian Options', icon: 'leaf' },
   { id: '6', name: 'Catering Available', icon: 'utensils' },
   { id: '7', name: 'Private Events', icon: 'door' },
+];
+
+// Default Events
+const defaultEvents: Event[] = [
+  {
+    id: '1',
+    title: 'Henna Party Events',
+    description: 'Host a memorable celebration with our exclusive Henna Party experience. Enjoy beautiful henna art, authentic Indian cuisine, live music, and a festive atmosphere perfect for birthdays, bridal showers, or any special occasion.',
+    image: 'https://images.unsplash.com/photo-1548142723-aae7678afa53?w=800',
+    features: [
+      { icon: 'palette', title: 'Henna Art', desc: 'Beautiful, intricate designs by skilled artists' },
+      { icon: 'music', title: 'Live Music', desc: 'Traditional Indian music and entertainment' },
+      { icon: 'utensils', title: 'Authentic Cuisine', desc: 'Full menu of Indian delicacies' },
+      { icon: 'camera', title: 'Photo Booth', desc: 'Capture memories with themed props' },
+    ],
+    gallery: [
+      'https://images.unsplash.com/photo-1597223685420-69a5b49c8ec0?w=400',
+      'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400',
+      'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400',
+      'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400',
+    ],
+    ctaTitle: 'Ready to Book Your Henna Party?',
+    ctaDescription: 'Contact us today to reserve your date and start planning an unforgettable celebration of Indian culture.',
+    phone: '(305) 791-7755',
+    active: true,
+  },
+];
+
+// Default Event Packages
+const defaultEventPackages: EventPackage[] = [
+  {
+    id: '1',
+    eventId: '1',
+    name: 'Basic Package',
+    price: '$35',
+    per: 'per person',
+    features: ['2-hour henna session', 'Welcome drink', 'Appetizer platter', 'Minimum 10 guests'],
+  },
+  {
+    id: '2',
+    eventId: '1',
+    name: 'Premium Package',
+    price: '$55',
+    per: 'per person',
+    features: ['3-hour henna session', 'Unlimited drinks', 'Full dinner buffet', 'Live music', 'Minimum 15 guests'],
+    popular: true,
+  },
+  {
+    id: '3',
+    eventId: '1',
+    name: 'Deluxe Package',
+    price: '$85',
+    per: 'per person',
+    features: ['4-hour henna session', 'Premium bar', 'Gourmet dinner', 'Live entertainment', 'Photo booth', 'Private dining room', 'Minimum 20 guests'],
+  },
 ];
 
 // Default Orders
@@ -458,6 +524,8 @@ const STORAGE_KEYS = {
   features: 'golden_lotus_features',
   orders: 'golden_lotus_orders',
   isAuthenticated: 'golden_lotus_admin_auth',
+  events: 'golden_lotus_events',
+  eventPackages: 'golden_lotus_event_packages',
 };
 
 // Initialize data in localStorage
@@ -497,6 +565,12 @@ export function initializeData() {
   }
   if (!localStorage.getItem(STORAGE_KEYS.orders)) {
     localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(defaultOrders));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.events)) {
+    localStorage.setItem(STORAGE_KEYS.events, JSON.stringify(defaultEvents));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.eventPackages)) {
+    localStorage.setItem(STORAGE_KEYS.eventPackages, JSON.stringify(defaultEventPackages));
   }
 }
 
@@ -645,6 +719,22 @@ export const DataStore = {
       weeklyStats,
       popularItems,
     };
+  },
+
+  // Events
+  getEvents: (): Event[] => getData(STORAGE_KEYS.events) || defaultEvents,
+  setEvents: (events: Event[]) => setData(STORAGE_KEYS.events, events),
+  getEventById: (id: string): Event | undefined => {
+    const events = getData<Event[]>(STORAGE_KEYS.events) || defaultEvents;
+    return events.find((e) => e.id === id);
+  },
+
+  // Event Packages
+  getEventPackages: (): EventPackage[] => getData(STORAGE_KEYS.eventPackages) || defaultEventPackages,
+  setEventPackages: (packages: EventPackage[]) => setData(STORAGE_KEYS.eventPackages, packages),
+  getPackagesByEventId: (eventId: string): EventPackage[] => {
+    const packages = getData<EventPackage[]>(STORAGE_KEYS.eventPackages) || defaultEventPackages;
+    return packages.filter((p) => p.eventId === eventId);
   },
 };
 

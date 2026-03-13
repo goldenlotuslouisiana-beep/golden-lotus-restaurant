@@ -48,6 +48,7 @@ export interface Testimonial {
   rating: number;
   text: string;
   date?: string;
+  published?: boolean;
 }
 
 // Gallery Image Types
@@ -148,6 +149,12 @@ export interface SiteContent {
   story: {
     sections: StorySection[];
   };
+  settings?: {
+    showTestimonials?: boolean;
+    showFeatures?: boolean;
+    showFAQ?: boolean;
+    showGallery?: boolean;
+  };
 }
 
 export interface StorySection {
@@ -155,6 +162,35 @@ export interface StorySection {
   title: string;
   content: string;
   image?: string;
+}
+
+// Event Package Types
+export interface EventPackage {
+  id: string;
+  name: string;
+  price: string;
+  per: string;
+  features: string[];
+  popular?: boolean;
+  eventId: string;
+}
+
+// Event Types
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  features: {
+    icon: string;
+    title: string;
+    desc: string;
+  }[];
+  gallery: string[];
+  ctaTitle: string;
+  ctaDescription: string;
+  phone: string;
+  active: boolean;
 }
 
 // Features list

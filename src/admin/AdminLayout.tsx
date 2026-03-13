@@ -20,6 +20,7 @@ import {
   Gift,
   Tag,
   MessageSquare,
+  Calendar,
 } from 'lucide-react';
 import { DataStore } from '@/data/store';
 
@@ -34,6 +35,7 @@ const navItems = [
   { name: 'Promos', href: '/admin/promos', icon: Tag },
   { name: 'Loyalty', href: '/admin/loyalty', icon: Gift },
   { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare },
+  { name: 'Events', href: '/admin/events', icon: Calendar },
   { name: 'Locations', href: '/admin/locations', icon: MapPin },
   { name: 'Testimonials', href: '/admin/testimonials', icon: Star },
   { name: 'Gallery', href: '/admin/gallery', icon: Image },

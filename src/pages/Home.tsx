@@ -166,39 +166,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Awards Section */}
-      <section className="py-12 lg:py-16 bg-lotus-cream">
-        <div className="section-padding text-center max-w-3xl mx-auto">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            {siteContent.awards.years.map((year, index) => (
-              <span key={year} className="flex items-center gap-2">
-                <span className="text-2xl md:text-3xl font-bold text-lotus-gold font-['Playfair_Display']">
-                  {year}
-                </span>
-                {index < siteContent.awards.years.length - 1 && (
-                  <span className="text-golden_lotus-gray">•</span>
-                )}
-              </span>
-            ))}
-          </div>
-          <h2 className="heading-md text-lotus-dark mb-4">
-            {siteContent.awards.title}
-          </h2>
-          <p className="text-body mb-6">
-            {siteContent.awards.description}
-          </p>
-          <a
-            href={siteContent.awards.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-lotus-gold hover:text-lotus-gold-dark transition-colors font-medium"
-          >
-            Read More!
-            <ExternalLink className="w-4 h-4" />
-          </a>
-        </div>
-      </section>
-
       {/* Welcome Section */}
       <section className="py-12 lg:py-20 bg-white">
         <div className="section-padding">
@@ -249,29 +216,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Full Bar Section */}
-      <section className="py-12 lg:py-20 bg-white">
-        <div className="section-padding">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            <div>
-              <h2 className="heading-md text-lotus-dark mb-6">
-                {siteContent.bar.title}
-              </h2>
-              <p className="text-body text-lg leading-relaxed">
-                {siteContent.bar.description}
-              </p>
-            </div>
-            <div className="relative">
-              <img
-                src={siteContent.bar.image}
-                alt="Full Bar"
-                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Order CTA Section */}
       <section className="py-16 lg:py-24 bg-lotus-gold">
         <div className="section-padding text-center text-white max-w-3xl mx-auto">
@@ -291,51 +235,53 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Gallery Section */}
-      <section className="py-12 lg:py-16 bg-white">
-        <div className="section-padding">
-          <h2 className="heading-sm text-lotus-dark mb-8 text-center">
-            A Feast for Your Eyes! 📸
-          </h2>
-          <p className="text-center text-gray-600 mb-8">
-            Explore the vibrant, mouth-watering creations that come from our kitchen!
-          </p>
+      {/* Gallery Section - Only show if enabled in settings */}
+      {siteContent.settings?.showGallery !== false && (
+        <section className="py-12 lg:py-16 bg-white">
+          <div className="section-padding">
+            <h2 className="heading-sm text-lotus-dark mb-8 text-center">
+              A Feast for Your Eyes! 📸
+            </h2>
+            <p className="text-center text-gray-600 mb-8">
+              Explore the vibrant, mouth-watering creations that come from our kitchen!
+            </p>
 
-          <div className="relative">
-            <button
-              onClick={() => scrollGallery('left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-lotus-cream transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => scrollGallery('left')}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-lotus-cream transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
 
-            <div
-              ref={galleryRef}
-              className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-12"
-            >
-              {DataStore.getGalleryImages().map((image) => (
-                <div
-                  key={image.id}
-                  className="flex-shrink-0 w-64 lg:w-80 aspect-square rounded-xl overflow-hidden"
-                >
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-              ))}
+              <div
+                ref={galleryRef}
+                className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-12"
+              >
+                {DataStore.getGalleryImages().map((image) => (
+                  <div
+                    key={image.id}
+                    className="flex-shrink-0 w-64 lg:w-80 aspect-square rounded-xl overflow-hidden"
+                  >
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => scrollGallery('right')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-lotus-cream transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
-
-            <button
-              onClick={() => scrollGallery('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-lotus-cream transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Ambience Section */}
       <section className="py-12 lg:py-20 bg-lotus-cream">
@@ -391,33 +337,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Henna Party Section */}
-      <section className="py-12 lg:py-20 bg-lotus-cream">
-        <div className="section-padding">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            <div>
-              <h2 className="heading-md text-lotus-dark mb-6">
-                {siteContent.events.hennaParty.title}
-              </h2>
-              <p className="text-body text-lg leading-relaxed mb-6">
-                {siteContent.events.hennaParty.description}
-              </p>
-              <Link to="/events" className="btn-primary inline-flex items-center gap-2">
-                Learn More
-                <ChevronRight className="w-5 h-5" />
-              </Link>
-            </div>
-            <div className="relative">
-              <img
-                src={siteContent.events.hennaParty.image}
-                alt="Henna Party"
-                className="rounded-2xl shadow-xl w-full h-[400px] object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Visit Us Section */}
       <section className="py-12 lg:py-24 bg-lotus-gold">
         <div className="section-padding text-center text-white max-w-4xl mx-auto">
@@ -437,56 +356,65 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-12 lg:py-16 bg-white">
-        <div className="section-padding">
-          <h2 className="heading-sm text-lotus-dark mb-8 text-center">
-            What our guests are saying
-          </h2>
+      {/* Testimonials Section - Only show if enabled in settings */}
+      {siteContent.settings?.showTestimonials !== false && (
+        <section className="py-12 lg:py-16 bg-white">
+          <div className="section-padding">
+            <h2 className="heading-sm text-lotus-dark mb-8 text-center">
+              What our guests are saying
+            </h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {testimonials.slice(0, 3).map((testimonial) => (
-              <div
-                key={testimonial.id}
-                className="bg-lotus-cream rounded-xl p-6"
-              >
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-lotus-gold text-lotus-gold" />
-                  ))}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {testimonials
+                .filter((t) => t.published !== false)
+                .slice(0, 3)
+                .map((testimonial) => (
+                  <div
+                    key={testimonial.id}
+                    className="bg-lotus-cream rounded-xl p-6"
+                  >
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="w-5 h-5 fill-lotus-gold text-lotus-gold" />
+                      ))}
+                    </div>
+                    <p className="text-gray-700 mb-4 line-clamp-4">{testimonial.text}</p>
+                    <p className="font-medium text-lotus-dark">{testimonial.name}</p>
+                  </div>
+                ))}
+            </div>
+
+            {testimonials.filter((t) => t.published !== false).length > 3 && (
+              <div className="text-center mt-8">
+                <button className="text-lotus-gold hover:text-lotus-gold-dark transition-colors font-medium">
+                  View more
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Features Section - Only show if enabled in settings */}
+      {siteContent.settings?.showFeatures !== false && (
+        <section className="py-12 lg:py-16 bg-lotus-cream">
+          <div className="section-padding">
+            <h2 className="heading-sm text-lotus-dark mb-8 text-center">Featuring</h2>
+
+            <div className="flex flex-wrap justify-center gap-4">
+              {features.map((feature) => (
+                <div
+                  key={feature.id}
+                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm"
+                >
+                  <span className="text-lotus-gold">{getFeatureIcon(feature.icon)}</span>
+                  <span className="text-sm font-medium text-lotus-dark">{feature.name}</span>
                 </div>
-                <p className="text-gray-700 mb-4 line-clamp-4">{testimonial.text}</p>
-                <p className="font-medium text-lotus-dark">{testimonial.name}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-
-          <div className="text-center mt-8">
-            <button className="text-lotus-gold hover:text-lotus-gold-dark transition-colors font-medium">
-              View more
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-12 lg:py-16 bg-lotus-cream">
-        <div className="section-padding">
-          <h2 className="heading-sm text-lotus-dark mb-8 text-center">Featuring</h2>
-
-          <div className="flex flex-wrap justify-center gap-4">
-            {features.map((feature) => (
-              <div
-                key={feature.id}
-                className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm"
-              >
-                <span className="text-lotus-gold">{getFeatureIcon(feature.icon)}</span>
-                <span className="text-sm font-medium text-lotus-dark">{feature.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Rewards Section */}
       <section className="py-12 lg:py-20 bg-white">
@@ -506,39 +434,41 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-12 lg:py-16 bg-lotus-cream">
-        <div className="section-padding max-w-3xl mx-auto">
-          <h2 className="heading-sm text-lotus-dark mb-8 text-center">
-            Frequently Asked Questions
-          </h2>
+      {/* FAQ Section - Only show if enabled in settings */}
+      {siteContent.settings?.showFAQ !== false && (
+        <section className="py-12 lg:py-16 bg-lotus-cream">
+          <div className="section-padding max-w-3xl mx-auto">
+            <h2 className="heading-sm text-lotus-dark mb-8 text-center">
+              Frequently Asked Questions
+            </h2>
 
-          <div className="space-y-4">
-            {faqs.map((faq) => (
-              <div
-                key={faq.id}
-                className="bg-white rounded-lg overflow-hidden shadow-sm"
-              >
-                <button
-                  onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
-                  className="w-full px-6 py-4 flex items-center justify-between text-left"
+            <div className="space-y-4">
+              {faqs.map((faq) => (
+                <div
+                  key={faq.id}
+                  className="bg-white rounded-lg overflow-hidden shadow-sm"
                 >
-                  <span className="font-medium text-lotus-dark">{faq.question}</span>
-                  <ChevronRight
-                    className={`w-5 h-5 text-lotus-gold transition-transform ${openFaq === faq.id ? 'rotate-90' : ''
-                      }`}
-                  />
-                </button>
-                {openFaq === faq.id && (
-                  <div className="px-6 pb-4">
-                    <p className="text-gray-600">{faq.answer}</p>
-                  </div>
-                )}
-              </div>
-            ))}
+                  <button
+                    onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+                    className="w-full px-6 py-4 flex items-center justify-between text-left"
+                  >
+                    <span className="font-medium text-lotus-dark">{faq.question}</span>
+                    <ChevronRight
+                      className={`w-5 h-5 text-lotus-gold transition-transform ${openFaq === faq.id ? 'rotate-90' : ''
+                        }`}
+                    />
+                  </button>
+                  {openFaq === faq.id && (
+                    <div className="px-6 pb-4">
+                      <p className="text-gray-600">{faq.answer}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Locations Section */}
       <section className="py-12 lg:py-20 bg-white">

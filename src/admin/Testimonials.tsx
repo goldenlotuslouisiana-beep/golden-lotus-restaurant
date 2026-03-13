@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, Star, Eye, EyeOff, Settings } from 'lucide-react';
 import { DataStore } from '@/data/store';
-import type { Testimonial } from '@/types';
+import type { Testimonial, SiteContent } from '@/types';
 
 export default function AdminTestimonials() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [siteContent, setSiteContent] = useState<SiteContent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
-  const [formData, setFormData] = useState({ name: '', rating: 5, text: '' });
+  const [formData, setFormData] = useState({ name: '', rating: 5, text: '', published: true });
 
   useEffect(() => {
     loadData();
@@ -15,17 +16,23 @@ export default function AdminTestimonials() {
 
   const loadData = () => {
     setTestimonials(DataStore.getTestimonials());
+    setSiteContent(DataStore.getSiteContent());
   };
 
   const handleAdd = () => {
     setEditingTestimonial(null);
-    setFormData({ name: '', rating: 5, text: '' });
+    setFormData({ name: '', rating: 5, text: '', published: true });
     setIsModalOpen(true);
   };
 
   const handleEdit = (testimonial: Testimonial) => {
     setEditingTestimonial(testimonial);
-    setFormData({ name: testimonial.name, rating: testimonial.rating, text: testimonial.text });
+    setFormData({ 
+      name: testimonial.name, 
+      rating: testimonial.rating, 
+      text: testimonial.text,
+      published: testimonial.published !== false 
+    });
     setIsModalOpen(true);
   };
 
@@ -35,6 +42,27 @@ export default function AdminTestimonials() {
       DataStore.setTestimonials(updated);
       loadData();
     }
+  };
+
+  const togglePublished = (testimonial: Testimonial) => {
+    const updated = testimonials.map((t) =>
+      t.id === testimonial.id ? { ...t, published: !t.published } : t
+    );
+    DataStore.setTestimonials(updated);
+    loadData();
+  };
+
+  const toggleSectionVisibility = () => {
+    if (!siteContent) return;
+    const updatedContent = {
+      ...siteContent,
+      settings: {
+        ...siteContent.settings,
+        showTestimonials: !siteContent.settings?.showTestimonials
+      }
+    };
+    DataStore.setSiteContent(updatedContent);
+    loadData();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,22 +86,73 @@ export default function AdminTestimonials() {
     loadData();
   };
 
+  const publishedCount = testimonials.filter(t => t.published !== false).length;
+  const isSectionVisible = siteContent?.settings?.showTestimonials !== false;
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-lotus-dark">Testimonials</h1>
-          <p className="text-gray-600">Manage customer reviews</p>
+      {/* Header with Section Toggle */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-lotus-dark">Testimonials</h1>
+            <p className="text-gray-600">Manage customer reviews and section visibility</p>
+          </div>
+          <button onClick={handleAdd} className="btn-primary flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Add Testimonial
+          </button>
         </div>
-        <button onClick={handleAdd} className="btn-primary flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          Add Testimonial
-        </button>
+
+        {/* Section Visibility Toggle */}
+        <div className="mt-6 pt-6 border-t">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Settings className="w-5 h-5 text-lotus-gold" />
+              <div>
+                <h3 className="font-medium text-lotus-dark">Testimonials Section Visibility</h3>
+                <p className="text-sm text-gray-500">
+                  {isSectionVisible 
+                    ? 'Section is visible on the home page' 
+                    : 'Section is hidden from the home page'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={toggleSectionVisibility}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                isSectionVisible
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+              }`}
+            >
+              {isSectionVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              {isSectionVisible ? 'Visible' : 'Hidden'}
+            </button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="mt-4 flex gap-6 text-sm">
+          <div>
+            <span className="text-gray-500">Total:</span>{' '}
+            <span className="font-medium text-lotus-dark">{testimonials.length}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Published:</span>{' '}
+            <span className="font-medium text-green-600">{publishedCount}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Hidden:</span>{' '}
+            <span className="font-medium text-gray-600">{testimonials.length - publishedCount}</span>
+          </div>
+        </div>
       </div>
 
+      {/* Testimonials Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {testimonials.map((testimonial) => (
-          <div key={testimonial.id} className="bg-white rounded-xl shadow-sm p-6">
+          <div key={testimonial.id} className={`bg-white rounded-xl shadow-sm p-6 transition-opacity ${testimonial.published === false ? 'opacity-60' : ''}`}>
             <div className="flex items-start justify-between mb-4">
               <div className="flex gap-1">
                 {[...Array(5)].map((_, i) => (
@@ -87,7 +166,18 @@ export default function AdminTestimonials() {
                   />
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1">
+                <button
+                  onClick={() => togglePublished(testimonial)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    testimonial.published !== false
+                      ? 'text-green-600 hover:bg-green-50'
+                      : 'text-gray-400 hover:bg-gray-100'
+                  }`}
+                  title={testimonial.published !== false ? 'Published - Click to hide' : 'Hidden - Click to publish'}
+                >
+                  {testimonial.published !== false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
                 <button
                   onClick={() => handleEdit(testimonial)}
                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -103,15 +193,27 @@ export default function AdminTestimonials() {
               </div>
             </div>
             <p className="text-gray-700 mb-4 line-clamp-4">{testimonial.text}</p>
-            <p className="font-medium text-lotus-dark">{testimonial.name}</p>
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-lotus-dark">{testimonial.name}</p>
+              {testimonial.published === false && (
+                <span className="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded">Hidden</span>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
+      {testimonials.length === 0 && (
+        <div className="text-center py-12 bg-white rounded-xl">
+          <p className="text-gray-500">No testimonials yet. Add your first one!</p>
+        </div>
+      )}
+
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg">
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-xl font-bold text-lotus-dark">
                 {editingTestimonial ? 'Edit Testimonial' : 'Add Testimonial'}
@@ -164,6 +266,19 @@ export default function AdminTestimonials() {
                   rows={4}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold resize-none"
                 />
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="published"
+                  checked={formData.published}
+                  onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-lotus-gold focus:ring-lotus-gold"
+                />
+                <label htmlFor="published" className="text-sm font-medium text-gray-700">
+                  Show on website
+                </label>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t">

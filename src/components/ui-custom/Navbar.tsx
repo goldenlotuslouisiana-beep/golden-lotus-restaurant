@@ -47,9 +47,11 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-lotus-gold rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">A</span>
-            </div>
+            <img 
+              src="/golden_lotus_logo.png" 
+              alt="Golden Lotus" 
+              className="w-10 h-10 object-contain"
+            />
             <span className="hidden sm:block text-xl font-bold text-lotus-dark font-['Playfair_Display']">
               Golden Lotus
             </span>

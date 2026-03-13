@@ -39,6 +39,7 @@ import AdminDelivery from '@/admin/Delivery';
 import AdminLoyalty from '@/admin/Loyalty';
 import AdminPromos from '@/admin/Promos';
 import AdminReviews from '@/admin/Reviews';
+import AdminEvents from '@/admin/Events';
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -104,6 +105,7 @@ function App() {
             <Route path="loyalty" element={<AdminLoyalty />} />
             <Route path="promos" element={<AdminPromos />} />
             <Route path="reviews" element={<AdminReviews />} />
+            <Route path="events" element={<AdminEvents />} />
           </Route>
         </Routes>
       </Router>

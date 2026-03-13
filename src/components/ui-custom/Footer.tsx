@@ -13,9 +13,11 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1 flex flex-col items-center sm:items-start">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-12 h-12 bg-lotus-gold rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">A</span>
-              </div>
+              <img 
+                src="/golden_lotus_logo.png" 
+                alt="Golden Lotus" 
+                className="w-12 h-12 object-contain"
+              />
               <span className="text-2xl font-bold font-['Playfair_Display']">
                 Golden Lotus
               </span>

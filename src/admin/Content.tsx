@@ -68,6 +68,7 @@ export default function AdminContent() {
     { id: 'catering', label: 'Catering' },
     { id: 'visitUs', label: 'Visit Us' },
     { id: 'rewards', label: 'Rewards' },
+    { id: 'settings', label: 'Page Settings' },
   ];
 
   const setUploadMethod = (fieldKey: string, method: UploadMethod) => {
@@ -500,6 +501,46 @@ export default function AdminContent() {
                 rows={4}
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold resize-none"
               />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-bold text-lotus-dark">Home Page Section Visibility</h3>
+            <p className="text-gray-600 text-sm">Control which sections are visible on the home page.</p>
+            
+            <div className="space-y-4">
+              {[
+                { key: 'showTestimonials', label: 'Show Testimonials Section', description: 'Display customer reviews on the home page' },
+                { key: 'showFeatures', label: 'Show Features Section', description: 'Display featuring badges (Delivery, Takeout, etc.)' },
+                { key: 'showFAQ', label: 'Show FAQ Section', description: 'Display frequently asked questions' },
+                { key: 'showGallery', label: 'Show Gallery Section', description: 'Display photo gallery' },
+              ].map((setting) => (
+                <div key={setting.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-lotus-dark">{setting.label}</p>
+                    <p className="text-sm text-gray-500">{setting.description}</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={content.settings?.[setting.key as keyof typeof content.settings] !== false}
+                      onChange={(e) => {
+                        setContent({
+                          ...content,
+                          settings: {
+                            ...content.settings,
+                            [setting.key]: e.target.checked
+                          }
+                        });
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-lotus-gold/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lotus-gold"></div>
+                  </label>
+                </div>
+              ))}
             </div>
           </div>
         )}
