@@ -1,23 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Check, Star, Eye, EyeOff, Package, Image, Phone } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, Star, Eye, EyeOff, Package, Image } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { Event, EventPackage } from '@/types';
-
-// Icon mapping
-const iconMap: Record<string, React.ReactNode> = {
-  palette: '🎨',
-  music: '🎵',
-  utensils: '🍽️',
-  camera: '📷',
-  calendar: '📅',
-  users: '👥',
-  star: '⭐',
-  heart: '❤️',
-  sparkles: '✨',
-  gift: '🎁',
-  cake: '🎂',
-  wine: '🍷',
-};
 
 export default function AdminEvents() {
   const [events, setEvents] = useState<Event[]>([]);

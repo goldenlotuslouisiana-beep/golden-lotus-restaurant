@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Star, Truck, Package, Calendar, Wine, Leaf, UtensilsCrossed, DoorOpen, MapPin, Phone, Clock, ChevronLeft, ExternalLink } from 'lucide-react';
+import { ChevronRight, Star, Truck, Package, Calendar, Wine, Leaf, UtensilsCrossed, DoorOpen, MapPin, Phone, Clock, ChevronLeft } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { Location, Testimonial, FeaturedDish, FAQ } from '@/types';
 
