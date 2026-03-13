@@ -78,7 +78,8 @@ export default function Home() {
 
   return (
     <div className="overflow-hidden">
-      {/* Hero Section */}
+      {/* Hero Section - Only show if enabled */}
+      {siteContent.settings?.showHero !== false && (
       <section className="relative h-[500px] sm:h-[600px] lg:h-[700px] flex items-center justify-center">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -103,8 +104,10 @@ export default function Home() {
           </Link>
         </div>
       </section>
+      )}
 
-      {/* Featured Dishes Section */}
+      {/* Featured Dishes Section - Only show if enabled */}
+      {siteContent.settings?.showFeaturedDishes !== false && (
       <section className="py-12 lg:py-16 bg-white">
         <div className="section-padding">
           <div className="flex items-center justify-between mb-8">
@@ -160,8 +163,10 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
-      {/* Welcome Section */}
+      {/* Welcome/About Section - Only show if enabled */}
+      {siteContent.settings?.showAbout !== false && (
       <section className="py-12 lg:py-20 bg-white">
         <div className="section-padding">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
@@ -183,27 +188,28 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
-      {/* Order CTA Section */}
+      {/* Order CTA Section - Only show if enabled */}
+      {siteContent.orderCTA?.enabled !== false && siteContent.settings?.showOrderCTA !== false && (
       <section className="py-16 lg:py-24 bg-lotus-gold">
         <div className="section-padding text-center text-white max-w-3xl mx-auto">
-          <h2 className="heading-md mb-4">Order From Our Website!</h2>
+          <h2 className="heading-md mb-4">{siteContent.orderCTA?.title || 'Order From Our Website!'}</h2>
           <p className="text-lg opacity-90 mb-8">
-            Craving something bold and delicious? Skip the wait and order straight from our website!
-            With just a few clicks, you can have our flavorful dishes delivered right to your door.
-            Quick, easy, and packed with the authentic taste you love. Why wait? Get your flavor fix now!
+            {siteContent.orderCTA?.description || 'Craving something bold and delicious? Skip the wait and order straight from our website!'}
           </p>
           <Link
             to="/menu?order=true"
             className="btn-outline inline-flex items-center gap-2"
           >
-            Order Now
+            {siteContent.orderCTA?.buttonText || 'Order Now'}
             <ChevronRight className="w-5 h-5" />
           </Link>
         </div>
       </section>
+      )}
 
-      {/* Gallery Section - Only show if enabled in settings */}
+      {/* Gallery Section - Only show if enabled */}
       {siteContent.settings?.showGallery !== false && (
         <section className="py-12 lg:py-16 bg-white">
           <div className="section-padding">
@@ -251,7 +257,8 @@ export default function Home() {
         </section>
       )}
 
-      {/* Ambience Section */}
+      {/* Ambience Section - Only show if enabled */}
+      {siteContent.settings?.showAmbience !== false && (
       <section className="py-12 lg:py-20 bg-lotus-cream">
         <div className="section-padding">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
@@ -277,8 +284,10 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
-      {/* Catering CTA Section */}
+      {/* Catering CTA Section - Only show if enabled */}
+      {siteContent.settings?.showCatering !== false && (
       <section className="py-12 lg:py-20 bg-white">
         <div className="section-padding">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
@@ -304,8 +313,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
-      {/* Testimonials Section - Only show if enabled in settings */}
+      {/* Testimonials Section - Only show if enabled */}
       {siteContent.settings?.showTestimonials !== false && (
         <section className="py-12 lg:py-16 bg-white">
           <div className="section-padding">
@@ -344,7 +354,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* Features Section - Only show if enabled in settings */}
+      {/* Features Section - Only show if enabled */}
       {siteContent.settings?.showFeatures !== false && (
         <section className="py-12 lg:py-16 bg-lotus-cream">
           <div className="section-padding">
@@ -365,7 +375,8 @@ export default function Home() {
         </section>
       )}
 
-      {/* Rewards Section */}
+      {/* Rewards Section - Only show if enabled */}
+      {siteContent.settings?.showRewards !== false && (
       <section className="py-12 lg:py-20 bg-white">
         <div className="section-padding">
           <div className="max-w-3xl mx-auto text-center">
@@ -382,6 +393,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
     </div>
   );

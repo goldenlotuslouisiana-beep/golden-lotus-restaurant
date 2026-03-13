@@ -62,12 +62,10 @@ export default function AdminContent() {
   const tabs = [
     { id: 'hero', label: 'Hero Section' },
     { id: 'about', label: 'About' },
-    { id: 'awards', label: 'Awards' },
-    { id: 'cuisine', label: 'Cuisine' },
-    { id: 'bar', label: 'Bar' },
+    { id: 'ambience', label: 'Ambience' },
     { id: 'catering', label: 'Catering' },
-    { id: 'visitUs', label: 'Visit Us' },
     { id: 'rewards', label: 'Rewards' },
+    { id: 'orderCTA', label: 'Order CTA' },
     { id: 'settings', label: 'Page Settings' },
   ];
 
@@ -505,24 +503,122 @@ export default function AdminContent() {
           </div>
         )}
 
+        {activeTab === 'ambience' && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-lotus-dark">Ambience Section</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <input
+                type="text"
+                value={content.ambience.title}
+                onChange={(e) => updateField('ambience', 'title', e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                value={content.ambience.description}
+                onChange={(e) => updateField('ambience', 'description', e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold resize-none"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'orderCTA' && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-lotus-dark">Order CTA Section</h3>
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
+              <input
+                type="checkbox"
+                id="orderCTAEnabled"
+                checked={content.orderCTA?.enabled !== false}
+                onChange={(e) => {
+                  setContent({
+                    ...content,
+                    orderCTA: {
+                      ...content.orderCTA,
+                      enabled: e.target.checked
+                    }
+                  });
+                }}
+                className="w-4 h-4 rounded border-gray-300 text-lotus-gold focus:ring-lotus-gold"
+              />
+              <label htmlFor="orderCTAEnabled" className="text-sm font-medium text-gray-700">
+                Enable Order CTA Section
+              </label>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <input
+                type="text"
+                value={content.orderCTA?.title || ''}
+                onChange={(e) => {
+                  setContent({
+                    ...content,
+                    orderCTA: { ...content.orderCTA, title: e.target.value }
+                  });
+                }}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                value={content.orderCTA?.description || ''}
+                onChange={(e) => {
+                  setContent({
+                    ...content,
+                    orderCTA: { ...content.orderCTA, description: e.target.value }
+                  });
+                }}
+                rows={4}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+              <input
+                type="text"
+                value={content.orderCTA?.buttonText || ''}
+                onChange={(e) => {
+                  setContent({
+                    ...content,
+                    orderCTA: { ...content.orderCTA, buttonText: e.target.value }
+                  });
+                }}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
+              />
+            </div>
+          </div>
+        )}
+
         {activeTab === 'settings' && (
           <div className="space-y-6">
             <h3 className="text-lg font-bold text-lotus-dark">Home Page Section Visibility</h3>
-            <p className="text-gray-600 text-sm">Control which sections are visible on the home page.</p>
+            <p className="text-gray-600 text-sm">Control which sections are visible on the home page. Toggle sections on/off to customize your homepage.</p>
             
-            <div className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
               {[
-                { key: 'showTestimonials', label: 'Show Testimonials Section', description: 'Display customer reviews on the home page' },
-                { key: 'showFeatures', label: 'Show Features Section', description: 'Display featuring badges (Delivery, Takeout, etc.)' },
-                { key: 'showFAQ', label: 'Show FAQ Section', description: 'Display frequently asked questions' },
-                { key: 'showGallery', label: 'Show Gallery Section', description: 'Display photo gallery' },
+                { key: 'showHero', label: 'Hero Section', description: 'Main banner with title and CTA' },
+                { key: 'showFeaturedDishes', label: 'Featured Dishes', description: 'Popular menu items carousel' },
+                { key: 'showAbout', label: 'About Section', description: 'Welcome/about restaurant text' },
+                { key: 'showOrderCTA', label: 'Order CTA', description: 'Order call-to-action banner' },
+                { key: 'showGallery', label: 'Gallery Section', description: 'Photo gallery carousel' },
+                { key: 'showAmbience', label: 'Ambience Section', description: 'Restaurant atmosphere description' },
+                { key: 'showCatering', label: 'Catering Section', description: 'Catering services promo' },
+                { key: 'showTestimonials', label: 'Testimonials', description: 'Customer reviews' },
+                { key: 'showFeatures', label: 'Features Badges', description: 'Delivery, Takeout badges' },
+                { key: 'showRewards', label: 'Rewards Section', description: 'Loyalty program promo' },
               ].map((setting) => (
                 <div key={setting.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-lotus-dark">{setting.label}</p>
-                    <p className="text-sm text-gray-500">{setting.description}</p>
+                  <div className="flex-1 min-w-0 mr-3">
+                    <p className="font-medium text-lotus-dark text-sm">{setting.label}</p>
+                    <p className="text-xs text-gray-500">{setting.description}</p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                     <input
                       type="checkbox"
                       checked={content.settings?.[setting.key as keyof typeof content.settings] !== false}

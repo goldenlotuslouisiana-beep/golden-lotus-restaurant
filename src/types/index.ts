@@ -149,11 +149,24 @@ export interface SiteContent {
   story: {
     sections: StorySection[];
   };
+  orderCTA?: {
+    title: string;
+    description: string;
+    buttonText: string;
+    enabled: boolean;
+  };
   settings?: {
+    showHero?: boolean;
+    showFeaturedDishes?: boolean;
+    showAbout?: boolean;
+    showOrderCTA?: boolean;
+    showGallery?: boolean;
+    showAmbience?: boolean;
+    showCatering?: boolean;
     showTestimonials?: boolean;
     showFeatures?: boolean;
+    showRewards?: boolean;
     showFAQ?: boolean;
-    showGallery?: boolean;
   };
 }
 

@@ -374,11 +374,24 @@ const defaultSiteContent: SiteContent = {
       },
     ],
   },
+  orderCTA: {
+    title: 'Order From Our Website!',
+    description: 'Craving something bold and delicious? Skip the wait and order straight from our website! With just a few clicks, you can have our flavorful dishes delivered right to your door. Quick, easy, and packed with the authentic taste you love. Why wait? Get your flavor fix now!',
+    buttonText: 'Order Now',
+    enabled: true,
+  },
   settings: {
+    showHero: true,
+    showFeaturedDishes: true,
+    showAbout: true,
+    showOrderCTA: true,
+    showGallery: true,
+    showAmbience: true,
+    showCatering: true,
     showTestimonials: true,
     showFeatures: true,
-    showFAQ: true,
-    showGallery: true,
+    showRewards: true,
+    showFAQ: false,
   },
 };
 
