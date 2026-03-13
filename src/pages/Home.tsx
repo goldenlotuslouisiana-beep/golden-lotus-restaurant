@@ -1,25 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Star, Truck, Package, Calendar, Wine, Leaf, UtensilsCrossed, DoorOpen, MapPin, Phone, Clock, ChevronLeft } from 'lucide-react';
+import { ChevronRight, Star, Truck, Package, Calendar, Wine, Leaf, UtensilsCrossed, DoorOpen, MapPin, ChevronLeft } from 'lucide-react';
 import { DataStore } from '@/data/store';
-import type { Location, Testimonial, FeaturedDish, FAQ } from '@/types';
+import type { Testimonial, FeaturedDish } from '@/types';
 
 export default function Home() {
-  const [locations, setLocations] = useState<Location[]>([]);
+
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [featuredDishes, setFeaturedDishes] = useState<FeaturedDish[]>([]);
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [siteContent, setSiteContent] = useState(DataStore.getSiteContent());
   const [features, setFeatures] = useState(DataStore.getFeatures());
-  const [activeLocation, setActiveLocation] = useState(0);
-  const [openFaq, setOpenFaq] = useState<string | null>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
   const dishesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setLocations(DataStore.getLocations());
     setTestimonials(DataStore.getTestimonials());
-    setFaqs(DataStore.getFAQs());
     setSiteContent(DataStore.getSiteContent());
     setFeatures(DataStore.getFeatures());
 
@@ -434,135 +429,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ Section - Only show if enabled in settings */}
-      {siteContent.settings?.showFAQ !== false && (
-        <section className="py-12 lg:py-16 bg-lotus-cream">
-          <div className="section-padding max-w-3xl mx-auto">
-            <h2 className="heading-sm text-lotus-dark mb-8 text-center">
-              Frequently Asked Questions
-            </h2>
-
-            <div className="space-y-4">
-              {faqs.map((faq) => (
-                <div
-                  key={faq.id}
-                  className="bg-white rounded-lg overflow-hidden shadow-sm"
-                >
-                  <button
-                    onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
-                    className="w-full px-6 py-4 flex items-center justify-between text-left"
-                  >
-                    <span className="font-medium text-lotus-dark">{faq.question}</span>
-                    <ChevronRight
-                      className={`w-5 h-5 text-lotus-gold transition-transform ${openFaq === faq.id ? 'rotate-90' : ''
-                        }`}
-                    />
-                  </button>
-                  {openFaq === faq.id && (
-                    <div className="px-6 pb-4">
-                      <p className="text-gray-600">{faq.answer}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Locations Section */}
-      <section className="py-12 lg:py-20 bg-white">
-        <div className="section-padding">
-          <h2 className="heading-sm text-lotus-dark mb-8 text-center">Our locations</h2>
-
-          {/* Location Tabs */}
-          <div className="flex justify-center gap-4 mb-8">
-            {locations.map((location, index) => (
-              <button
-                key={location.id}
-                onClick={() => setActiveLocation(index)}
-                className={`px-6 py-2 rounded-full font-medium transition-colors ${activeLocation === index
-                  ? 'bg-lotus-gold text-white'
-                  : 'bg-lotus-cream text-lotus-dark hover:bg-lotus-gold/10'
-                  }`}
-              >
-                {location.city}
-              </button>
-            ))}
-          </div>
-
-          {/* Location Card */}
-          {locations[activeLocation] && (
-            <div className="max-w-2xl mx-auto bg-lotus-cream rounded-2xl p-8">
-              <h3 className="text-xl font-bold text-lotus-dark mb-2">
-                {locations[activeLocation].name}
-              </h3>
-              <p className="text-lotus-gold font-medium mb-6">
-                {locations[activeLocation].city}, {locations[activeLocation].state}
-              </p>
-
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 flex-col sm:flex-row">
-                  <MapPin className="hidden sm:block w-5 h-5 text-lotus-gold mt-0.5" />
-                  <div>
-                    <p className="font-medium text-lotus-dark flex items-center gap-2 sm:gap-0">
-                      <MapPin className="sm:hidden w-4 h-4 text-lotus-gold inline-block" />
-                      Address
-                    </p>
-                    <p className="text-gray-600 mt-1 sm:mt-0">
-                      {locations[activeLocation].address}
-                    </p>
-                    <p className="text-gray-600">
-                      {locations[activeLocation].city}, {locations[activeLocation].state} {locations[activeLocation].zip}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-lotus-gold mt-0.5" />
-                  <div>
-                    <p className="font-medium text-lotus-dark">Contacts</p>
-                    <a
-                      href={`tel:${locations[activeLocation].phone}`}
-                      className="text-gray-600 hover:text-lotus-gold transition-colors"
-                    >
-                      {locations[activeLocation].phone}
-                    </a>
-                    <p className="text-gray-600">{locations[activeLocation].email}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-lotus-gold mt-0.5" />
-                  <div>
-                    <p className="font-medium text-lotus-dark">Hours</p>
-                    <p className="text-gray-600">
-                      Today: 11:30 AM - 4:00 PM, 5:00 PM - 10:00 PM
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6">
-                <a
-                  href={locations[activeLocation].googleMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 btn-secondary text-center text-sm py-3"
-                >
-                  Get Directions
-                </a>
-                <Link
-                  to="/menu?order=true"
-                  className="flex-1 btn-primary text-center text-sm py-3"
-                >
-                  Order Now
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
     </div>
   );
 }
