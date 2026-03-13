@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Star, Truck, Package, Calendar, Wine, Leaf, UtensilsCrossed, DoorOpen, MapPin, ChevronLeft } from 'lucide-react';
+import { ChevronRight, Star, Truck, Package, Calendar, Wine, Leaf, UtensilsCrossed, DoorOpen, ChevronLeft } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { Testimonial, FeaturedDish } from '@/types';
 
@@ -184,33 +184,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Authentic Cuisine Section */}
-      <section className="py-12 lg:py-20 bg-lotus-cream">
-        <div className="section-padding">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            <div className="order-2 lg:order-1 relative">
-              <img
-                src={siteContent.cuisine.image}
-                alt="Authentic Indian Cuisine"
-                className="rounded-2xl shadow-xl w-full h-[300px] sm:h-[400px] object-cover"
-              />
-            </div>
-            <div className="order-1 lg:order-2 text-center lg:text-left">
-              <h2 className="text-3xl sm:heading-md text-lotus-dark mb-4 sm:mb-6">
-                {siteContent.cuisine.title}
-              </h2>
-              <p className="text-body text-base sm:text-lg leading-relaxed mb-6">
-                {siteContent.cuisine.description}
-              </p>
-              <Link to="/menu" className="btn-primary inline-flex items-center gap-2">
-                Explore Our Menu
-                <ChevronRight className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Order CTA Section */}
       <section className="py-16 lg:py-24 bg-lotus-gold">
         <div className="section-padding text-center text-white max-w-3xl mx-auto">
@@ -328,25 +301,6 @@ export default function Home() {
                 <ChevronRight className="w-5 h-5" />
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Visit Us Section */}
-      <section className="py-12 lg:py-24 bg-lotus-gold">
-        <div className="section-padding text-center text-white max-w-4xl mx-auto">
-          <h2 className="text-3xl sm:heading-md mb-4 sm:mb-6">{siteContent.visitUs.title}</h2>
-          <p className="text-base sm:text-lg opacity-90 leading-relaxed px-4">
-            {siteContent.visitUs.content}
-          </p>
-          <div className="mt-6 sm:mt-8">
-            <Link
-              to="/locations"
-              className="btn-outline inline-flex items-center gap-2 bg-white/10 hover:bg-white hover:text-lotus-gold transition-colors text-sm sm:text-base border-white"
-            >
-              Check Our Locations
-              <MapPin className="w-5 h-5" />
-            </Link>
           </div>
         </div>
       </section>
