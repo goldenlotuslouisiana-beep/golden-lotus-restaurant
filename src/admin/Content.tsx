@@ -139,7 +139,8 @@ export default function AdminContent() {
     label: string;
   }) => {
     const state = imageStates[fieldKey] || { method: 'url', isUploading: false, preview: null };
-    const currentValue = (content as Record<string, Record<string, string>>)?.[section]?.[field] || '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const currentValue = ((content as unknown as Record<string, Record<string, string>>)?.[section]?.[field]) || '';
 
     return (
       <div>
