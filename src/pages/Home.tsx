@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Star, Truck, Package, Calendar, Wine, Leaf, UtensilsCrossed, DoorOpen, ChevronLeft } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { Testimonial, FeaturedDish } from '@/types';
+import SEO, { restaurantSchema, breadcrumbSchema } from '@/components/SEO';
 
 export default function Home() {
 
@@ -77,6 +78,14 @@ export default function Home() {
   };
 
   return (
+    <>
+      <SEO 
+        title="Golden Lotus Indian Restaurant | Authentic Indian Cuisine in Alexandria, LA"
+        description="Golden Lotus offers authentic Indian cuisine, catering services, and unforgettable dining experiences in Alexandria, Louisiana. Located at 1473 Dorchester Dr. Wedding catering, corporate events, private parties. Book now!"
+        keywords="Indian restaurant Alexandria LA, Indian food Louisiana, catering Alexandria LA, wedding catering Alexandria, corporate catering Louisiana, Indian cuisine 71301, halal food Alexandria, vegetarian, vegan"
+        url="https://www.goldenlotusgrill.com"
+        schema={[restaurantSchema, breadcrumbSchema([{ name: 'Home', url: 'https://www.goldenlotusgrill.com' }])]}
+      />
     <div className="overflow-hidden">
       {/* Hero Section - Only show if enabled */}
       {siteContent.settings?.showHero !== false && (
@@ -396,5 +405,6 @@ export default function Home() {
       )}
 
     </div>
+    </>
   );
 }
