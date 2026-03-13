@@ -284,3 +284,87 @@ export interface Analytics {
   weeklyStats: DailyStats[];
   popularItems: { name: string; count: number }[];
 }
+
+// Catering Types
+export type CateringType = 'wedding' | 'corporate' | 'private';
+export type CateringStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+export type BudgetTier = 'silver' | 'gold' | 'platinum' | 'budget' | 'standard' | 'premium';
+
+export interface CateringDish {
+  id: string;
+  name: string;
+  description?: string;
+  dietary: ('halal' | 'vegetarian' | 'gluten-free' | 'vegan')[];
+  course: 'starter' | 'soup' | 'main' | 'dessert';
+}
+
+export interface CateringAddOn {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+}
+
+export interface CateringPackage {
+  id: string;
+  name: string;
+  cateringType: CateringType;
+  description: string;
+  pricePerHead?: number;
+  flatPrice?: number;
+  minGuests: number;
+  maxGuests: number;
+  includedItems: string[];
+  dishes: CateringDish[];
+  addOns: CateringAddOn[];
+  gallery: string[];
+  features: string[];
+  active: boolean;
+  order: number;
+  // Type-specific fields
+  budgetTiers?: BudgetTier[];
+  venueTypes?: string[];
+  serviceFormats?: string[];
+  cuisineStyles?: string[];
+}
+
+export interface CateringOrder {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  cateringType: CateringType;
+  packageId?: string;
+  packageName?: string;
+  eventDate: string;
+  eventLocation: string;
+  guestCount: number;
+  budgetTier?: BudgetTier;
+  specialRequests?: string;
+  photos?: string[];
+  // Wedding-specific
+  courses?: string[];
+  decorationAddons?: string[];
+  tastingSessionDate?: string;
+  // Corporate-specific
+  serviceFormat?: string;
+  setupTime?: string;
+  breakdownTime?: string;
+  recurringBooking?: 'one-time' | 'weekly' | 'monthly';
+  brandingOptions?: string[];
+  // Private-specific
+  eventSubType?: string;
+  indoorOutdoor?: 'indoor' | 'outdoor';
+  cuisineStyle?: string;
+  liveCooking?: boolean;
+  rentalItems?: string[];
+  serviceDuration?: string;
+  // Status
+  status: CateringStatus;
+  adminNotes?: string;
+  customQuote?: boolean;
+  customPricing?: number;
+  createdAt: string;
+  updatedAt: string;
+}

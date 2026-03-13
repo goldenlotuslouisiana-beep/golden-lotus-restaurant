@@ -21,6 +21,7 @@ import {
   Tag,
   MessageSquare,
   Calendar,
+  ChefHat,
 } from 'lucide-react';
 import { DataStore } from '@/data/store';
 
@@ -32,6 +33,7 @@ const navItems = [
   { name: 'Delivery', href: '/admin/delivery', icon: Truck },
   { name: 'Menu Items', href: '/admin/menu', icon: UtensilsCrossed },
   { name: 'Categories', href: '/admin/categories', icon: List },
+  { name: 'Catering', href: '/admin/catering', icon: ChefHat },
   { name: 'Promos', href: '/admin/promos', icon: Tag },
   { name: 'Loyalty', href: '/admin/loyalty', icon: Gift },
   { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare },

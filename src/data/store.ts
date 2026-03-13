@@ -14,6 +14,8 @@ import type {
   Analytics,
   Event,
   EventPackage,
+  CateringPackage,
+  CateringOrder,
 } from '@/types';
 
 // Default Admin User
@@ -522,6 +524,135 @@ const defaultOrders: Order[] = [
   },
 ];
 
+// Default Catering Packages
+const defaultCateringPackages: CateringPackage[] = [
+  {
+    id: '1',
+    name: 'Wedding Silver Package',
+    cateringType: 'wedding',
+    description: 'Elegant wedding catering with essential services and classic menu options.',
+    pricePerHead: 45,
+    minGuests: 50,
+    maxGuests: 100,
+    includedItems: ['Tables & Chairs', 'Basic Cutlery', 'Service Staff (2)', 'Setup & Cleanup'],
+    dishes: [
+      { id: 'w1', name: 'Spring Rolls', course: 'starter', dietary: ['vegetarian'] },
+      { id: 'w2', name: 'Hot & Sour Soup', course: 'soup', dietary: ['vegetarian', 'halal'] },
+      { id: 'w3', name: 'Kung Pao Chicken', course: 'main', dietary: ['halal'] },
+      { id: 'w4', name: 'Vegetable Fried Rice', course: 'main', dietary: ['vegetarian', 'halal'] },
+      { id: 'w5', name: 'Mango Pudding', course: 'dessert', dietary: ['vegetarian', 'gluten-free'] },
+    ],
+    addOns: [
+      { id: 'a1', name: 'Floral Centerpieces', price: 150, description: 'Beautiful floral arrangements for each table' },
+      { id: 'a2', name: 'Extra Service Staff', price: 100, description: 'Additional server for 4 hours' },
+    ],
+    gallery: [
+      'https://images.unsplash.com/photo-1519741497674-611481863552?w=800',
+      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800',
+    ],
+    features: ['Multi-course Menu', 'Guest Count 50-100', 'Basic Decor', '2 Service Staff'],
+    active: true,
+    order: 1,
+    budgetTiers: ['silver'],
+    venueTypes: ['indoor hall', 'marquee'],
+  },
+  {
+    id: '2',
+    name: 'Wedding Gold Package',
+    cateringType: 'wedding',
+    description: 'Premium wedding catering with upgraded menu and enhanced services.',
+    pricePerHead: 75,
+    minGuests: 100,
+    maxGuests: 200,
+    includedItems: ['Tables & Chairs', 'Premium Cutlery', 'Service Staff (4)', 'Setup & Cleanup', 'Tasting Session', 'Event Coordinator'],
+    dishes: [
+      { id: 'g1', name: 'Dim Sum Platter', course: 'starter', dietary: ['halal'] },
+      { id: 'g2', name: 'Wonton Soup', course: 'soup', dietary: ['halal'] },
+      { id: 'g3', name: 'Peking Duck', course: 'main', dietary: ['halal'] },
+      { id: 'g4', name: 'Szechuan Beef', course: 'main', dietary: ['halal'] },
+      { id: 'g5', name: 'Vegetable Lo Mein', course: 'main', dietary: ['vegetarian'] },
+      { id: 'g6', name: 'Sesame Balls', course: 'dessert', dietary: ['vegetarian'] },
+    ],
+    addOns: [
+      { id: 'b1', name: 'Premium Floral Package', price: 350, description: 'Luxury floral arrangements and centerpieces' },
+      { id: 'b2', name: 'Live Cooking Station', price: 500, description: 'Interactive wok station with chef' },
+      { id: 'b3', name: 'Champagne Service', price: 250, description: 'Welcome champagne for all guests' },
+    ],
+    gallery: [
+      'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800',
+      'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=800',
+    ],
+    features: ['Multi-course Menu', 'Guest Count 100-200', 'Premium Decor', '4 Service Staff', 'Tasting Session'],
+    active: true,
+    order: 2,
+    budgetTiers: ['gold'],
+    venueTypes: ['indoor hall', 'outdoor', 'marquee'],
+  },
+  {
+    id: '3',
+    name: 'Corporate Buffet Package',
+    cateringType: 'corporate',
+    description: 'Professional buffet service perfect for business meetings and corporate events.',
+    pricePerHead: 25,
+    minGuests: 20,
+    maxGuests: 500,
+    includedItems: ['Chafing Dishes', 'Serving Tables', 'Disposable Cutlery', 'Setup & Cleanup', 'Delivery within 10 miles'],
+    dishes: [
+      { id: 'c1', name: 'Mixed Appetizer Platter', course: 'starter', dietary: ['vegetarian', 'halal'] },
+      { id: 'c2', name: 'Orange Chicken', course: 'main', dietary: ['halal'] },
+      { id: 'c3', name: 'Beef with Broccoli', course: 'main', dietary: ['halal', 'gluten-free'] },
+      { id: 'c4', name: 'Vegetable Chow Mein', course: 'main', dietary: ['vegetarian'] },
+      { id: 'c5', name: 'Steamed Rice', course: 'main', dietary: ['vegetarian', 'gluten-free', 'halal'] },
+      { id: 'c6', name: 'Fortune Cookies', course: 'dessert', dietary: ['vegetarian'] },
+    ],
+    addOns: [
+      { id: 'co1', name: 'Branded Napkins', price: 50, description: 'Custom printed napkins with company logo' },
+      { id: 'co2', name: 'Extension Cords', price: 25, description: 'For chafing dishes' },
+      { id: 'co3', name: 'Extra Delivery Mileage', price: 2, description: 'Per mile beyond 10 miles' },
+    ],
+    gallery: [
+      'https://images.unsplash.com/photo-1555244162-803279f50793?w=800',
+    ],
+    features: ['Buffet Style', 'Min 20 Guests', 'Delivery Available', 'Disposableware Included'],
+    active: true,
+    order: 3,
+    serviceFormats: ['buffet'],
+  },
+  {
+    id: '4',
+    name: 'Private Party Standard',
+    cateringType: 'private',
+    description: 'Perfect for birthdays, anniversaries, and social gatherings.',
+    pricePerHead: 35,
+    minGuests: 15,
+    maxGuests: 100,
+    includedItems: ['Tables & Chairs', 'Cutlery', 'Service Staff (2)', '3 Hours Service'],
+    dishes: [
+      { id: 'p1', name: 'Crab Rangoon', course: 'starter', dietary: [] },
+      { id: 'p2', name: 'Egg Drop Soup', course: 'soup', dietary: ['vegetarian', 'halal', 'gluten-free'] },
+      { id: 'p3', name: 'General Tso Chicken', course: 'main', dietary: ['halal'] },
+      { id: 'p4', name: 'Mongolian Beef', course: 'main', dietary: ['halal', 'gluten-free'] },
+      { id: 'p5', name: 'Tofu with Vegetables', course: 'main', dietary: ['vegetarian', 'halal', 'gluten-free'] },
+      { id: 'p6', name: 'Fried Bananas', course: 'dessert', dietary: ['vegetarian'] },
+    ],
+    addOns: [
+      { id: 'pa1', name: 'Tent Rental', price: 200, description: '20x20 tent for outdoor events' },
+      { id: 'pa2', name: 'Extra Hour', price: 75, description: 'Extend service time' },
+      { id: 'pa3', name: 'Birthday Cake', price: 60, description: 'Custom celebration cake' },
+    ],
+    gallery: [
+      'https://images.unsplash.com/photo-1530103862676-de3c9da59af7?w=800',
+    ],
+    features: ['Flexible Menu', '15-100 Guests', 'Indoor/Outdoor', '2 Service Staff'],
+    active: true,
+    order: 4,
+    cuisineStyles: ['chinese', 'mixed'],
+  },
+];
+
+// Default Catering Orders (empty initially)
+const defaultCateringOrders: CateringOrder[] = [];
+
 // Storage Keys
 const STORAGE_KEYS = {
   adminUser: 'golden_lotus_admin_user',
@@ -539,6 +670,8 @@ const STORAGE_KEYS = {
   isAuthenticated: 'golden_lotus_admin_auth',
   events: 'golden_lotus_events',
   eventPackages: 'golden_lotus_event_packages',
+  cateringPackages: 'golden_lotus_catering_packages',
+  cateringOrders: 'golden_lotus_catering_orders',
 };
 
 // Initialize data in localStorage
@@ -584,6 +717,12 @@ export function initializeData() {
   }
   if (!localStorage.getItem(STORAGE_KEYS.eventPackages)) {
     localStorage.setItem(STORAGE_KEYS.eventPackages, JSON.stringify(defaultEventPackages));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.cateringPackages)) {
+    localStorage.setItem(STORAGE_KEYS.cateringPackages, JSON.stringify(defaultCateringPackages));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.cateringOrders)) {
+    localStorage.setItem(STORAGE_KEYS.cateringOrders, JSON.stringify(defaultCateringOrders));
   }
 }
 
@@ -748,6 +887,52 @@ export const DataStore = {
   getPackagesByEventId: (eventId: string): EventPackage[] => {
     const packages = getData<EventPackage[]>(STORAGE_KEYS.eventPackages) || defaultEventPackages;
     return packages.filter((p) => p.eventId === eventId);
+  },
+
+  // Catering Packages
+  getCateringPackages: (): CateringPackage[] => getData(STORAGE_KEYS.cateringPackages) || defaultCateringPackages,
+  setCateringPackages: (packages: CateringPackage[]) => setData(STORAGE_KEYS.cateringPackages, packages),
+  getCateringPackageById: (id: string): CateringPackage | undefined => {
+    const packages = getData<CateringPackage[]>(STORAGE_KEYS.cateringPackages) || defaultCateringPackages;
+    return packages.find((p) => p.id === id);
+  },
+  getCateringPackagesByType: (type: CateringPackage['cateringType']): CateringPackage[] => {
+    const packages = getData<CateringPackage[]>(STORAGE_KEYS.cateringPackages) || defaultCateringPackages;
+    return packages.filter((p) => p.cateringType === type && p.active);
+  },
+
+  // Catering Orders
+  getCateringOrders: (): CateringOrder[] => getData(STORAGE_KEYS.cateringOrders) || defaultCateringOrders,
+  setCateringOrders: (orders: CateringOrder[]) => setData(STORAGE_KEYS.cateringOrders, orders),
+  getCateringOrderById: (id: string): CateringOrder | undefined => {
+    const orders = getData<CateringOrder[]>(STORAGE_KEYS.cateringOrders) || defaultCateringOrders;
+    return orders.find((o) => o.id === id);
+  },
+  addCateringOrder: (order: CateringOrder): void => {
+    const orders = getData<CateringOrder[]>(STORAGE_KEYS.cateringOrders) || defaultCateringOrders;
+    setData(STORAGE_KEYS.cateringOrders, [...orders, order]);
+  },
+  updateCateringOrderStatus: (id: string, status: CateringOrder['status']): boolean => {
+    const orders = getData<CateringOrder[]>(STORAGE_KEYS.cateringOrders) || defaultCateringOrders;
+    const index = orders.findIndex((o) => o.id === id);
+    if (index !== -1) {
+      orders[index].status = status;
+      orders[index].updatedAt = new Date().toISOString();
+      setData(STORAGE_KEYS.cateringOrders, orders);
+      return true;
+    }
+    return false;
+  },
+  updateCateringOrderNotes: (id: string, notes: string): boolean => {
+    const orders = getData<CateringOrder[]>(STORAGE_KEYS.cateringOrders) || defaultCateringOrders;
+    const index = orders.findIndex((o) => o.id === id);
+    if (index !== -1) {
+      orders[index].adminNotes = notes;
+      orders[index].updatedAt = new Date().toISOString();
+      setData(STORAGE_KEYS.cateringOrders, orders);
+      return true;
+    }
+    return false;
   },
 };
 
