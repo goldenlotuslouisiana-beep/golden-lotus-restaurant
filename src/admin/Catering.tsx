@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { 
-  Search, Download, CheckCircle, XCircle, 
-  X, Calendar, Users, DollarSign, Phone, Mail,
-  Star, Utensils, Check
+  Plus, Search, Download, CheckCircle, XCircle, 
+  Trash2, X, Calendar, Users, DollarSign, Phone, Mail,
+  Star, Utensils, Check,
+  Upload
 } from 'lucide-react';
 import { DataStore } from '@/data/store';
+import { uploadImage } from '@/lib/uploadImage';
 import type { CateringInquiry, CateringPackage } from '@/types';
 
 // Status badge configurations
@@ -24,6 +26,13 @@ const PRIORITY_CONFIG = {
   urgent: { color: 'bg-red-100 text-red-700', label: 'Urgent' },
 };
 
+const CATERING_TYPES = [
+  { value: 'wedding', label: 'Wedding' },
+  { value: 'corporate', label: 'Corporate' },
+  { value: 'private', label: 'Private Event' },
+  { value: 'all', label: 'All Types' },
+];
+
 export default function AdminCatering() {
   const [activeTab, setActiveTab] = useState<'inquiries' | 'packages'>('inquiries');
   
@@ -38,6 +47,8 @@ export default function AdminCatering() {
   
   // Packages state
   const [packages, setPackages] = useState<CateringPackage[]>([]);
+  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+  const [editingPackage, setEditingPackage] = useState<CateringPackage | null>(null);
 
   useEffect(() => {
     loadData();
@@ -72,9 +83,7 @@ export default function AdminCatering() {
       filtered = filtered.filter(i => i.priority === priorityFilter);
     }
     
-    // Sort by date (newest first)
     filtered.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-    
     setFilteredInquiries(filtered);
   };
 
@@ -93,8 +102,68 @@ export default function AdminCatering() {
       date: new Date().toISOString(),
       type,
       notes,
-      staffName: 'Admin', // In real app, get from auth context
+      staffName: 'Admin',
     });
+    loadData();
+  };
+
+  const handleDeleteInquiry = (inquiryId: string) => {
+    if (confirm('Are you sure you want to delete this inquiry?')) {
+      DataStore.deleteCateringInquiry(inquiryId);
+      loadData();
+    }
+  };
+
+  const handleSavePackage = (pkg: CateringPackage) => {
+    const existingPackages = DataStore.getCateringPackages();
+    let updatedPackages;
+    
+    if (editingPackage) {
+      // Update existing
+      updatedPackages = existingPackages.map(p => 
+        p.id === pkg.id ? { ...pkg, updatedAt: new Date().toISOString() } : p
+      );
+    } else {
+      // Create new
+      const newPackage = {
+        ...pkg,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      updatedPackages = [...existingPackages, newPackage];
+    }
+    
+    DataStore.setCateringPackages(updatedPackages);
+    setIsPackageModalOpen(false);
+    setEditingPackage(null);
+    loadData();
+  };
+
+  const handleDeletePackage = (pkgId: string) => {
+    if (confirm('Are you sure you want to delete this package?')) {
+      const existingPackages = DataStore.getCateringPackages();
+      const updatedPackages = existingPackages.filter(p => p.id !== pkgId);
+      DataStore.setCateringPackages(updatedPackages);
+      loadData();
+    }
+  };
+
+  const handleTogglePackageActive = (pkg: CateringPackage) => {
+    const existingPackages = DataStore.getCateringPackages();
+    const updatedPackages = existingPackages.map(p => 
+      p.id === pkg.id ? { ...p, active: !p.active, updatedAt: new Date().toISOString() } : p
+    );
+    DataStore.setCateringPackages(updatedPackages);
+    loadData();
+  };
+
+  const handleTogglePackageFeatured = (pkg: CateringPackage) => {
+    const existingPackages = DataStore.getCateringPackages();
+    const updatedPackages = existingPackages.map(p => 
+      p.id === pkg.id ? { ...p, featured: !p.featured, updatedAt: new Date().toISOString() } : p
+    );
+    DataStore.setCateringPackages(updatedPackages);
     loadData();
   };
 
@@ -336,15 +405,23 @@ export default function AdminCatering() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedInquiry(inquiry);
-                            setShowDetailModal(true);
-                          }}
-                          className="text-lotus-gold hover:text-lotus-gold-dark font-medium"
-                        >
-                          View Details
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedInquiry(inquiry);
+                              setShowDetailModal(true);
+                            }}
+                            className="text-lotus-gold hover:text-lotus-gold-dark font-medium"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleDeleteInquiry(inquiry.id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -361,46 +438,97 @@ export default function AdminCatering() {
       )}
 
       {activeTab === 'packages' && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {packages.map((pkg) => (
-            <div key={pkg.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="h-48 overflow-hidden">
-                <img 
-                  src={pkg.featuredImage || pkg.images[0]} 
-                  alt={pkg.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="font-bold text-lg text-gray-900">{pkg.name}</h3>
-                    {pkg.subtitle && (
-                      <p className="text-sm text-lotus-gold">{pkg.subtitle}</p>
+        <>
+          {/* Add Package Button */}
+          <div className="mb-6">
+            <button
+              onClick={() => {
+                setEditingPackage(null);
+                setIsPackageModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-6 py-3 bg-lotus-gold text-white rounded-xl font-semibold hover:bg-lotus-gold-dark transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Add New Package
+            </button>
+          </div>
+
+          {/* Packages Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {packages.map((pkg) => (
+              <div key={pkg.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="h-48 overflow-hidden relative">
+                  <img 
+                    src={pkg.featuredImage || pkg.images[0]} 
+                    alt={pkg.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    {pkg.featured && (
+                      <span className="px-2 py-1 bg-lotus-gold text-white text-xs rounded-full">Featured</span>
+                    )}
+                    {!pkg.active && (
+                      <span className="px-2 py-1 bg-gray-500 text-white text-xs rounded-full">Inactive</span>
                     )}
                   </div>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${pkg.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                    {pkg.active ? 'Active' : 'Inactive'}
-                  </span>
                 </div>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{pkg.description}</p>
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                  <span className="font-medium text-lotus-gold">${pkg.pricePerPerson}/person</span>
-                  <span>•</span>
-                  <span>{pkg.minGuests}-{pkg.maxGuests} guests</span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => alert('Package editing will be available in the next update')}
-                    className="flex-1 px-4 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark transition-colors"
-                  >
-                    Edit Package
-                  </button>
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900">{pkg.name}</h3>
+                      {pkg.subtitle && <p className="text-sm text-lotus-gold">{pkg.subtitle}</p>}
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{pkg.description}</p>
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                    <span className="font-medium text-lotus-gold">${pkg.pricePerPerson}/person</span>
+                    <span>•</span>
+                    <span>{pkg.minGuests}-{pkg.maxGuests} guests</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <button
+                      onClick={() => handleTogglePackageActive(pkg)}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        pkg.active 
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {pkg.active ? 'Active' : 'Inactive'}
+                    </button>
+                    <button
+                      onClick={() => handleTogglePackageFeatured(pkg)}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        pkg.featured 
+                          ? 'bg-lotus-gold text-white hover:bg-lotus-gold-dark' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {pkg.featured ? 'Featured' : 'Not Featured'}
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingPackage(pkg);
+                        setIsPackageModalOpen(true);
+                      }}
+                      className="flex-1 px-4 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeletePackage(pkg.id)}
+                      className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Inquiry Detail Modal */}
@@ -412,8 +540,475 @@ export default function AdminCatering() {
           onAddCommunication={handleAddCommunication}
         />
       )}
+
+      {/* Package Modal */}
+      {isPackageModalOpen && (
+        <PackageModal
+          pkg={editingPackage}
+          onClose={() => {
+            setIsPackageModalOpen(false);
+            setEditingPackage(null);
+          }}
+          onSave={handleSavePackage}
+        />
+      )}
     </div>
   );
+}
+
+// Package Modal Component
+function PackageModal({ 
+  pkg, 
+  onClose, 
+  onSave 
+}: { 
+  pkg: CateringPackage | null; 
+  onClose: () => void; 
+  onSave: (pkg: CateringPackage) => void;
+}) {
+  const [formData, setFormData] = useState<Partial<CateringPackage>>({
+    name: '',
+    subtitle: '',
+    cateringType: 'all',
+    description: '',
+    longDescription: '',
+    pricePerPerson: 0,
+    minGuests: 10,
+    maxGuests: 100,
+    images: [],
+    featuredImage: '',
+    menuItems: [],
+    inclusions: [],
+    features: [],
+    suitableFor: [],
+    availableAddOns: [],
+    active: true,
+    featured: false,
+    order: 0,
+    ...pkg,
+  });
+  
+  const [newMenuCategory, setNewMenuCategory] = useState('');
+  const [newMenuItems, setNewMenuItems] = useState('');
+  const [newInclusion, setNewInclusion] = useState('');
+  const [newFeature, setNewFeature] = useState('');
+  const [newSuitableFor, setNewSuitableFor] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingImage(true);
+    try {
+      const url = await uploadImage(file);
+      setFormData(prev => ({
+        ...prev,
+        images: [...(prev.images || []), url],
+        featuredImage: prev.featuredImage || url
+      }));
+    } catch (error) {
+      alert('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleAddMenuSection = () => {
+    if (newMenuCategory && newMenuItems) {
+      setFormData(prev => ({
+        ...prev,
+        menuItems: [...(prev.menuItems || []), { category: newMenuCategory, items: newMenuItems.split(',').map(s => s.trim()) }]
+      }));
+      setNewMenuCategory('');
+      setNewMenuItems('');
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData as CateringPackage);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-2xl w-full max-w-4xl my-8">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+          <h2 className="text-xl font-bold text-gray-900">{pkg ? 'Edit Package' : 'Create New Package'}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+          {/* Basic Info */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Package Name *</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+                placeholder="e.g., Royal Wedding Feast"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+              <input
+                type="text"
+                value={formData.subtitle}
+                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+                placeholder="e.g., Elegant Celebration"
+              />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price Per Person *</label>
+              <input
+                type="number"
+                required
+                value={formData.pricePerPerson}
+                onChange={(e) => setFormData({ ...formData, pricePerPerson: Number(e.target.value) })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Min Guests *</label>
+              <input
+                type="number"
+                required
+                value={formData.minGuests}
+                onChange={(e) => setFormData({ ...formData, minGuests: Number(e.target.value) })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Max Guests *</label>
+              <input
+                type="number"
+                required
+                value={formData.maxGuests}
+                onChange={(e) => setFormData({ ...formData, maxGuests: Number(e.target.value) })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Catering Type</label>
+            <select
+              value={formData.cateringType}
+              onChange={(e) => setFormData({ ...formData, cateringType: e.target.value as any })}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+            >
+              {CATERING_TYPES.map(type => (
+                <option key={type.value} value={type.value}>{type.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Short Description *</label>
+            <textarea
+              required
+              rows={2}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold resize-none"
+              placeholder="Brief description for package cards..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Long Description</label>
+            <textarea
+              rows={4}
+              value={formData.longDescription}
+              onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold resize-none"
+              placeholder="Detailed description for package detail page..."
+            />
+          </div>
+
+          {/* Images */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Package Images</label>
+            <div className="flex flex-wrap gap-4 mb-4">
+              {formData.images?.map((img, idx) => (
+                <div key={idx} className="relative w-24 h-24">
+                  <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      images: prev.images?.filter((_, i) => i !== idx) || []
+                    }))}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              <label className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-lotus-gold">
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="sr-only" />
+                {uploadingImage ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-lotus-gold" />
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6 text-gray-400 mb-1" />
+                    <span className="text-xs text-gray-500">Add Image</span>
+                  </>
+                )}
+              </label>
+            </div>
+          </div>
+
+          {/* Menu Items */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Menu Items</label>
+            <div className="space-y-4">
+              {formData.menuItems?.map((section, idx) => (
+                <div key={idx} className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">{section.category}</h4>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        menuItems: prev.menuItems?.filter((_, i) => i !== idx) || []
+                      }))}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {section.items.map((item, i) => (
+                      <span key={i} className="px-3 py-1 bg-white rounded-full text-sm border border-gray-200">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Category (e.g., Appetizers)"
+                  value={newMenuCategory}
+                  onChange={(e) => setNewMenuCategory(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg"
+                />
+                <input
+                  type="text"
+                  placeholder="Items (comma separated)"
+                  value={newMenuItems}
+                  onChange={(e) => setNewMenuItems(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddMenuSection}
+                  className="px-4 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Inclusions */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">What's Included</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {formData.inclusions?.map((item, idx) => (
+                <span key={idx} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm flex items-center gap-1">
+                  {item}
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      inclusions: prev.inclusions?.filter((_, i) => i !== idx) || []
+                    }))}
+                    className="hover:text-green-900"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Add inclusion..."
+                value={newInclusion}
+                onChange={(e) => setNewInclusion(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddInclusion())}
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg"
+              />
+              <button
+                type="button"
+                onClick={handleAddInclusion}
+                className="px-4 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Features</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {formData.features?.map((item, idx) => (
+                <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-1">
+                  {item}
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      features: prev.features?.filter((_, i) => i !== idx) || []
+                    }))}
+                    className="hover:text-blue-900"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Add feature..."
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg"
+              />
+              <button
+                type="button"
+                onClick={handleAddFeature}
+                className="px-4 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* Suitable For */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Suitable For</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {formData.suitableFor?.map((item, idx) => (
+                <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm flex items-center gap-1">
+                  {item}
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      suitableFor: prev.suitableFor?.filter((_, i) => i !== idx) || []
+                    }))}
+                    className="hover:text-purple-900"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Add event type..."
+                value={newSuitableFor}
+                onChange={(e) => setNewSuitableFor(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg"
+              />
+              <button
+                type="button"
+                onClick={handleAddSuitableFor}
+                className="px-4 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.active}
+                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                className="w-5 h-5 rounded border-gray-300 text-lotus-gold focus:ring-lotus-gold"
+              />
+              <span className="text-sm font-medium">Active</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.featured}
+                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                className="w-5 h-5 rounded border-gray-300 text-lotus-gold focus:ring-lotus-gold"
+              />
+              <span className="text-sm font-medium">Featured</span>
+            </label>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark"
+            >
+              {pkg ? 'Save Changes' : 'Create Package'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  function handleAddInclusion() {
+    if (newInclusion.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        inclusions: [...(prev.inclusions || []), newInclusion.trim()]
+      }));
+      setNewInclusion('');
+    }
+  }
+
+  function handleAddFeature() {
+    if (newFeature.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        features: [...(prev.features || []), newFeature.trim()]
+      }));
+      setNewFeature('');
+    }
+  }
+
+  function handleAddSuitableFor() {
+    if (newSuitableFor.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        suitableFor: [...(prev.suitableFor || []), newSuitableFor.trim()]
+      }));
+      setNewSuitableFor('');
+    }
+  }
 }
 
 // Inquiry Detail Modal Component
@@ -426,10 +1021,11 @@ function InquiryDetailModal({
   inquiry: CateringInquiry; 
   onClose: () => void; 
   onUpdate: () => void;
-  onAddCommunication: (id: string, type: any, notes: string) => void;
+  onAddCommunication: (id: string, type: 'email' | 'phone' | 'meeting' | 'note', notes: string) => void;
 }) {
   const [activeSection, setActiveSection] = useState<'details' | 'communication' | 'notes'>('details');
   const [newNote, setNewNote] = useState('');
+  const [commType, setCommType] = useState<'email' | 'phone' | 'meeting' | 'note'>('note');
   const [quotedAmount, setQuotedAmount] = useState(inquiry.quotedAmount || '');
   const [adminNotes, setAdminNotes] = useState(inquiry.adminNotes || '');
 
@@ -448,7 +1044,7 @@ function InquiryDetailModal({
 
   const handleAddNote = () => {
     if (newNote.trim()) {
-      onAddCommunication(inquiry.id, 'note', newNote);
+      onAddCommunication(inquiry.id, commType, newNote);
       setNewNote('');
       onUpdate();
     }
@@ -598,13 +1194,19 @@ function InquiryDetailModal({
               {/* Add Communication */}
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-semibold text-gray-900 mb-3">Add Communication</h3>
-                <div className="flex gap-2">
-                  <select className="px-3 py-2 border border-gray-200 rounded-lg">
+                <div className="flex gap-2 mb-2">
+                  <select 
+                    value={commType}
+                    onChange={(e) => setCommType(e.target.value as any)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg"
+                  >
                     <option value="note">Note</option>
                     <option value="phone">Phone Call</option>
                     <option value="email">Email</option>
                     <option value="meeting">Meeting</option>
                   </select>
+                </div>
+                <div className="flex gap-2">
                   <input
                     type="text"
                     value={newNote}
