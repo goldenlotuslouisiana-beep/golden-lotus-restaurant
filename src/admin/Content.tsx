@@ -723,8 +723,8 @@ export default function AdminContent() {
                       setContent({
                         ...content,
                         footerSettings: {
-                          ...content.footerSettings,
-                          showGiftCards: e.target.checked
+                          showGiftCards: e.target.checked,
+                          showHiring: content.footerSettings?.showHiring !== false
                         }
                       });
                     }}
@@ -747,7 +747,7 @@ export default function AdminContent() {
                       setContent({
                         ...content,
                         footerSettings: {
-                          ...content.footerSettings,
+                          showGiftCards: content.footerSettings?.showGiftCards !== false,
                           showHiring: e.target.checked
                         }
                       });
