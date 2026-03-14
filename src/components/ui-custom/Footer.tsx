@@ -23,8 +23,9 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Experience the art of authentic Indian cuisine at Golden Lotus Indian Restaurant.
-              Two locations in Florida serving the finest Indian food.
+              Experience the art of authentic Indian cuisine at Golden Lotus Grill.
+              Located in Alexandria, Louisiana, serving the finest Indian food with 
+              dine-in, takeout, and catering services.
             </p>
             <div className="flex items-center gap-4">
               <a
@@ -78,6 +79,7 @@ export default function Footer() {
                 { name: "We're Hiring", href: '/careers' },
                 { name: 'Gift Cards', href: '/gift-cards' },
                 { name: 'Contact Us', href: '/contact' },
+                { name: 'Sitemap', href: '/sitemap' },
                 { name: 'Terms of Service', href: '/terms' },
                 { name: 'Accessibility', href: '/accessibility' },
               ].map((link) => (

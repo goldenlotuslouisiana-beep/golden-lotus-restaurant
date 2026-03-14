@@ -19,6 +19,7 @@ import Checkout from '@/pages/Checkout';
 import OrderConfirmed from '@/pages/OrderConfirmed';
 import OrderTracking from '@/pages/OrderTracking';
 import Profile from '@/pages/Profile';
+import Sitemap from '@/pages/Sitemap';
 
 // Admin Pages
 import AdminLayout from '@/admin/AdminLayout';
@@ -72,11 +73,15 @@ function App() {
             <Route path="/order/:id/track" element={<OrderTracking />} />
             <Route path="/profile" element={<Profile />} />
 
+            {/* Utility pages */}
+            <Route path="/sitemap" element={<Sitemap />} />
+            
             {/* Placeholder routes */}
             <Route path="/careers" element={<div className="pt-32 pb-20 text-center">We're Hiring - Coming Soon</div>} />
             <Route path="/gift-cards" element={<div className="pt-32 pb-20 text-center">Gift Cards - Coming Soon</div>} />
             <Route path="/contact" element={<div className="pt-32 pb-20 text-center">Contact Us - Coming Soon</div>} />
             <Route path="/terms" element={<div className="pt-32 pb-20 text-center">Terms of Service - Coming Soon</div>} />
+            <Route path="/privacy" element={<div className="pt-32 pb-20 text-center">Privacy Policy - Coming Soon</div>} />
             <Route path="/accessibility" element={<div className="pt-32 pb-20 text-center">Accessibility - Coming Soon</div>} />
           </Route>
 

@@ -3,18 +3,64 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, ShoppingBag, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-const navLinks = [
-  { name: 'Menu', href: '/menu' },
-  { name: 'Catering', href: '/catering' },
-  { name: 'Locations', href: '/locations' },
-  { name: 'Our Story', href: '/story' },
-  { name: 'Events', href: '/events' },
+/**
+ * SEO-Optimized Navigation Structure
+ * 
+ * These links are carefully organized to help Google generate Sitelinks.
+ * Primary navigation includes the most important pages that should appear
+ * in Google search results under the main website link.
+ */
+
+// Primary navigation - These are the main pages that Google should index
+// and potentially show as Sitelinks
+const mainNavLinks = [
+  { 
+    name: 'Home', 
+    href: '/',
+    // Home is the root page - always important for Sitelinks
+  },
+  { 
+    name: 'Menu', 
+    href: '/menu',
+    // Menu is a critical page for restaurants - high priority for Sitelinks
+  },
+  { 
+    name: 'Catering', 
+    href: '/catering',
+    // Catering is a major revenue stream - important for Sitelinks
+  },
+  { 
+    name: 'About Us', 
+    href: '/story',
+    // About page helps establish business credibility
+  },
+  { 
+    name: 'Locations', 
+    href: '/locations',
+    // Location page with address and hours - important for local SEO
+  },
+  { 
+    name: 'Events', 
+    href: '/events',
+    // Events page shows ongoing activities
+  },
 ];
 
-const moreLinks = [
-  { name: "We're Hiring", href: '/careers' },
-  { name: 'Gift Cards', href: '/gift-cards' },
-  { name: 'Contact Us', href: '/contact' },
+// Secondary navigation - Important but less prominent pages
+const secondaryNavLinks = [
+  { 
+    name: 'Contact', 
+    href: '/contact',
+    // Contact page with form and information
+  },
+  { 
+    name: "We're Hiring", 
+    href: '/careers',
+  },
+  { 
+    name: 'Gift Cards', 
+    href: '/gift-cards',
+  },
 ];
 
 export default function Navbar() {
@@ -45,21 +91,35 @@ export default function Navbar() {
     >
       <div className="section-padding">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
+          {/* Logo - Links to homepage with descriptive text */}
+          <Link 
+            to="/" 
+            className="flex items-center gap-2"
+            aria-label="Golden Lotus Grill - Authentic Indian Restaurant in Alexandria, LA"
+          >
             <img 
               src="/golden_lotus_logo.png" 
-              alt="Golden Lotus" 
+              alt="Golden Lotus Grill Logo" 
               className="w-10 h-10 object-contain"
+              width="40"
+              height="40"
             />
             <span className="hidden sm:block text-xl font-bold text-lotus-dark font-['Playfair_Display']">
               Golden Lotus
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-6">
-            {navLinks.map((link) => (
+          {/* Desktop Navigation - SEO-optimized with semantic HTML */}
+          <nav 
+            className="hidden lg:flex items-center gap-6"
+            role="navigation"
+            aria-label="Main Navigation"
+          >
+            {/* 
+              Primary navigation links
+              These are the most important pages for Sitelinks generation
+            */}
+            {mainNavLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
@@ -67,29 +127,36 @@ export default function Navbar() {
                     ? 'text-lotus-gold'
                     : 'text-lotus-dark'
                   }`}
+                aria-current={isActive(link.href) ? 'page' : undefined}
               >
                 {link.name}
               </Link>
             ))}
 
-            {/* More Dropdown */}
+            {/* Secondary Dropdown - Contains additional important pages */}
             <div className="relative">
               <button
                 onClick={() => setIsMoreOpen(!isMoreOpen)}
                 className="flex items-center gap-1 text-sm font-medium text-lotus-dark hover:text-lotus-gold transition-colors"
+                aria-expanded={isMoreOpen}
+                aria-haspopup="true"
               >
                 More
                 <ChevronDown className={`w-4 h-4 transition-transform ${isMoreOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isMoreOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 animate-fade-in">
-                  {moreLinks.map((link) => (
+                <div 
+                  className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 animate-fade-in"
+                  role="menu"
+                >
+                  {secondaryNavLinks.map((link) => (
                     <Link
                       key={link.name}
                       to={link.href}
                       className="block px-4 py-2 text-sm text-lotus-dark hover:bg-lotus-cream hover:text-lotus-gold transition-colors"
                       onClick={() => setIsMoreOpen(false)}
+                      role="menuitem"
                     >
                       {link.name}
                     </Link>
@@ -106,6 +173,8 @@ export default function Navbar() {
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2"
+                  aria-expanded={dropdownOpen}
+                  aria-haspopup="true"
                 >
                   <div className="w-9 h-9 rounded-full bg-lotus-gold flex items-center justify-center text-white font-bold text-sm">
                     {user?.fullName?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
@@ -152,6 +221,7 @@ export default function Navbar() {
               </Link>
             )}
 
+            {/* Order Online Button - Prominent CTA */}
             <Link
               to="/menu?order=true"
               className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2 bg-lotus-gold text-white text-sm font-medium rounded-lg hover:bg-lotus-gold-dark transition-colors"
@@ -165,17 +235,24 @@ export default function Navbar() {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden p-2 text-lotus-dark hover:text-lotus-gold transition-colors"
+              aria-label="Toggle mobile menu"
+              aria-expanded={isMobileMenuOpen}
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - All navigation links for mobile users */}
         {isMobileMenuOpen && (
           <div className="lg:hidden mt-4 pb-4 border-t border-gray-100 pt-4 animate-fade-in">
-            <nav className="flex flex-col gap-2">
-              {navLinks.map((link) => (
+            <nav 
+              className="flex flex-col gap-2"
+              role="navigation"
+              aria-label="Mobile Navigation"
+            >
+              {/* Primary links first */}
+              {mainNavLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.href}
@@ -184,12 +261,14 @@ export default function Navbar() {
                       : 'text-lotus-dark hover:bg-gray-50'
                     }`}
                   onClick={() => setIsMobileMenuOpen(false)}
+                  aria-current={isActive(link.href) ? 'page' : undefined}
                 >
                   {link.name}
                 </Link>
               ))}
               <div className="border-t border-gray-100 my-2" />
-              {moreLinks.map((link) => (
+              {/* Secondary links */}
+              {secondaryNavLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.href}
