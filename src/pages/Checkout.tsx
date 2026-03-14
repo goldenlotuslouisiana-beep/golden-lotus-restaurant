@@ -4,6 +4,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { ArrowLeft, ArrowRight, Phone, Mail, User, CreditCard, DollarSign, ShoppingBag, Lock, Check, Loader2, Tag, Clock} from 'lucide-react';
 import { stripePromise } from '@/lib/stripe';
 import { useAuth } from '@/context/AuthContext';
+import SEO from '@/components/SEO';
 
 interface CartItem { id: string; name: string; price: number; quantity: number; image?: string; }
 
@@ -169,6 +170,13 @@ function CheckoutInner() {
     const inputNoCls = "w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all";
 
     return (
+        <>
+            <SEO 
+                title="Checkout | Golden Lotus Restaurant"
+                description="Complete your order at Golden Lotus. Secure payment options including credit card and cash on delivery."
+                url="https://www.goldenlotusgrill.com/checkout"
+                noIndex={true}
+            />
         <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
             <div className="max-w-5xl mx-auto">
                 <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/menu')} className="flex items-center gap-2 text-gray-600 hover:text-[#F97316] mb-6 transition-colors">
@@ -187,10 +195,10 @@ function CheckoutInner() {
                                         📍 Pickup Location
                                     </h3>
                                     <p className="text-gray-600 mt-1">Golden Lotus Restaurant</p>
-                                    <p className="text-gray-600">168 Dragon Blvd, Los Angeles, CA 90012</p>
+                                    <p className="text-gray-600">1473 Dorchester Dr, Alexandria, LA 71301</p>
                                     <p className="text-gray-600">(213) 555-1688</p>
                                     <a 
-                                      href="https://maps.google.com?q=168+Dragon+Blvd+Los+Angeles+CA"
+                                      href="https://maps.google.com?q=1473+Dorchester+Dr+Alexandria+LA+71301"
                                       target="_blank"
                                       className="text-orange-500 text-sm mt-2 inline-block font-medium"
                                     >
@@ -321,6 +329,7 @@ function CheckoutInner() {
                 </div>
             </div>
         </div>
+        </>
     );
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DataStore } from '@/data/store';
 import type { StorySection } from '@/types';
+import SEO, { breadcrumbSchema } from '@/components/SEO';
 
 export default function Story() {
   const [storySections, setStorySections] = useState<StorySection[]>([]);
@@ -11,6 +12,17 @@ export default function Story() {
   }, []);
 
   return (
+    <>
+      <SEO 
+        title="Our Story | Golden Lotus Indian Restaurant Alexandria, LA"
+        description="Discover the story behind Golden Lotus in Alexandria, Louisiana. Our journey from a family kitchen to Central Louisiana's favorite Indian restaurant. Authentic recipes, passionate chefs, and a commitment to excellence."
+        keywords="our story, about Golden Lotus, Indian restaurant Alexandria history, family restaurant Louisiana, authentic recipes, 71301 restaurant story"
+        url="https://www.goldenlotusgrill.com/story"
+        schema={breadcrumbSchema([
+          { name: 'Home', url: 'https://www.goldenlotusgrill.com' },
+          { name: 'Our Story', url: 'https://www.goldenlotusgrill.com/story' },
+        ])}
+      />
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <section className="relative h-[400px] flex items-center justify-center">
@@ -145,5 +157,6 @@ export default function Story() {
         </div>
       </section>
     </div>
+    </>
   );
 }

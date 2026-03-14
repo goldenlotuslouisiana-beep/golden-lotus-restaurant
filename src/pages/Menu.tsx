@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Plus, Minus, X, Tag } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { MenuItem, MenuCategory, Coupon } from '@/types';
+import SEO, { breadcrumbSchema } from '@/components/SEO';
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -86,6 +87,16 @@ export default function Menu() {
 
   return (
     <>
+      <SEO 
+        title="Our Menu | Authentic Indian Dishes | Golden Lotus Alexandria, LA"
+        description="Explore our menu of authentic Indian cuisine in Alexandria, Louisiana. From flavorful curries to fresh tandoori dishes, vegetarian options, and more. Order online for pickup at 1473 Dorchester Dr!"
+        keywords="Indian menu Alexandria LA, Indian food menu, curry dishes, tandoori, biryani, vegetarian Indian food Alexandria, halal food Louisiana, order Indian food online 71301"
+        url="https://www.goldenlotusgrill.com/menu"
+        schema={breadcrumbSchema([
+          { name: 'Home', url: 'https://www.goldenlotusgrill.com' },
+          { name: 'Menu', url: 'https://www.goldenlotusgrill.com/menu' },
+        ])}
+      />
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b sticky top-16 z-30">

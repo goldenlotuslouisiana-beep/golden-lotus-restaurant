@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Clock, ExternalLink, Navigation } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { Location } from '@/types';
+import SEO, { breadcrumbSchema } from '@/components/SEO';
 
 export default function Locations() {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -11,6 +12,17 @@ export default function Locations() {
   }, []);
 
   return (
+    <>
+      <SEO 
+        title="Our Location | Golden Lotus Indian Restaurant | Alexandria, LA 71301"
+        description="Visit Golden Lotus at 1473 Dorchester Dr, Alexandria, LA 71301. Authentic Indian cuisine in Central Louisiana. View hours, contact info, and directions. Order online for pickup!"
+        keywords="Golden Lotus location, Indian restaurant Alexandria LA, 1473 Dorchester Dr, Alexandria LA restaurant, restaurant hours 71301, directions Alexandria Louisiana, Indian food near me"
+        url="https://www.goldenlotusgrill.com/locations"
+        schema={breadcrumbSchema([
+          { name: 'Home', url: 'https://www.goldenlotusgrill.com' },
+          { name: 'Locations', url: 'https://www.goldenlotusgrill.com/locations' },
+        ])}
+      />
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <section className="relative h-[350px] flex items-center justify-center">
@@ -22,9 +34,9 @@ export default function Locations() {
         </div>
         
         <div className="relative z-10 text-center text-white px-4 section-padding">
-          <h1 className="heading-lg mb-4">Our Locations</h1>
+          <h1 className="heading-lg mb-4">Our Location</h1>
           <p className="text-lg opacity-90 max-w-2xl mx-auto">
-            Visit us at one of our two convenient locations in Florida. 
+            Visit us at 1473 Dorchester Dr, Alexandria, LA 71301 in Central Louisiana. 
             Experience authentic Indian cuisine in a warm, welcoming atmosphere.
           </p>
         </div>
@@ -153,8 +165,8 @@ export default function Locations() {
           <div className="text-center mb-8">
             <h2 className="heading-sm text-lotus-dark mb-4">Find Us on the Map</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Both our locations are easily accessible and offer ample parking. 
-              Visit us today and experience the best Indian food in Florida!
+              Our location is easily accessible with ample parking. 
+              Visit us today at 1473 Dorchester Dr and experience the best Indian food in Alexandria, Louisiana!
             </p>
           </div>
           
@@ -165,7 +177,7 @@ export default function Locations() {
                 className="aspect-video bg-gray-200 rounded-xl overflow-hidden relative"
               >
                 <iframe
-                  src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3592.5!2d-80.3!3d25.7!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjXCsDQyJzAwLjAiTiA4MMKwMTgnMDAuMCJX!5e0!3m2!1sen!2sus!4v1`}
+                  src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3354.5!2d-92.4626!3d31.2944!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzHCsDE3JzQwLjAiTiA5MsKwMjcnNDUuNCJX!5e0!3m2!1sen!2sus!4v1`}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
@@ -205,5 +217,6 @@ export default function Locations() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2, ArrowRight, Check, X } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/context/AuthContext';
+import SEO from '@/components/SEO';
 
 function PasswordStrength({ password }: { password: string }) {
     const checks = [
@@ -99,6 +100,13 @@ export default function Signup() {
     };
 
     return (
+        <>
+            <SEO 
+                title="Create Account | Golden Lotus Rewards"
+                description="Join Golden Lotus Rewards to earn points on every order, get exclusive offers, and enjoy a personalized dining experience."
+                url="https://www.goldenlotusgrill.com/signup"
+                noIndex={true}
+            />
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex items-center justify-center py-12 px-4">
             <div className="max-w-md w-full">
                 {/* Branding */}
@@ -216,5 +224,6 @@ export default function Signup() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

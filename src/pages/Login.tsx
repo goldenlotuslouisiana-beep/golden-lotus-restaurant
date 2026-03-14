@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/context/AuthContext';
+import SEO from '@/components/SEO';
 
 export default function Login() {
   const { login, googleLogin, isLoggedIn } = useAuth();
@@ -69,6 +70,13 @@ export default function Login() {
   };
 
   return (
+    <>
+      <SEO 
+        title="Sign In | Golden Lotus Rewards"
+        description="Sign in to your Golden Lotus account to access rewards, track orders, and manage your preferences."
+        url="https://www.goldenlotusgrill.com/login"
+        noIndex={true}
+      />
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
         {/* Branding */}
@@ -172,5 +180,6 @@ export default function Login() {
         </div>
       </div>
     </div>
+    </>
   );
 }

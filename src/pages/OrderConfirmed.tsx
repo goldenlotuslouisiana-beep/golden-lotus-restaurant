@@ -1,6 +1,7 @@
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { CheckCircle, Phone, Mail, ArrowRight, Loader2, Package } from 'lucide-react';
+import SEO from '@/components/SEO';
 
 interface OrderData {
     id: string; orderNumber: string;
@@ -32,6 +33,13 @@ export default function OrderConfirmed() {
     if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-[#F97316]" /></div>;
 
     return (
+        <>
+            <SEO 
+                title="Order Confirmed | Golden Lotus Restaurant"
+                description="Your order has been confirmed! Thank you for choosing Golden Lotus. We'll have your delicious Indian food ready soon."
+                url="https://www.goldenlotusgrill.com/order-confirmed"
+                noIndex={true}
+            />
         <div className="min-h-screen bg-gradient-to-b from-green-50 to-gray-50 pt-28 pb-16 px-4 relative overflow-hidden">
             {/* Confetti particles */}
             {showConfetti && (
@@ -80,8 +88,8 @@ export default function OrderConfirmed() {
                     <h3 className="font-bold text-lg text-gray-900">Ready in 15-20 minutes!</h3>
                     <p className="text-gray-600 mt-1">Please pick up your order at:</p>
                     <p className="font-semibold text-gray-900 mt-2">Golden Lotus Restaurant</p>
-                    <p className="text-gray-600 text-sm">168 Dragon Blvd, Los Angeles, CA 90012</p>
-                    <a href="https://maps.google.com?q=168+Dragon+Blvd+Los+Angeles+CA"
+                    <p className="text-gray-600 text-sm">1473 Dorchester Dr, Alexandria, LA 71301</p>
+                    <a href="https://maps.google.com?q=1473+Dorchester+Dr+Alexandria+LA+71301"
                        target="_blank"
                        className="mt-3 inline-block bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors">
                       📌 Get Directions
@@ -137,5 +145,6 @@ export default function OrderConfirmed() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

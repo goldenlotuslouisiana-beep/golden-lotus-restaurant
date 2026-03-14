@@ -286,85 +286,104 @@ export interface Analytics {
 }
 
 // Catering Types
-export type CateringType = 'wedding' | 'corporate' | 'private';
+export type CateringType = 'wedding' | 'corporate' | 'private' | 'all';
 export type CateringStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
 export type BudgetTier = 'silver' | 'gold' | 'platinum' | 'budget' | 'standard' | 'premium';
 
-export interface CateringDish {
+// Professional Catering Menu Item
+export interface CateringMenuItem {
   id: string;
   name: string;
-  description?: string;
-  dietary: ('halal' | 'vegetarian' | 'gluten-free' | 'vegan')[];
-  course: 'starter' | 'soup' | 'main' | 'dessert';
+  description: string;
+  image?: string;
+  category: 'appetizer' | 'main' | 'dessert' | 'beverage' | 'sides';
+  dietary: ('halal' | 'vegetarian' | 'gluten-free' | 'vegan' | 'spicy')[];
+  isPopular?: boolean;
 }
 
-export interface CateringAddOn {
-  id: string;
-  name: string;
-  price: number;
-  description?: string;
-}
-
+// Catering Package - Professional Structure
 export interface CateringPackage {
   id: string;
   name: string;
+  subtitle?: string;
   cateringType: CateringType;
   description: string;
-  pricePerHead?: number;
-  flatPrice?: number;
+  longDescription?: string;
+  pricePerPerson: number;
   minGuests: number;
   maxGuests: number;
-  includedItems: string[];
-  dishes: CateringDish[];
-  addOns: CateringAddOn[];
-  gallery: string[];
+  images: string[];
+  featuredImage: string;
+  // Menu Items with categories
+  menuItems: {
+    category: string;
+    items: string[];
+  }[];
+  // What's included list
+  inclusions: string[];
+  // Features/Benefits
   features: string[];
+  // Suitable for
+  suitableFor: string[];
+  // Add-ons available
+  availableAddOns?: {
+    name: string;
+    price: number;
+    description?: string;
+  }[];
+  // Display settings
   active: boolean;
+  featured: boolean;
   order: number;
-  // Type-specific fields
-  budgetTiers?: BudgetTier[];
-  venueTypes?: string[];
-  serviceFormats?: string[];
-  cuisineStyles?: string[];
+  // Metadata
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface CateringOrder {
+// Catering Inquiry/Order - Professional Structure
+export interface CateringInquiry {
   id: string;
-  orderNumber: string;
+  inquiryNumber: string;
+  // Contact Info
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  cateringType: CateringType;
+  companyName?: string;
+  // Event Details
+  eventType: string;
+  eventDate: string;
+  eventTime?: string;
+  guestCount: number;
+  // Location
+  venueType: 'delivery' | 'pickup' | 'on-site';
+  venueAddress?: string;
+  // Package Selection
   packageId?: string;
   packageName?: string;
-  eventDate: string;
-  eventLocation: string;
-  guestCount: number;
-  budgetTier?: BudgetTier;
+  customRequest: boolean;
+  // Requirements
+  dietaryRequirements?: string;
   specialRequests?: string;
-  photos?: string[];
-  // Wedding-specific
-  courses?: string[];
-  decorationAddons?: string[];
-  tastingSessionDate?: string;
-  // Corporate-specific
-  serviceFormat?: string;
-  setupTime?: string;
-  breakdownTime?: string;
-  recurringBooking?: 'one-time' | 'weekly' | 'monthly';
-  brandingOptions?: string[];
-  // Private-specific
-  eventSubType?: string;
-  indoorOutdoor?: 'indoor' | 'outdoor';
-  cuisineStyle?: string;
-  liveCooking?: boolean;
-  rentalItems?: string[];
-  serviceDuration?: string;
-  // Status
-  status: CateringStatus;
+  budgetRange?: string;
+  // Service preferences
+  serviceStyle?: 'buffet' | 'plated' | 'family-style' | 'stations';
+  needStaffing?: boolean;
+  needRentals?: boolean;
+  // Status & Admin
+  status: 'new' | 'contacted' | 'quoted' | 'confirmed' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  assignedTo?: string;
   adminNotes?: string;
-  customQuote?: boolean;
-  customPricing?: number;
-  createdAt: string;
+  quotedAmount?: number;
+  followUpDate?: string;
+  // Timestamps
+  submittedAt: string;
   updatedAt: string;
+  // Communication
+  communicationLog?: {
+    date: string;
+    type: 'email' | 'phone' | 'meeting' | 'note';
+    notes: string;
+    staffName?: string;
+  }[];
 }

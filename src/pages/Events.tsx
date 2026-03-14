@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, Users, Music, Palette, Sparkles, Camera, UtensilsCrossed, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { Event, EventPackage } from '@/types';
+import SEO, { breadcrumbSchema } from '@/components/SEO';
 
 // Icon mapping for features
 const iconComponents: Record<string, React.ReactNode> = {
@@ -52,6 +53,12 @@ export default function Events() {
 
   if (events.length === 0) {
     return (
+      <>
+        <SEO 
+          title="Special Events | Golden Lotus Indian Restaurant"
+          description="Discover special events and celebrations at Golden Lotus. Henna parties, themed nights, and more. Book your spot today!"
+          url="https://www.goldenlotusgrill.com/events"
+        />
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -59,10 +66,22 @@ export default function Events() {
           <p className="text-gray-500">Check back soon for upcoming events!</p>
         </div>
       </div>
+      </>
     );
   }
 
   return (
+    <>
+      <SEO 
+        title="Special Events & Celebrations | Golden Lotus Alexandria, LA"
+        description="Join us for special events at Golden Lotus in Alexandria, Louisiana. Henna parties, themed nights, cultural celebrations, and exclusive dining experiences. Located at 1473 Dorchester Dr. Reserve your spot!"
+        keywords="events Alexandria LA, henna party Louisiana, themed nights, cultural events, Indian restaurant events Alexandria, 71301 events, celebration Alexandria"
+        url="https://www.goldenlotusgrill.com/events"
+        schema={breadcrumbSchema([
+          { name: 'Home', url: 'https://www.goldenlotusgrill.com' },
+          { name: 'Events', url: 'https://www.goldenlotusgrill.com/events' },
+        ])}
+      />
     <div className="min-h-screen bg-gray-50">
       {/* Event Selector - Show if multiple events */}
       {events.length > 1 && (
@@ -275,5 +294,6 @@ export default function Events() {
         </>
       )}
     </div>
+    </>
   );
 }

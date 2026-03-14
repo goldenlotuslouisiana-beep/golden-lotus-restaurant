@@ -15,7 +15,7 @@ import type {
   Event,
   EventPackage,
   CateringPackage,
-  CateringOrder,
+  CateringInquiry,
 } from '@/types';
 
 // Default Admin User
@@ -157,40 +157,20 @@ const defaultMenuItems: MenuItem[] = [
 const defaultLocations: Location[] = [
   {
     id: '1',
-    name: 'Golden Lotus - Downtown',
-    address: '888 Lotus Lane',
-    city: 'San Francisco',
-    state: 'CA',
-    zip: '94108',
-    phone: '(415) 555-8888',
-    email: 'hello@goldenlotus.com',
-    googleMapsUrl: 'https://maps.google.com/?q=San+Francisco+Chinatown',
+    name: 'Golden Lotus Indian Restaurant',
+    address: '1473 Dorchester Dr',
+    city: 'Alexandria',
+    state: 'LA',
+    zip: '71301',
+    phone: '(318) 555-0123',
+    email: 'hello@goldenlotusgrill.com',
+    googleMapsUrl: 'https://maps.google.com/?q=1473+Dorchester+Dr+Alexandria+LA+71301',
     hours: [
-      { day: 'Monday', open: '11:00 AM', close: '10:00 PM' },
-      { day: 'Tuesday', open: '11:00 AM', close: '10:00 PM' },
-      { day: 'Wednesday', open: '11:00 AM', close: '10:00 PM' },
-      { day: 'Thursday', open: '11:00 AM', close: '10:00 PM' },
-      { day: 'Friday', open: '11:00 AM', close: '11:00 PM' },
-      { day: 'Saturday', open: '11:00 AM', close: '11:00 PM' },
-      { day: 'Sunday', open: '11:00 AM', close: '10:00 PM' },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Golden Lotus - Westside',
-    address: '168 Dragon Blvd',
-    city: 'Los Angeles',
-    state: 'CA',
-    zip: '90012',
-    phone: '(213) 555-1688',
-    email: 'la@goldenlotus.com',
-    googleMapsUrl: 'https://maps.google.com/?q=Los+Angeles+Chinatown',
-    hours: [
-      { day: 'Monday', open: '11:00 AM', close: '10:00 PM' },
-      { day: 'Tuesday', open: '11:00 AM', close: '10:00 PM' },
-      { day: 'Wednesday', open: '11:00 AM', close: '10:00 PM' },
-      { day: 'Thursday', open: '11:00 AM', close: '10:00 PM' },
-      { day: 'Friday', open: '11:00 AM', close: '11:00 PM' },
+      { day: 'Monday', open: '11:30 AM', close: '10:00 PM' },
+      { day: 'Tuesday', open: '11:30 AM', close: '10:00 PM' },
+      { day: 'Wednesday', open: '11:30 AM', close: '10:00 PM' },
+      { day: 'Thursday', open: '11:30 AM', close: '10:00 PM' },
+      { day: 'Friday', open: '11:30 AM', close: '11:00 PM' },
       { day: 'Saturday', open: '11:00 AM', close: '11:00 PM' },
       { day: 'Sunday', open: '11:00 AM', close: '10:00 PM' },
     ],
@@ -524,134 +504,472 @@ const defaultOrders: Order[] = [
   },
 ];
 
-// Default Catering Packages
+// Professional Catering Packages
 const defaultCateringPackages: CateringPackage[] = [
   {
     id: '1',
-    name: 'Wedding Silver Package',
+    name: 'Royal Wedding Feast',
+    subtitle: 'Elegant Celebration',
     cateringType: 'wedding',
-    description: 'Elegant wedding catering with essential services and classic menu options.',
-    pricePerHead: 45,
+    description: 'An exquisite dining experience for your special day with premium dishes and elegant presentation.',
+    longDescription: 'Our Royal Wedding Feast package offers a comprehensive catering solution for your dream wedding. From the welcome drinks to the final dessert, every detail is crafted to perfection. Includes professional service staff, elegant buffet setup, and customizable menu options.',
+    pricePerPerson: 85,
     minGuests: 50,
-    maxGuests: 100,
-    includedItems: ['Tables & Chairs', 'Basic Cutlery', 'Service Staff (2)', 'Setup & Cleanup'],
-    dishes: [
-      { id: 'w1', name: 'Spring Rolls', course: 'starter', dietary: ['vegetarian'] },
-      { id: 'w2', name: 'Hot & Sour Soup', course: 'soup', dietary: ['vegetarian', 'halal'] },
-      { id: 'w3', name: 'Kung Pao Chicken', course: 'main', dietary: ['halal'] },
-      { id: 'w4', name: 'Vegetable Fried Rice', course: 'main', dietary: ['vegetarian', 'halal'] },
-      { id: 'w5', name: 'Mango Pudding', course: 'dessert', dietary: ['vegetarian', 'gluten-free'] },
-    ],
-    addOns: [
-      { id: 'a1', name: 'Floral Centerpieces', price: 150, description: 'Beautiful floral arrangements for each table' },
-      { id: 'a2', name: 'Extra Service Staff', price: 100, description: 'Additional server for 4 hours' },
-    ],
-    gallery: [
-      'https://images.unsplash.com/photo-1519741497674-611481863552?w=800',
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800',
-    ],
-    features: ['Multi-course Menu', 'Guest Count 50-100', 'Basic Decor', '2 Service Staff'],
-    active: true,
-    order: 1,
-    budgetTiers: ['silver'],
-    venueTypes: ['indoor hall', 'marquee'],
-  },
-  {
-    id: '2',
-    name: 'Wedding Gold Package',
-    cateringType: 'wedding',
-    description: 'Premium wedding catering with upgraded menu and enhanced services.',
-    pricePerHead: 75,
-    minGuests: 100,
-    maxGuests: 200,
-    includedItems: ['Tables & Chairs', 'Premium Cutlery', 'Service Staff (4)', 'Setup & Cleanup', 'Tasting Session', 'Event Coordinator'],
-    dishes: [
-      { id: 'g1', name: 'Dim Sum Platter', course: 'starter', dietary: ['halal'] },
-      { id: 'g2', name: 'Wonton Soup', course: 'soup', dietary: ['halal'] },
-      { id: 'g3', name: 'Peking Duck', course: 'main', dietary: ['halal'] },
-      { id: 'g4', name: 'Szechuan Beef', course: 'main', dietary: ['halal'] },
-      { id: 'g5', name: 'Vegetable Lo Mein', course: 'main', dietary: ['vegetarian'] },
-      { id: 'g6', name: 'Sesame Balls', course: 'dessert', dietary: ['vegetarian'] },
-    ],
-    addOns: [
-      { id: 'b1', name: 'Premium Floral Package', price: 350, description: 'Luxury floral arrangements and centerpieces' },
-      { id: 'b2', name: 'Live Cooking Station', price: 500, description: 'Interactive wok station with chef' },
-      { id: 'b3', name: 'Champagne Service', price: 250, description: 'Welcome champagne for all guests' },
-    ],
-    gallery: [
+    maxGuests: 500,
+    images: [
+      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800',
       'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800',
       'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=800',
     ],
-    features: ['Multi-course Menu', 'Guest Count 100-200', 'Premium Decor', '4 Service Staff', 'Tasting Session'],
+    featuredImage: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800',
+    menuItems: [
+      {
+        category: 'Welcome Drinks',
+        items: ['Rose Lassi', 'Mango Mojito (Mocktail)', 'Masala Chai']
+      },
+      {
+        category: 'Appetizers',
+        items: ['Paneer Tikka', 'Chicken Seekh Kebab', 'Vegetable Samosa', 'Dahi Puri']
+      },
+      {
+        category: 'Main Course',
+        items: ['Butter Chicken', 'Paneer Butter Masala', 'Dal Makhani', 'Hydrabadi Biryani', 'Assorted Naan']
+      },
+      {
+        category: 'Desserts',
+        items: ['Gulab Jamun', 'Kesar Badam Kheer', 'Rasmalai']
+      }
+    ],
+    inclusions: [
+      'Professional Service Staff (1 per 20 guests)',
+      'Elegant Buffet Setup with Chafing Dishes',
+      'Premium Cutlery & Crockery',
+      'Table Linens & Napkins',
+      'Setup & Cleanup Service',
+      'Tasting Session for Couple',
+      'Event Coordinator',
+      'Custom Menu Planning Consultation'
+    ],
+    features: [
+      'Authentic Indian Cuisine',
+      'Halal Certified Meats',
+      'Vegetarian & Vegan Options',
+      'Live Tandoor Station',
+      'Flexible Customization'
+    ],
+    suitableFor: ['Weddings', 'Receptions', 'Engagement Parties', 'Anniversary Celebrations'],
+    availableAddOns: [
+      { name: 'Live Tandoor Station', price: 500, description: 'Fresh naan and kebabs prepared live' },
+      { name: 'Additional Service Staff', price: 150, description: 'Per staff member for 5 hours' },
+      { name: 'Premium Floral Decor', price: 800, description: 'Elegant centerpieces and buffet decor' },
+      { name: 'Welcome Drink Station', price: 300, description: 'Unlimited mocktails for 2 hours' }
+    ],
     active: true,
+    featured: true,
+    order: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    name: 'Corporate Executive Package',
+    subtitle: 'Business Dining',
+    cateringType: 'corporate',
+    description: 'Professional catering solutions for meetings, conferences, and corporate events.',
+    longDescription: 'Designed for the modern workplace, our Corporate Executive Package delivers delicious, professional catering that impresses clients and energizes teams. Timely delivery, flexible service options, and dietary accommodations included.',
+    pricePerPerson: 45,
+    minGuests: 20,
+    maxGuests: 300,
+    images: [
+      'https://images.unsplash.com/photo-1555244162-803794f237d6?w=800',
+      'https://images.unsplash.com/photo-1541014741259-de529411b96a?w=800',
+    ],
+    featuredImage: 'https://images.unsplash.com/photo-1555244162-803794f237d6?w=800',
+    menuItems: [
+      {
+        category: 'Appetizers',
+        items: ['Vegetable Spring Rolls', 'Chicken Pakora', 'Mint Chutney']
+      },
+      {
+        category: 'Main Course',
+        items: ['Butter Chicken', 'Palak Paneer', 'Chana Masala', 'Jeera Rice', 'Mixed Bread Basket']
+      },
+      {
+        category: 'Accompaniments',
+        items: ['Green Salad', 'Papad', 'Pickles']
+      },
+      {
+        category: 'Dessert',
+        items: ['Gulab Jamun', 'Masala Chai']
+      }
+    ],
+    inclusions: [
+      'Delivery within Alexandria city limits',
+      'Buffet Setup with Chafing Dishes',
+      'Disposable Cutlery & Plates',
+      'Napkins & Serving Utensils',
+      'Setup Service',
+      'Dietary Labels for Allergens',
+      'Corporate Billing Available'
+    ],
+    features: [
+      'On-Time Delivery Guaranteed',
+      'Individual Box Lunch Options',
+      'Dietary Restrictions Accommodated',
+      'Eco-Friendly Packaging Available',
+      'Recurring Order Discounts'
+    ],
+    suitableFor: ['Business Meetings', 'Team Lunches', 'Conferences', 'Training Sessions', 'Office Parties'],
+    availableAddOns: [
+      { name: 'Premium Cutlery Upgrade', price: 3, description: 'Per person - reusable bamboo cutlery' },
+      { name: 'Beverage Station', price: 5, description: 'Soft drinks and water per person' },
+      { name: 'Breakfast Add-on', price: 15, description: 'Continental breakfast with coffee' },
+      { name: 'Branded Napkins', price: 50, description: 'Custom printed with company logo' }
+    ],
+    active: true,
+    featured: true,
     order: 2,
-    budgetTiers: ['gold'],
-    venueTypes: ['indoor hall', 'outdoor', 'marquee'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: '3',
-    name: 'Corporate Buffet Package',
-    cateringType: 'corporate',
-    description: 'Professional buffet service perfect for business meetings and corporate events.',
-    pricePerHead: 25,
-    minGuests: 20,
-    maxGuests: 500,
-    includedItems: ['Chafing Dishes', 'Serving Tables', 'Disposable Cutlery', 'Setup & Cleanup', 'Delivery within 10 miles'],
-    dishes: [
-      { id: 'c1', name: 'Mixed Appetizer Platter', course: 'starter', dietary: ['vegetarian', 'halal'] },
-      { id: 'c2', name: 'Orange Chicken', course: 'main', dietary: ['halal'] },
-      { id: 'c3', name: 'Beef with Broccoli', course: 'main', dietary: ['halal', 'gluten-free'] },
-      { id: 'c4', name: 'Vegetable Chow Mein', course: 'main', dietary: ['vegetarian'] },
-      { id: 'c5', name: 'Steamed Rice', course: 'main', dietary: ['vegetarian', 'gluten-free', 'halal'] },
-      { id: 'c6', name: 'Fortune Cookies', course: 'dessert', dietary: ['vegetarian'] },
+    name: 'Birthday Celebration Package',
+    subtitle: 'Party Special',
+    cateringType: 'private',
+    description: 'Make birthdays memorable with our festive catering package.',
+    longDescription: 'Celebrate another year with flavor! Our Birthday Celebration Package brings joy to your party with crowd-pleasing dishes, colorful presentation, and hassle-free service. Perfect for all ages.',
+    pricePerPerson: 40,
+    minGuests: 15,
+    maxGuests: 150,
+    images: [
+      'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800',
+      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800',
     ],
-    addOns: [
-      { id: 'co1', name: 'Branded Napkins', price: 50, description: 'Custom printed napkins with company logo' },
-      { id: 'co2', name: 'Extension Cords', price: 25, description: 'For chafing dishes' },
-      { id: 'co3', name: 'Extra Delivery Mileage', price: 2, description: 'Per mile beyond 10 miles' },
+    featuredImage: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800',
+    menuItems: [
+      {
+        category: 'Starters',
+        items: ['Samosa Chaat', 'Paneer Tikka', 'Chicken Wings']
+      },
+      {
+        category: 'Main Course',
+        items: ['Chicken Curry', 'Dal Tadka', 'Mixed Vegetables', 'Pulao Rice', 'Naan & Roti']
+      },
+      {
+        category: 'Kids Favorites',
+        items: ['French Fries', 'Veg Nuggets', 'Fruit Juice']
+      },
+      {
+        category: 'Desserts',
+        items: ['Birthday Cake', 'Ice Cream', 'Gulab Jamun']
+      }
     ],
-    gallery: [
-      'https://images.unsplash.com/photo-1555244162-803279f50793?w=800',
+    inclusions: [
+      '2 Professional Service Staff',
+      'Colorful Buffet Setup',
+      'Birthday Banner Decoration',
+      'Disposable Cutlery & Plates',
+      'Cake Cutting Setup',
+      '3 Hours Service Time',
+      'Cleanup Service'
     ],
-    features: ['Buffet Style', 'Min 20 Guests', 'Delivery Available', 'Disposableware Included'],
+    features: [
+      'Kid-Friendly Options',
+      'Colorful Presentation',
+      'Flexible Menu',
+      'BYO Cake Welcome',
+      'Party Music Setup'
+    ],
+    suitableFor: ['Birthday Parties', 'Kids Parties', 'Milestone Birthdays', 'Surprise Parties'],
+    availableAddOns: [
+      { name: 'Balloon Decorations', price: 100, description: 'Table centerpieces and buffet decor' },
+      { name: 'Face Painting', price: 200, description: 'Professional artist for 2 hours' },
+      { name: 'Extra Hour Service', price: 100, description: 'Extend party time' },
+      { name: 'Photo Booth Props', price: 50, description: 'Fun props for memorable photos' }
+    ],
     active: true,
+    featured: false,
     order: 3,
-    serviceFormats: ['buffet'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: '4',
-    name: 'Private Party Standard',
-    cateringType: 'private',
-    description: 'Perfect for birthdays, anniversaries, and social gatherings.',
-    pricePerHead: 35,
-    minGuests: 15,
-    maxGuests: 100,
-    includedItems: ['Tables & Chairs', 'Cutlery', 'Service Staff (2)', '3 Hours Service'],
-    dishes: [
-      { id: 'p1', name: 'Crab Rangoon', course: 'starter', dietary: [] },
-      { id: 'p2', name: 'Egg Drop Soup', course: 'soup', dietary: ['vegetarian', 'halal', 'gluten-free'] },
-      { id: 'p3', name: 'General Tso Chicken', course: 'main', dietary: ['halal'] },
-      { id: 'p4', name: 'Mongolian Beef', course: 'main', dietary: ['halal', 'gluten-free'] },
-      { id: 'p5', name: 'Tofu with Vegetables', course: 'main', dietary: ['vegetarian', 'halal', 'gluten-free'] },
-      { id: 'p6', name: 'Fried Bananas', course: 'dessert', dietary: ['vegetarian'] },
+    name: 'Premium Non-Veg Platter',
+    subtitle: 'Meat Lover\'s Delight',
+    cateringType: 'all',
+    description: 'A spectacular spread of our finest non-vegetarian specialties.',
+    longDescription: 'Specially curated for meat lovers, this package features our signature tandoori items, rich curries, and grilled specialties. Every dish is prepared with premium cuts and authentic spices.',
+    pricePerPerson: 65,
+    minGuests: 30,
+    maxGuests: 400,
+    images: [
+      'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800',
+      'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=800',
     ],
-    addOns: [
-      { id: 'pa1', name: 'Tent Rental', price: 200, description: '20x20 tent for outdoor events' },
-      { id: 'pa2', name: 'Extra Hour', price: 75, description: 'Extend service time' },
-      { id: 'pa3', name: 'Birthday Cake', price: 60, description: 'Custom celebration cake' },
+    featuredImage: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800',
+    menuItems: [
+      {
+        category: 'Tandoori Starters',
+        items: ['Chicken Tikka', 'Seekh Kebab', 'Fish Amritsari', 'Tandoori Prawns']
+      },
+      {
+        category: 'Main Course',
+        items: ['Butter Chicken', 'Rogan Josh', 'Chicken Biryani', 'Naan Assortment', 'Raita']
+      },
+      {
+        category: 'Grilled Specialties',
+        items: ['Tandoori Chicken (Full)', 'Malai Boti', 'Grilled Fish']
+      },
+      {
+        category: 'Dessert',
+        items: ['Phirni', 'Kulfi']
+      }
     ],
-    gallery: [
-      'https://images.unsplash.com/photo-1530103862676-de3c9da59af7?w=800',
+    inclusions: [
+      'Live Tandoor Station with Chef',
+      'Premium Cutlery & Plates',
+      'Service Staff',
+      ' Buffet Setup',
+      'Fresh Preparation',
+      'Mint Chutney & Sauces'
     ],
-    features: ['Flexible Menu', '15-100 Guests', 'Indoor/Outdoor', '2 Service Staff'],
+    features: [
+      'Live Cooking Station',
+      'Premium Quality Meats',
+      'Halal Certified',
+      'Authentic Tandoor Flavor',
+      'Chef Special Recommendations'
+    ],
+    suitableFor: ['Eid Celebrations', 'Family Gatherings', 'Festive Events', 'Wedding Functions'],
+    availableAddOns: [
+      { name: 'Additional Tandoor Item', price: 8, description: 'Per person' },
+      { name: 'Mutton Biryani Upgrade', price: 5, description: 'Per person upgrade' },
+      { name: 'Extra Chef', price: 200, description: 'For faster service' }
+    ],
     active: true,
+    featured: true,
     order: 4,
-    cuisineStyles: ['chinese', 'mixed'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '5',
+    name: 'Vegetarian Grand Buffet',
+    subtitle: 'Pure Veg Delight',
+    cateringType: 'all',
+    description: 'An elaborate vegetarian feast with authentic flavors.',
+    longDescription: 'Perfect for religious gatherings and vegetarian guests, this package showcases the best of Indian vegetarian cuisine. From street food favorites to royal curries, every dish is a celebration of vegetables.',
+    pricePerPerson: 40,
+    minGuests: 25,
+    maxGuests: 500,
+    images: [
+      'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800',
+      'https://images.unsplash.com/photo-1512058454905-6b841e7da1cb?w=800',
+    ],
+    featuredImage: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800',
+    menuItems: [
+      {
+        category: 'Appetizers',
+        items: ['Paneer Tikka', 'Hara Bhara Kebab', 'Veg Spring Rolls', 'Dahi Bhalla']
+      },
+      {
+        category: 'Main Course',
+        items: ['Paneer Butter Masala', 'Dal Makhani', 'Mix Vegetable Curry', 'Jeera Rice', 'Assorted Breads']
+      },
+      {
+        category: 'South Indian Corner',
+        items: ['Dosa Live Station', 'Idli Sambar', 'Coconut Chutney']
+      },
+      {
+        category: 'Desserts',
+        items: ['Jalebi', 'Gulab Jamun', 'Rasmalai', 'Masala Chai']
+      }
+    ],
+    inclusions: [
+      'Pure Vegetarian Kitchen Prep',
+      'Jain Options Available',
+      'Service Staff',
+      'Buffet Setup',
+      'Live Dosa Station',
+      'Separate Serving Utensils'
+    ],
+    features: [
+      '100% Vegetarian',
+      'Jain Menu Available',
+      'Live Cooking Station',
+      'No Onion/Garlic Options',
+      'Religious Event Suitable'
+    ],
+    suitableFor: ['Religious Events', 'Pujas', 'House Warming', 'Vegetarian Families'],
+    availableAddOns: [
+      { name: 'Jain Preparation', price: 0, description: 'No onion, no garlic - Free' },
+      { name: 'Extra Dosa Batter', price: 100, description: 'For larger crowds' },
+      { name: 'Gujarati Thali Add-on', price: 10, description: 'Per person' }
+    ],
+    active: true,
+    featured: false,
+    order: 5,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '6',
+    name: 'Snack & Finger Food Package',
+    subtitle: 'Light Bites',
+    cateringType: 'all',
+    description: 'Perfect for cocktail parties, networking events, or appetizers.',
+    longDescription: 'Keep it light and social with our finger food package. Ideal for networking events, open houses, or as appetizers before a main meal. Easy to eat while mingling!',
+    pricePerPerson: 25,
+    minGuests: 30,
+    maxGuests: 600,
+    images: [
+      'https://images.unsplash.com/photo-1541014741259-de529411b96a?w=800',
+      'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=800',
+    ],
+    featuredImage: 'https://images.unsplash.com/photo-1541014741259-de529411b96a?w=800',
+    menuItems: [
+      {
+        category: 'Savory Snacks',
+        items: ['Veg Samosa', 'Paneer Tikka Skewers', 'Chicken Wings', 'Spring Rolls']
+      },
+      {
+        category: 'Chaat Station',
+        items: ['Pani Puri', 'Bhel Puri', 'Dahi Puri', 'Papdi Chaat']
+      },
+      {
+        category: 'Kebabs',
+        items: ['Seekh Kebab', 'Shami Kebab', 'Hara Bhara Kebab']
+      },
+      {
+        category: 'Beverages',
+        items: ['Masala Chai', 'Soft Drinks', 'Jaljeera']
+      }
+    ],
+    inclusions: [
+      'Chaat Live Station',
+      'Disposable Plates & Napkins',
+      'Serving Staff',
+      'Setup for 2 Hours',
+      'Chutneys & Sauces',
+      'Beverage Service'
+    ],
+    features: [
+      'Easy Finger Foods',
+      'Live Chaat Station',
+      'Budget Friendly',
+      'Great for Networking',
+      'Quick Setup'
+    ],
+    suitableFor: ['Networking Events', 'Open Houses', 'Pre-wedding Functions', 'Corporate Mixers'],
+    availableAddOns: [
+      { name: 'Extra Hour', price: 150, description: 'Extend service time' },
+      { name: 'Premium Kebab Upgrade', price: 5, description: 'Per person' },
+      { name: 'Mocktail Station', price: 300, description: 'Unlimited mocktails' }
+    ],
+    active: true,
+    featured: false,
+    order: 6,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 
-// Default Catering Orders (empty initially)
-const defaultCateringOrders: CateringOrder[] = [];
+// Empty Catering Inquiries (will be populated by customer submissions)
+const defaultCateringInquiries: CateringInquiry[] = [
+  {
+    id: 'demo-1',
+    inquiryNumber: 'CAT-2024-001',
+    customerName: 'Sarah Johnson',
+    customerEmail: 'sarah.j@email.com',
+    customerPhone: '(318) 555-0145',
+    eventType: 'Wedding Reception',
+    eventDate: '2024-12-15T18:00',
+    guestCount: 120,
+    venueType: 'delivery',
+    venueAddress: '1473 Dorchester Dr, Alexandria, LA 71301',
+    packageId: '1',
+    packageName: 'Royal Wedding Feast',
+    customRequest: false,
+    dietaryRequirements: 'Need 20 vegetarian meals and 5 vegan options',
+    specialRequests: 'Would like a tasting session before confirming',
+    budgetRange: '$8,000 - $12,000',
+    serviceStyle: 'buffet',
+    needStaffing: true,
+    needRentals: false,
+    status: 'quoted',
+    priority: 'high',
+    assignedTo: 'Manager',
+    adminNotes: 'Client visited for initial consultation. Very interested in the Royal package.',
+    quotedAmount: 10200,
+    submittedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    communicationLog: [
+      {
+        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        type: 'email',
+        notes: 'Initial inquiry received',
+        staffName: 'System'
+      },
+      {
+        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        type: 'phone',
+        notes: 'Discussed menu options and dietary requirements',
+        staffName: 'Manager'
+      }
+    ]
+  },
+  {
+    id: 'demo-2',
+    inquiryNumber: 'CAT-2024-002',
+    customerName: 'Robert Chen',
+    customerEmail: 'robert.chen@techcorp.com',
+    customerPhone: '(318) 555-0298',
+    companyName: 'TechCorp Solutions',
+    eventType: 'Corporate Lunch',
+    eventDate: '2024-11-28T12:00',
+    guestCount: 45,
+    venueType: 'delivery',
+    venueAddress: '456 Business Park, Alexandria, LA 71301',
+    packageId: '2',
+    packageName: 'Corporate Executive Package',
+    customRequest: false,
+    specialRequests: 'Need invoice for company billing',
+    serviceStyle: 'buffet',
+    needStaffing: false,
+    needRentals: false,
+    status: 'confirmed',
+    priority: 'medium',
+    assignedTo: 'Coordinator',
+    adminNotes: 'Repeat corporate client. Payment received.',
+    quotedAmount: 2025,
+    submittedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'demo-3',
+    inquiryNumber: 'CAT-2024-003',
+    customerName: 'Maria Garcia',
+    customerEmail: 'maria.garcia@email.com',
+    customerPhone: '(318) 555-0176',
+    eventType: 'Birthday Party',
+    eventDate: '2025-01-10T17:00',
+    guestCount: 35,
+    venueType: 'pickup',
+    customRequest: true,
+    dietaryRequirements: 'Gluten-free options needed',
+    specialRequests: 'Looking for custom package - mix of vegetarian and non-veg items',
+    budgetRange: '$1,200 - $1,500',
+    serviceStyle: 'family-style',
+    needStaffing: false,
+    needRentals: false,
+    status: 'new',
+    priority: 'medium',
+    submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  }
+];
 
 // Storage Keys
 const STORAGE_KEYS = {
@@ -671,7 +989,7 @@ const STORAGE_KEYS = {
   events: 'golden_lotus_events',
   eventPackages: 'golden_lotus_event_packages',
   cateringPackages: 'golden_lotus_catering_packages',
-  cateringOrders: 'golden_lotus_catering_orders',
+  cateringInquiries: 'golden_lotus_catering_inquiries',
 };
 
 // Initialize data in localStorage
@@ -721,8 +1039,8 @@ export function initializeData() {
   if (!localStorage.getItem(STORAGE_KEYS.cateringPackages)) {
     localStorage.setItem(STORAGE_KEYS.cateringPackages, JSON.stringify(defaultCateringPackages));
   }
-  if (!localStorage.getItem(STORAGE_KEYS.cateringOrders)) {
-    localStorage.setItem(STORAGE_KEYS.cateringOrders, JSON.stringify(defaultCateringOrders));
+  if (!localStorage.getItem(STORAGE_KEYS.cateringInquiries)) {
+    localStorage.setItem(STORAGE_KEYS.cateringInquiries, JSON.stringify(defaultCateringInquiries));
   }
 }
 
@@ -901,39 +1219,71 @@ export const DataStore = {
     return packages.filter((p) => p.cateringType === type && p.active);
   },
 
-  // Catering Orders
-  getCateringOrders: (): CateringOrder[] => getData(STORAGE_KEYS.cateringOrders) || defaultCateringOrders,
-  setCateringOrders: (orders: CateringOrder[]) => setData(STORAGE_KEYS.cateringOrders, orders),
-  getCateringOrderById: (id: string): CateringOrder | undefined => {
-    const orders = getData<CateringOrder[]>(STORAGE_KEYS.cateringOrders) || defaultCateringOrders;
-    return orders.find((o) => o.id === id);
+  // Catering Inquiries (Professional CRM System)
+  getCateringInquiries: (): CateringInquiry[] => getData(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries,
+  setCateringInquiries: (inquiries: CateringInquiry[]) => setData(STORAGE_KEYS.cateringInquiries, inquiries),
+  
+  getCateringInquiryById: (id: string): CateringInquiry | undefined => {
+    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
+    return inquiries.find((i) => i.id === id);
   },
-  addCateringOrder: (order: CateringOrder): void => {
-    const orders = getData<CateringOrder[]>(STORAGE_KEYS.cateringOrders) || defaultCateringOrders;
-    setData(STORAGE_KEYS.cateringOrders, [...orders, order]);
+  
+  addCateringInquiry: (inquiry: CateringInquiry): void => {
+    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
+    setData(STORAGE_KEYS.cateringInquiries, [...inquiries, inquiry]);
   },
-  updateCateringOrderStatus: (id: string, status: CateringOrder['status']): boolean => {
-    const orders = getData<CateringOrder[]>(STORAGE_KEYS.cateringOrders) || defaultCateringOrders;
-    const index = orders.findIndex((o) => o.id === id);
+  
+  updateCateringInquiry: (id: string, updates: Partial<CateringInquiry>): boolean => {
+    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
+    const index = inquiries.findIndex((i) => i.id === id);
     if (index !== -1) {
-      orders[index].status = status;
-      orders[index].updatedAt = new Date().toISOString();
-      setData(STORAGE_KEYS.cateringOrders, orders);
+      inquiries[index] = { ...inquiries[index], ...updates, updatedAt: new Date().toISOString() };
+      setData(STORAGE_KEYS.cateringInquiries, inquiries);
       return true;
     }
     return false;
   },
-  updateCateringOrderNotes: (id: string, notes: string): boolean => {
-    const orders = getData<CateringOrder[]>(STORAGE_KEYS.cateringOrders) || defaultCateringOrders;
-    const index = orders.findIndex((o) => o.id === id);
+  
+  updateCateringInquiryStatus: (id: string, status: CateringInquiry['status']): boolean => {
+    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
+    const index = inquiries.findIndex((i) => i.id === id);
     if (index !== -1) {
-      orders[index].adminNotes = notes;
-      orders[index].updatedAt = new Date().toISOString();
-      setData(STORAGE_KEYS.cateringOrders, orders);
+      inquiries[index].status = status;
+      inquiries[index].updatedAt = new Date().toISOString();
+      setData(STORAGE_KEYS.cateringInquiries, inquiries);
       return true;
     }
     return false;
   },
+  
+  addCateringInquiryCommunication: (id: string, communication: NonNullable<CateringInquiry['communicationLog']>[0]): boolean => {
+    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
+    const index = inquiries.findIndex((i) => i.id === id);
+    if (index !== -1) {
+      if (!inquiries[index].communicationLog) {
+        inquiries[index].communicationLog = [];
+      }
+      inquiries[index].communicationLog.push(communication);
+      inquiries[index].updatedAt = new Date().toISOString();
+      setData(STORAGE_KEYS.cateringInquiries, inquiries);
+      return true;
+    }
+    return false;
+  },
+  
+  deleteCateringInquiry: (id: string): boolean => {
+    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
+    const filtered = inquiries.filter((i) => i.id !== id);
+    if (filtered.length !== inquiries.length) {
+      setData(STORAGE_KEYS.cateringInquiries, filtered);
+      return true;
+    }
+    return false;
+  },
+  
+  // Legacy support for Catering Orders (map to inquiries)
+  getCateringOrders: function() { return this.getCateringInquiries(); },
+  addCateringOrder: function(order: any) { return this.addCateringInquiry(order as CateringInquiry); },
 };
 
 export { STORAGE_KEYS };

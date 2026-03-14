@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, MapPin, ShoppingBag, Star, Loader2, Plus, Trash2, Edit, Check, Package, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import SEO from '@/components/SEO';
 
 type Tab = 'personal' | 'addresses' | 'orders' | 'loyalty';
 
@@ -89,6 +90,13 @@ export default function Profile() {
     }
 
     return (
+        <>
+            <SEO 
+                title="My Profile | Golden Lotus Rewards"
+                description="Manage your Golden Lotus account. View order history, update personal information, track loyalty points, and manage saved addresses."
+                url="https://www.goldenlotusgrill.com/profile"
+                noIndex={true}
+            />
         <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
             <div className="max-w-5xl mx-auto">
                 {/* Profile Header */}
@@ -130,6 +138,7 @@ export default function Profile() {
                 </div>
             </div>
         </div>
+        </>
     );
 }
 

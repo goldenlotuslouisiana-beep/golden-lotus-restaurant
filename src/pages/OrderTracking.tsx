@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CheckCircle, ChefHat, Package, Clock, ChevronDown, ChevronUp, HelpCircle, XCircle, Loader2 } from 'lucide-react';
+import SEO from '@/components/SEO';
 
 const STAGES = [
     { key: 'confirmed', label: 'Order Confirmed', icon: CheckCircle, color: 'text-green-600 bg-green-100' },
@@ -95,6 +96,13 @@ export default function OrderTracking() {
     const stageIdx = getStageIndex();
 
     return (
+        <>
+            <SEO 
+                title="Track Order | Golden Lotus Restaurant"
+                description="Track your Golden Lotus order in real-time. See when your food is being prepared and when it's ready for pickup."
+                url="https://www.goldenlotusgrill.com/order-tracking"
+                noIndex={true}
+            />
         <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
             <div className="max-w-lg mx-auto">
                 {/* Header */}
@@ -203,5 +211,6 @@ export default function OrderTracking() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

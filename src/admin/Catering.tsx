@@ -1,108 +1,117 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { 
-  Plus, Search, Filter, Download, Eye, CheckCircle, XCircle, Clock, 
-  Package, Calendar, Users, DollarSign, ChevronLeft, ChevronRight, 
-  Trash2, Edit, Save, X, FileText, Star, Utensils, Upload
+  Search, Download, CheckCircle, XCircle, 
+  X, Calendar, Users, DollarSign, Phone, Mail,
+  Star, Utensils, Check
 } from 'lucide-react';
 import { DataStore } from '@/data/store';
-import { uploadImage } from '@/lib/uploadImage';
-import type { CateringOrder, CateringPackage, CateringType, CateringStatus } from '@/types';
+import type { CateringInquiry, CateringPackage } from '@/types';
 
-const STATUS_BADGES: Record<CateringStatus, { color: string; icon: React.ReactNode; label: string }> = {
-  pending: { color: 'bg-yellow-100 text-yellow-700', icon: <Clock className="w-4 h-4" />, label: 'Pending' },
-  confirmed: { color: 'bg-blue-100 text-blue-700', icon: <CheckCircle className="w-4 h-4" />, label: 'Confirmed' },
-  in_progress: { color: 'bg-purple-100 text-purple-700', icon: <Clock className="w-4 h-4" />, label: 'In Progress' },
-  completed: { color: 'bg-green-100 text-green-700', icon: <CheckCircle className="w-4 h-4" />, label: 'Completed' },
-  cancelled: { color: 'bg-red-100 text-red-700', icon: <XCircle className="w-4 h-4" />, label: 'Cancelled' },
+// Status badge configurations
+const STATUS_CONFIG = {
+  new: { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Star className="w-4 h-4" />, label: 'New' },
+  contacted: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: <Phone className="w-4 h-4" />, label: 'Contacted' },
+  quoted: { color: 'bg-purple-100 text-purple-700 border-purple-200', icon: <DollarSign className="w-4 h-4" />, label: 'Quoted' },
+  confirmed: { color: 'bg-green-100 text-green-700 border-green-200', icon: <CheckCircle className="w-4 h-4" />, label: 'Confirmed' },
+  completed: { color: 'bg-gray-100 text-gray-700 border-gray-200', icon: <Check className="w-4 h-4" />, label: 'Completed' },
+  cancelled: { color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle className="w-4 h-4" />, label: 'Cancelled' },
 };
 
-const CATERING_TYPE_LABELS: Record<CateringType, string> = {
-  wedding: 'Wedding',
-  corporate: 'Corporate',
-  private: 'Private Event',
+const PRIORITY_CONFIG = {
+  low: { color: 'bg-gray-100 text-gray-600', label: 'Low' },
+  medium: { color: 'bg-yellow-100 text-yellow-700', label: 'Medium' },
+  high: { color: 'bg-orange-100 text-orange-700', label: 'High' },
+  urgent: { color: 'bg-red-100 text-red-700', label: 'Urgent' },
 };
 
 export default function AdminCatering() {
-  const [activeTab, setActiveTab] = useState<'orders' | 'packages' | 'quotes'>('orders');
+  const [activeTab, setActiveTab] = useState<'inquiries' | 'packages'>('inquiries');
   
-  // Orders state
-  const [orders, setOrders] = useState<CateringOrder[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<CateringOrder[]>([]);
+  // Inquiries state
+  const [inquiries, setInquiries] = useState<CateringInquiry[]>([]);
+  const [filteredInquiries, setFilteredInquiries] = useState<CateringInquiry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<CateringStatus | 'all'>('all');
-  const [typeFilter, setTypeFilter] = useState<CateringType | 'all'>('all');
-  const [selectedOrder, setSelectedOrder] = useState<CateringOrder | null>(null);
-  const [orderNotes, setOrderNotes] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CateringInquiry['status'] | 'all'>('all');
+  const [priorityFilter, setPriorityFilter] = useState<CateringInquiry['priority'] | 'all'>('all');
+  const [selectedInquiry, setSelectedInquiry] = useState<CateringInquiry | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   
   // Packages state
   const [packages, setPackages] = useState<CateringPackage[]>([]);
-  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
-  const [editingPackage, setEditingPackage] = useState<CateringPackage | null>(null);
-  
-  // Custom quote state
-  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
 
   useEffect(() => {
-    filterOrders();
-  }, [orders, searchQuery, statusFilter, typeFilter]);
+    filterInquiries();
+  }, [inquiries, searchQuery, statusFilter, priorityFilter]);
 
   const loadData = () => {
-    setOrders(DataStore.getCateringOrders());
+    setInquiries(DataStore.getCateringInquiries());
     setPackages(DataStore.getCateringPackages());
   };
 
-  const filterOrders = () => {
-    let filtered = orders;
+  const filterInquiries = () => {
+    let filtered = inquiries;
     
     if (searchQuery) {
-      filtered = filtered.filter(o => 
-        o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.customerEmail.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(i => 
+        i.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        i.inquiryNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        i.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        i.eventType.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(o => o.status === statusFilter);
+      filtered = filtered.filter(i => i.status === statusFilter);
     }
     
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(o => o.cateringType === typeFilter);
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(i => i.priority === priorityFilter);
     }
     
-    setFilteredOrders(filtered);
+    // Sort by date (newest first)
+    filtered.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+    
+    setFilteredInquiries(filtered);
   };
 
-  const handleUpdateStatus = (orderId: string, status: CateringStatus) => {
-    DataStore.updateCateringOrderStatus(orderId, status);
-    if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder({ ...selectedOrder, status });
-    }
+  const handleUpdateStatus = (inquiryId: string, status: CateringInquiry['status']) => {
+    DataStore.updateCateringInquiryStatus(inquiryId, status);
     loadData();
   };
 
-  const handleSaveNotes = () => {
-    if (!selectedOrder) return;
-    DataStore.updateCateringOrderNotes(selectedOrder.id, orderNotes);
-    setSelectedOrder({ ...selectedOrder, adminNotes: orderNotes });
+  const handleUpdatePriority = (inquiryId: string, priority: CateringInquiry['priority']) => {
+    DataStore.updateCateringInquiry(inquiryId, { priority });
+    loadData();
+  };
+
+  const handleAddCommunication = (inquiryId: string, type: 'email' | 'phone' | 'meeting' | 'note', notes: string) => {
+    DataStore.addCateringInquiryCommunication(inquiryId, {
+      date: new Date().toISOString(),
+      type,
+      notes,
+      staffName: 'Admin', // In real app, get from auth context
+    });
     loadData();
   };
 
   const exportToCSV = () => {
-    const headers = ['Order #', 'Date', 'Customer', 'Type', 'Event Date', 'Guests', 'Status'];
-    const rows = filteredOrders.map(o => [
-      o.orderNumber,
-      new Date(o.createdAt).toLocaleDateString(),
-      o.customerName,
-      CATERING_TYPE_LABELS[o.cateringType],
-      new Date(o.eventDate).toLocaleDateString(),
-      o.guestCount,
-      o.status
+    const headers = ['Inquiry #', 'Date', 'Customer', 'Email', 'Phone', 'Event Type', 'Event Date', 'Guests', 'Status', 'Priority', 'Quoted Amount'];
+    const rows = filteredInquiries.map(i => [
+      i.inquiryNumber,
+      new Date(i.submittedAt).toLocaleDateString(),
+      i.customerName,
+      i.customerEmail,
+      i.customerPhone,
+      i.eventType,
+      new Date(i.eventDate).toLocaleDateString(),
+      i.guestCount,
+      i.status,
+      i.priority,
+      i.quotedAmount || '',
     ]);
     
     const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -110,675 +119,589 @@ export default function AdminCatering() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `catering-orders-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `catering-inquiries-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
 
+  const stats = {
+    total: inquiries.length,
+    new: inquiries.filter(i => i.status === 'new').length,
+    quoted: inquiries.filter(i => i.status === 'quoted').length,
+    confirmed: inquiries.filter(i => i.status === 'confirmed').length,
+    revenue: inquiries.filter(i => i.quotedAmount).reduce((sum, i) => sum + (i.quotedAmount || 0), 0),
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-lotus-dark">Catering Management</h1>
-          <p className="text-gray-600">Manage catering orders, packages, and custom quotes</p>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Catering Management</h1>
+        <p className="text-gray-600 mt-1">Manage catering inquiries, packages, and customer requests</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Inquiries</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+              <Mail className="w-6 h-6" />
+            </div>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => setActiveTab('orders')}
-            className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'orders' ? 'bg-lotus-gold text-white' : 'bg-gray-100 text-gray-700'}`}
-          >
-            Orders
-          </button>
-          <button 
-            onClick={() => setActiveTab('packages')}
-            className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'packages' ? 'bg-lotus-gold text-white' : 'bg-gray-100 text-gray-700'}`}
-          >
-            Packages
-          </button>
-          <button 
-            onClick={() => setIsQuoteModalOpen(true)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Custom Quote
-          </button>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">New Leads</p>
+              <p className="text-2xl font-bold text-blue-600">{stats.new}</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+              <Star className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Confirmed</p>
+              <p className="text-2xl font-bold text-green-600">{stats.confirmed}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
+              <CheckCircle className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Revenue</p>
+              <p className="text-2xl font-bold text-lotus-gold">${stats.revenue.toLocaleString()}</p>
+            </div>
+            <div className="w-12 h-12 bg-lotus-gold/20 rounded-lg flex items-center justify-center text-lotus-gold">
+              <DollarSign className="w-6 h-6" />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Orders Tab */}
-      {activeTab === 'orders' && (
-        <div className="space-y-4">
+      {/* Tabs */}
+      <div className="flex gap-4 border-b border-gray-200 mb-6">
+        <button
+          onClick={() => setActiveTab('inquiries')}
+          className={`pb-4 px-2 font-medium transition-colors ${
+            activeTab === 'inquiries'
+              ? 'text-lotus-gold border-b-2 border-lotus-gold'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Inquiries ({inquiries.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('packages')}
+          className={`pb-4 px-2 font-medium transition-colors ${
+            activeTab === 'packages'
+              ? 'text-lotus-gold border-b-2 border-lotus-gold'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Packages ({packages.length})
+        </button>
+      </div>
+
+      {activeTab === 'inquiries' && (
+        <>
           {/* Filters */}
-          <div className="bg-white rounded-xl shadow-sm p-4 flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search orders..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-lotus-gold"
-                />
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+            <div className="flex flex-wrap gap-4 items-center">
+              <div className="flex-1 min-w-[200px]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search inquiries..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold focus:border-transparent"
+                  />
+                </div>
               </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+              >
+                <option value="all">All Statuses</option>
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="quoted">Quoted</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value as any)}
+                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+              >
+                <option value="all">All Priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+              <button
+                onClick={exportToCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </button>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as CateringStatus | 'all')}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lotus-gold"
-            >
-              <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as CateringType | 'all')}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lotus-gold"
-            >
-              <option value="all">All Types</option>
-              <option value="wedding">Wedding</option>
-              <option value="corporate">Corporate</option>
-              <option value="private">Private</option>
-            </select>
-            <button 
-              onClick={exportToCSV}
-              className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
           </div>
 
-          {/* Orders Table */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Order #</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Customer</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Type</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Event Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Guests</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filteredOrders.length === 0 ? (
+          {/* Inquiries Table */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                      No orders found
-                    </td>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Inquiry #</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Customer</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Event Details</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Priority</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Amount</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-700">Actions</th>
                   </tr>
-                ) : (
-                  filteredOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{order.orderNumber}</td>
-                      <td className="px-4 py-3">
-                        <div className="font-medium">{order.customerName}</div>
-                        <div className="text-sm text-gray-500">{order.customerEmail}</div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredInquiries.map((inquiry) => (
+                    <tr key={inquiry.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-gray-900">{inquiry.inquiryNumber}</div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(inquiry.submittedAt).toLocaleDateString()}
+                        </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-sm">
-                          {CATERING_TYPE_LABELS[order.cateringType]}
-                        </span>
-                        {order.customQuote && (
-                          <span className="ml-2 inline-flex items-center gap-1 px-2 py-1 bg-lotus-gold/10 text-lotus-gold rounded text-xs">
-                            Custom
-                          </span>
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-gray-900">{inquiry.customerName}</div>
+                        <div className="text-sm text-gray-500">{inquiry.customerEmail}</div>
+                        <div className="text-sm text-gray-500">{inquiry.customerPhone}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-gray-900">{inquiry.eventType}</div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(inquiry.eventDate).toLocaleDateString()} • {inquiry.guestCount} guests
+                        </div>
+                        {inquiry.packageName && (
+                          <div className="text-sm text-lotus-gold">{inquiry.packageName}</div>
                         )}
                       </td>
-                      <td className="px-4 py-3">{new Date(order.eventDate).toLocaleDateString()}</td>
-                      <td className="px-4 py-3">{order.guestCount}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${STATUS_BADGES[order.status].color}`}>
-                          {STATUS_BADGES[order.status].icon}
-                          {STATUS_BADGES[order.status].label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button 
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setOrderNotes(order.adminNotes || '');
-                          }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                      <td className="px-6 py-4">
+                        <select
+                          value={inquiry.status}
+                          onChange={(e) => handleUpdateStatus(inquiry.id, e.target.value as any)}
+                          className={`px-3 py-1 rounded-full text-sm font-medium border ${STATUS_CONFIG[inquiry.status].color}`}
                         >
-                          <Eye className="w-4 h-4" />
+                          <option value="new">New</option>
+                          <option value="contacted">Contacted</option>
+                          <option value="quoted">Quoted</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="completed">Completed</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4">
+                        <select
+                          value={inquiry.priority}
+                          onChange={(e) => handleUpdatePriority(inquiry.id, e.target.value as any)}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${PRIORITY_CONFIG[inquiry.priority].color}`}
+                        >
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                          <option value="urgent">Urgent</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4">
+                        {inquiry.quotedAmount ? (
+                          <div className="font-medium text-gray-900">
+                            ${inquiry.quotedAmount.toLocaleString()}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => {
+                            setSelectedInquiry(inquiry);
+                            setShowDetailModal(true);
+                          }}
+                          className="text-lotus-gold hover:text-lotus-gold-dark font-medium"
+                        >
+                          View Details
                         </button>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {filteredInquiries.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                No inquiries found matching your filters.
+              </div>
+            )}
           </div>
-        </div>
+        </>
       )}
 
-      {/* Packages Tab */}
       {activeTab === 'packages' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Catering Packages</h2>
-            <button 
-              onClick={() => {
-                setEditingPackage(null);
-                setIsPackageModalOpen(true);
-              }}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Package
-            </button>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {packages.map((pkg) => (
-              <div key={pkg.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
-                {pkg.gallery[0] && (
-                  <div className="h-40 overflow-hidden">
-                    <img src={pkg.gallery[0]} alt={pkg.name} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-bold text-lotus-dark">{pkg.name}</h3>
-                    <span className={`px-2 py-1 rounded text-xs ${pkg.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {pkg.active ? 'Active' : 'Draft'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{pkg.description}</p>
-                  <div className="flex items-baseline gap-1 mb-3">
-                    <span className="text-xl font-bold text-lotus-gold">${pkg.pricePerHead}</span>
-                    <span className="text-sm text-gray-500">/person</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => {
-                        setEditingPackage(pkg);
-                        setIsPackageModalOpen(true);
-                      }}
-                      className="flex-1 py-2 text-sm border rounded-lg hover:bg-gray-50"
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      onClick={() => {
-                        const updated = packages.filter(p => p.id !== pkg.id);
-                        DataStore.setCateringPackages(updated);
-                        loadData();
-                      }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Order Detail Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedOrder(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold">Order {selectedOrder.orderNumber}</h2>
-              <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              {/* Status */}
-              <div className="flex items-center gap-3">
-                <span className="text-gray-600">Status:</span>
-                <select
-                  value={selectedOrder.status}
-                  onChange={(e) => handleUpdateStatus(selectedOrder.id, e.target.value as CateringStatus)}
-                  className="px-3 py-1 border rounded-lg"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-
-              {/* Customer Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold mb-3">Customer Information</h3>
-                <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Name:</span>
-                    <p className="font-medium">{selectedOrder.customerName}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Email:</span>
-                    <p className="font-medium">{selectedOrder.customerEmail}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Phone:</span>
-                    <p className="font-medium">{selectedOrder.customerPhone}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Event Details */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold mb-3">Event Details</h3>
-                <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Type:</span>
-                    <p className="font-medium">{CATERING_TYPE_LABELS[selectedOrder.cateringType]}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Package:</span>
-                    <p className="font-medium">{selectedOrder.packageName}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Event Date:</span>
-                    <p className="font-medium">{new Date(selectedOrder.eventDate).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Guests:</span>
-                    <p className="font-medium">{selectedOrder.guestCount}</p>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <span className="text-gray-500">Location:</span>
-                    <p className="font-medium">{selectedOrder.eventLocation}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Admin Notes */}
-              <div>
-                <h3 className="font-semibold mb-2">Admin Notes</h3>
-                <textarea
-                  value={orderNotes}
-                  onChange={(e) => setOrderNotes(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 border rounded-lg resize-none"
-                  placeholder="Add internal notes about this order..."
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {packages.map((pkg) => (
+            <div key={pkg.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="h-48 overflow-hidden">
+                <img 
+                  src={pkg.featuredImage || pkg.images[0]} 
+                  alt={pkg.name}
+                  className="w-full h-full object-cover"
                 />
-                <button 
-                  onClick={handleSaveNotes}
-                  className="mt-2 btn-primary text-sm"
-                >
-                  Save Notes
-                </button>
+              </div>
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-900">{pkg.name}</h3>
+                    {pkg.subtitle && (
+                      <p className="text-sm text-lotus-gold">{pkg.subtitle}</p>
+                    )}
+                  </div>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${pkg.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {pkg.active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{pkg.description}</p>
+                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                  <span className="font-medium text-lotus-gold">${pkg.pricePerPerson}/person</span>
+                  <span>•</span>
+                  <span>{pkg.minGuests}-{pkg.maxGuests} guests</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => alert('Package editing will be available in the next update')}
+                    className="flex-1 px-4 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark transition-colors"
+                  >
+                    Edit Package
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
 
-      {/* Package Modal */}
-      {isPackageModalOpen && (
-        <PackageModal 
-          pkg={editingPackage}
-          onClose={() => setIsPackageModalOpen(false)}
-          onSave={() => {
-            loadData();
-            setIsPackageModalOpen(false);
-          }}
-        />
-      )}
-
-      {/* Custom Quote Modal */}
-      {isQuoteModalOpen && (
-        <QuoteModal 
-          onClose={() => setIsQuoteModalOpen(false)}
-          onSave={() => {
-            loadData();
-            setIsQuoteModalOpen(false);
-          }}
+      {/* Inquiry Detail Modal */}
+      {showDetailModal && selectedInquiry && (
+        <InquiryDetailModal
+          inquiry={selectedInquiry}
+          onClose={() => setShowDetailModal(false)}
+          onUpdate={loadData}
+          onAddCommunication={handleAddCommunication}
         />
       )}
     </div>
   );
 }
 
-// Package Modal Component
-function PackageModal({ pkg, onClose, onSave }: { pkg: CateringPackage | null; onClose: () => void; onSave: () => void }) {
-  const [formData, setFormData] = useState<Partial<CateringPackage>>({
-    name: pkg?.name || '',
-    cateringType: pkg?.cateringType || 'wedding',
-    description: pkg?.description || '',
-    pricePerHead: pkg?.pricePerHead || 0,
-    minGuests: pkg?.minGuests || 50,
-    maxGuests: pkg?.maxGuests || 100,
-    includedItems: pkg?.includedItems || [],
-    active: pkg?.active !== false,
-  });
-  const [newItem, setNewItem] = useState('');
+// Inquiry Detail Modal Component
+function InquiryDetailModal({ 
+  inquiry, 
+  onClose, 
+  onUpdate,
+  onAddCommunication 
+}: { 
+  inquiry: CateringInquiry; 
+  onClose: () => void; 
+  onUpdate: () => void;
+  onAddCommunication: (id: string, type: any, notes: string) => void;
+}) {
+  const [activeSection, setActiveSection] = useState<'details' | 'communication' | 'notes'>('details');
+  const [newNote, setNewNote] = useState('');
+  const [quotedAmount, setQuotedAmount] = useState(inquiry.quotedAmount || '');
+  const [adminNotes, setAdminNotes] = useState(inquiry.adminNotes || '');
 
-  const handleSave = () => {
-    const packages = DataStore.getCateringPackages();
-    
-    if (pkg) {
-      // Edit existing
-      const updated = packages.map(p => p.id === pkg.id ? { ...p, ...formData } as CateringPackage : p);
-      DataStore.setCateringPackages(updated);
-    } else {
-      // Create new
-      const newPackage: CateringPackage = {
-        ...formData as CateringPackage,
-        id: Date.now().toString(),
-        dishes: [],
-        addOns: [],
-        gallery: [],
-        features: [],
-        order: packages.length + 1,
-      };
-      DataStore.setCateringPackages([...packages, newPackage]);
+  const handleSaveQuote = () => {
+    DataStore.updateCateringInquiry(inquiry.id, { 
+      quotedAmount: Number(quotedAmount),
+      status: 'quoted'
+    });
+    onUpdate();
+  };
+
+  const handleSaveNotes = () => {
+    DataStore.updateCateringInquiry(inquiry.id, { adminNotes });
+    onUpdate();
+  };
+
+  const handleAddNote = () => {
+    if (newNote.trim()) {
+      onAddCommunication(inquiry.id, 'note', newNote);
+      setNewNote('');
+      onUpdate();
     }
-    
-    onSave();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">{pkg ? 'Edit Package' : 'Create Package'}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">{inquiry.inquiryNumber}</h2>
+            <p className="text-sm text-gray-500">
+              Submitted {new Date(inquiry.submittedAt).toLocaleString()}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full">
+            <X className="w-6 h-6" />
           </button>
         </div>
-        
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Package Name</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Catering Type</label>
+
+        {/* Modal Tabs */}
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveSection('details')}
+            className={`px-6 py-3 font-medium ${activeSection === 'details' ? 'text-lotus-gold border-b-2 border-lotus-gold' : 'text-gray-600'}`}
+          >
+            Details
+          </button>
+          <button
+            onClick={() => setActiveSection('communication')}
+            className={`px-6 py-3 font-medium ${activeSection === 'communication' ? 'text-lotus-gold border-b-2 border-lotus-gold' : 'text-gray-600'}`}
+          >
+            Communication Log
+          </button>
+          <button
+            onClick={() => setActiveSection('notes')}
+            className={`px-6 py-3 font-medium ${activeSection === 'notes' ? 'text-lotus-gold border-b-2 border-lotus-gold' : 'text-gray-600'}`}
+          >
+            Admin Notes
+          </button>
+        </div>
+
+        {/* Modal Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {activeSection === 'details' && (
+            <div className="space-y-6">
+              {/* Customer Info */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-lotus-gold" />
+                    Customer Information
+                  </h3>
+                  <div className="space-y-2">
+                    <p className="text-sm"><span className="text-gray-500">Name:</span> {inquiry.customerName}</p>
+                    <p className="text-sm"><span className="text-gray-500">Email:</span> {inquiry.customerEmail}</p>
+                    <p className="text-sm"><span className="text-gray-500">Phone:</span> {inquiry.customerPhone}</p>
+                    {inquiry.companyName && (
+                      <p className="text-sm"><span className="text-gray-500">Company:</span> {inquiry.companyName}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-lotus-gold" />
+                    Event Details
+                  </h3>
+                  <div className="space-y-2">
+                    <p className="text-sm"><span className="text-gray-500">Type:</span> {inquiry.eventType}</p>
+                    <p className="text-sm"><span className="text-gray-500">Date:</span> {new Date(inquiry.eventDate).toLocaleString()}</p>
+                    <p className="text-sm"><span className="text-gray-500">Guests:</span> {inquiry.guestCount}</p>
+                    <p className="text-sm"><span className="text-gray-500">Venue:</span> {inquiry.venueType}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Package Info */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Utensils className="w-5 h-5 text-lotus-gold" />
+                  Package Selection
+                </h3>
+                {inquiry.packageName ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">{inquiry.packageName}</p>
+                      <p className="text-sm text-gray-500">Standard Package</p>
+                    </div>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">Selected</span>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-medium text-amber-600">Custom Package Request</p>
+                    <p className="text-sm text-gray-500">Client requested custom quote</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Requirements */}
+              {(inquiry.dietaryRequirements || inquiry.specialRequests) && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3">Special Requirements</h3>
+                  {inquiry.dietaryRequirements && (
+                    <p className="text-sm mb-2"><span className="text-gray-500">Dietary:</span> {inquiry.dietaryRequirements}</p>
+                  )}
+                  {inquiry.specialRequests && (
+                    <p className="text-sm"><span className="text-gray-500">Requests:</span> {inquiry.specialRequests}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Quoting Section */}
+              <div className="bg-lotus-cream rounded-xl p-4">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-lotus-gold" />
+                  Quote Management
+                </h3>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm text-gray-600 mb-1">Quoted Amount ($)</label>
+                    <input
+                      type="number"
+                      value={quotedAmount}
+                      onChange={(e) => setQuotedAmount(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+                      placeholder="Enter amount..."
+                    />
+                  </div>
+                  <button
+                    onClick={handleSaveQuote}
+                    className="mt-6 px-6 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark transition-colors"
+                  >
+                    Save Quote
+                  </button>
+                </div>
+                {inquiry.budgetRange && (
+                  <p className="text-sm text-gray-500 mt-2">Client budget: {inquiry.budgetRange}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'communication' && (
+            <div className="space-y-4">
+              {/* Add Communication */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Add Communication</h3>
+                <div className="flex gap-2">
+                  <select className="px-3 py-2 border border-gray-200 rounded-lg">
+                    <option value="note">Note</option>
+                    <option value="phone">Phone Call</option>
+                    <option value="email">Email</option>
+                    <option value="meeting">Meeting</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="Enter communication details..."
+                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold"
+                  />
+                  <button
+                    onClick={handleAddNote}
+                    className="px-4 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Communication Log */}
+              <div className="space-y-3">
+                {inquiry.communicationLog && inquiry.communicationLog.length > 0 ? (
+                  [...inquiry.communicationLog].reverse().map((log, idx) => (
+                    <div key={idx} className="bg-white border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            log.type === 'email' ? 'bg-blue-100 text-blue-700' :
+                            log.type === 'phone' ? 'bg-green-100 text-green-700' :
+                            log.type === 'meeting' ? 'bg-purple-100 text-purple-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {log.type.charAt(0).toUpperCase() + log.type.slice(1)}
+                          </span>
+                          {log.staffName && (
+                            <span className="text-sm text-gray-500">by {log.staffName}</span>
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          {new Date(log.date).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-gray-700">{log.notes}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500 py-8">No communication logged yet.</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'notes' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block font-semibold text-gray-900 mb-2">Admin Notes</label>
+                <textarea
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  rows={10}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-lotus-gold resize-none"
+                  placeholder="Enter internal notes about this inquiry..."
+                />
+              </div>
+              <button
+                onClick={handleSaveNotes}
+                className="px-6 py-2 bg-lotus-gold text-white rounded-lg hover:bg-lotus-gold-dark transition-colors"
+              >
+                Save Notes
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Current Status:</span>
             <select
-              value={formData.cateringType}
-              onChange={(e) => setFormData({ ...formData, cateringType: e.target.value as any })}
-              className="w-full px-3 py-2 border rounded-lg"
+              value={inquiry.status}
+              onChange={(e) => {
+                DataStore.updateCateringInquiryStatus(inquiry.id, e.target.value as any);
+                onUpdate();
+              }}
+              className={`px-3 py-1 rounded-full text-sm font-medium border ${STATUS_CONFIG[inquiry.status].color}`}
             >
-              <option value="wedding">Wedding</option>
-              <option value="corporate">Corporate</option>
-              <option value="private">Private Event</option>
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="quoted">Quoted</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border rounded-lg resize-none"
-            />
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Price/Person</label>
-              <input
-                type="number"
-                value={formData.pricePerHead}
-                onChange={(e) => setFormData({ ...formData, pricePerHead: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Min Guests</label>
-              <input
-                type="number"
-                value={formData.minGuests}
-                onChange={(e) => setFormData({ ...formData, minGuests: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Max Guests</label>
-              <input
-                type="number"
-                value={formData.maxGuests}
-                onChange={(e) => setFormData({ ...formData, maxGuests: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Included Items</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={newItem}
-                onChange={(e) => setNewItem(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (newItem.trim()) {
-                      setFormData({ ...formData, includedItems: [...(formData.includedItems || []), newItem.trim()] });
-                      setNewItem('');
-                    }
-                  }
-                }}
-                placeholder="Add item..."
-                className="flex-1 px-3 py-2 border rounded-lg"
-              />
-              <button 
-                onClick={() => {
-                  if (newItem.trim()) {
-                    setFormData({ ...formData, includedItems: [...(formData.includedItems || []), newItem.trim()] });
-                    setNewItem('');
-                  }
-                }}
-                className="px-4 py-2 bg-gray-100 rounded-lg"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {formData.includedItems?.map((item, idx) => (
-                <span key={idx} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm">
-                  {item}
-                  <button 
-                    onClick={() => setFormData({ ...formData, includedItems: formData.includedItems?.filter((_, i) => i !== idx) })}
-                    className="text-gray-400 hover:text-red-500"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="active"
-              checked={formData.active}
-              onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-              className="w-4 h-4 rounded"
-            />
-            <label htmlFor="active">Active (visible on website)</label>
-          </div>
-          
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <button onClick={onClose} className="px-4 py-2 border rounded-lg">Cancel</button>
-            <button onClick={handleSave} className="btn-primary">Save Package</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Quote Modal Component
-function QuoteModal({ onClose, onSave }: { onClose: () => void; onSave: () => void }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    cateringType: 'wedding' as CateringType,
-    eventDate: '',
-    guestCount: '',
-    customMenu: '',
-    customPricing: '',
-    notes: '',
-  });
-
-  const handleSave = () => {
-    const newOrder: CateringOrder = {
-      id: Date.now().toString(),
-      orderNumber: `CAT-${Date.now().toString().slice(-6)}`,
-      customerName: formData.name,
-      customerEmail: formData.email,
-      customerPhone: formData.phone,
-      cateringType: formData.cateringType,
-      packageName: 'Custom Quote',
-      eventDate: formData.eventDate,
-      eventLocation: '',
-      guestCount: parseInt(formData.guestCount) || 0,
-      specialRequests: formData.customMenu,
-      adminNotes: formData.notes,
-      customPricing: parseInt(formData.customPricing) || undefined,
-      status: 'pending',
-      customQuote: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    DataStore.addCateringOrder(newOrder);
-    onSave();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">Create Custom Quote</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
+          <button
+            onClick={onClose}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Close
           </button>
-        </div>
-        
-        <div className="p-6 space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Customer Name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Phone</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-          
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Event Type</label>
-              <select
-                value={formData.cateringType}
-                onChange={(e) => setFormData({ ...formData, cateringType: e.target.value as any })}
-                className="w-full px-3 py-2 border rounded-lg"
-              >
-                <option value="wedding">Wedding</option>
-                <option value="corporate">Corporate</option>
-                <option value="private">Private Event</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Event Date</label>
-              <input
-                type="date"
-                value={formData.eventDate}
-                onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Guest Count</label>
-            <input
-              type="number"
-              value={formData.guestCount}
-              onChange={(e) => setFormData({ ...formData, guestCount: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Custom Menu Items</label>
-            <textarea
-              value={formData.customMenu}
-              onChange={(e) => setFormData({ ...formData, customMenu: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border rounded-lg resize-none"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Custom Pricing ($)</label>
-            <input
-              type="number"
-              value={formData.customPricing}
-              onChange={(e) => setFormData({ ...formData, customPricing: e.target.value })}
-              placeholder="Total price or per person"
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Internal Notes</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border rounded-lg resize-none"
-            />
-          </div>
-          
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <button onClick={onClose} className="px-4 py-2 border rounded-lg">Cancel</button>
-            <button onClick={handleSave} className="btn-primary">Create Quote</button>
-          </div>
         </div>
       </div>
     </div>
