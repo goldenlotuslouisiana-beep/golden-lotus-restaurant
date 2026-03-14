@@ -66,6 +66,8 @@ export default function AdminContent() {
     { id: 'catering', label: 'Catering' },
     { id: 'rewards', label: 'Rewards' },
     { id: 'orderCTA', label: 'Order CTA' },
+    { id: 'legal', label: 'Legal Pages' },
+    { id: 'footer', label: 'Footer Links' },
     { id: 'settings', label: 'Page Settings' },
   ];
 
@@ -654,6 +656,107 @@ export default function AdminContent() {
                   </label>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'legal' && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-lotus-dark mb-2">Terms of Service</h3>
+              <p className="text-gray-600 text-sm mb-4">Edit the content for your Terms of Service page. HTML is supported.</p>
+              <textarea
+                value={content.legal?.termsOfService || ''}
+                onChange={(e) => {
+                  setContent({
+                    ...content,
+                    legal: {
+                      ...content.legal,
+                      termsOfService: e.target.value,
+                      privacyPolicy: content.legal?.privacyPolicy || ''
+                    }
+                  });
+                }}
+                rows={15}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold resize-none font-mono text-sm"
+              />
+            </div>
+
+            <div className="pt-6 border-t">
+              <h3 className="text-lg font-bold text-lotus-dark mb-2">Privacy Policy</h3>
+              <p className="text-gray-600 text-sm mb-4">Edit the content for your Privacy Policy page. HTML is supported.</p>
+              <textarea
+                value={content.legal?.privacyPolicy || ''}
+                onChange={(e) => {
+                  setContent({
+                    ...content,
+                    legal: {
+                      ...content.legal,
+                      termsOfService: content.legal?.termsOfService || '',
+                      privacyPolicy: e.target.value
+                    }
+                  });
+                }}
+                rows={15}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold resize-none font-mono text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'footer' && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-bold text-lotus-dark">Footer Link Visibility</h3>
+            <p className="text-gray-600 text-sm">Control which links appear in the footer "More" section.</p>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1 min-w-0 mr-3">
+                  <p className="font-medium text-lotus-dark text-sm">Gift Cards</p>
+                  <p className="text-xs text-gray-500">Show/hide Gift Cards link in footer</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={content.footerSettings?.showGiftCards !== false}
+                    onChange={(e) => {
+                      setContent({
+                        ...content,
+                        footerSettings: {
+                          ...content.footerSettings,
+                          showGiftCards: e.target.checked
+                        }
+                      });
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-lotus-gold/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lotus-gold"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1 min-w-0 mr-3">
+                  <p className="font-medium text-lotus-dark text-sm">We're Hiring</p>
+                  <p className="text-xs text-gray-500">Show/hide We're Hiring link in footer</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={content.footerSettings?.showHiring !== false}
+                    onChange={(e) => {
+                      setContent({
+                        ...content,
+                        footerSettings: {
+                          ...content.footerSettings,
+                          showHiring: e.target.checked
+                        }
+                      });
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-lotus-gold/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lotus-gold"></div>
+                </label>
+              </div>
             </div>
           </div>
         )}

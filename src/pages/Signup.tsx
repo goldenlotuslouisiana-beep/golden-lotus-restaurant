@@ -180,7 +180,7 @@ export default function Signup() {
                         <label className="flex items-start gap-3 cursor-pointer">
                             <input type="checkbox" checked={agreedTerms} onChange={() => setAgreedTerms(!agreedTerms)} className="w-4 h-4 mt-0.5 rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]" />
                             <span className="text-sm text-gray-600">
-                                I agree to the <button type="button" className="text-[#F97316] hover:underline">Terms of Service</button> and <button type="button" className="text-[#F97316] hover:underline">Privacy Policy</button>
+                                I agree to the <Link to="/terms" className="text-[#F97316] hover:underline">Terms of Service</Link> and <Link to="/privacy" className="text-[#F97316] hover:underline">Privacy Policy</Link>
                             </span>
                         </label>
 

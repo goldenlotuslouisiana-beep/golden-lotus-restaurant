@@ -168,6 +168,14 @@ export interface SiteContent {
     showRewards?: boolean;
     showFAQ?: boolean;
   };
+  legal?: {
+    termsOfService: string;
+    privacyPolicy: string;
+  };
+  footerSettings?: {
+    showGiftCards: boolean;
+    showHiring: boolean;
+  };
 }
 
 export interface StorySection {

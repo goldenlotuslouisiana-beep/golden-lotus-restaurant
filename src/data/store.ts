@@ -375,6 +375,52 @@ const defaultSiteContent: SiteContent = {
     showRewards: true,
     showFAQ: false,
   },
+  legal: {
+    termsOfService: `<h2 class="text-2xl font-bold mb-4">Terms of Service</h2>
+<p class="mb-4">Welcome to Golden Lotus Indian Restaurant. By accessing or using our website and services, you agree to be bound by these Terms of Service.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">1. Acceptance of Terms</h3>
+<p class="mb-4">By placing an order, creating an account, or using our services, you agree to these terms. If you do not agree, please do not use our services.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">2. Orders and Payments</h3>
+<p class="mb-4">All orders placed through our website are subject to acceptance and availability. We reserve the right to refuse any order. Payment must be made at the time of ordering.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">3. Cancellation Policy</h3>
+<p class="mb-4">Orders may be cancelled within 10 minutes of placement. After this period, orders cannot be cancelled as food preparation begins immediately.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">4. Delivery and Pickup</h3>
+<p class="mb-4">Delivery times are estimates and may vary. We are not responsible for delays due to traffic, weather, or other circumstances beyond our control.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">5. Food Allergies</h3>
+<p class="mb-4">Please inform us of any food allergies when placing your order. While we take precautions, we cannot guarantee that cross-contamination will not occur.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">6. Contact Us</h3>
+<p>If you have any questions about these Terms, please contact us at golden_lotusmiami@gmail.com</p>`,
+    privacyPolicy: `<h2 class="text-2xl font-bold mb-4">Privacy Policy</h2>
+<p class="mb-4">Golden Lotus Indian Restaurant is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">1. Information We Collect</h3>
+<p class="mb-4">We collect personal information such as your name, email address, phone number, and delivery address when you create an account or place an order.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">2. How We Use Your Information</h3>
+<p class="mb-4">We use your information to process orders, communicate about your orders, improve our services, and send promotional offers (with your consent).</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">3. Data Security</h3>
+<p class="mb-4">We implement appropriate security measures to protect your personal information. Payment information is processed securely through Stripe.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">4. Third-Party Services</h3>
+<p class="mb-4">We use trusted third-party services for payment processing (Stripe) and analytics. These services have their own privacy policies.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">5. Your Rights</h3>
+<p class="mb-4">You have the right to access, update, or delete your personal information. Contact us to exercise these rights.</p>
+
+<h3 class="text-xl font-semibold mb-2 mt-6">6. Contact Us</h3>
+<p>If you have any questions about this Privacy Policy, please contact us at golden_lotusmiami@gmail.com</p>`,
+  },
+  footerSettings: {
+    showGiftCards: true,
+    showHiring: true,
+  },
 };
 
 // Features list

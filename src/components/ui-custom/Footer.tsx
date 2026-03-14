@@ -1,9 +1,16 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, MapPin, Phone, Mail } from 'lucide-react';
 import { DataStore } from '@/data/store';
+import { useEffect, useState } from 'react';
+import type { SiteContent } from '@/types';
 
 export default function Footer() {
   const locations = DataStore.getLocations();
+  const [siteContent, setSiteContent] = useState<SiteContent>(DataStore.getSiteContent());
+
+  useEffect(() => {
+    setSiteContent(DataStore.getSiteContent());
+  }, []);
 
   return (
     <footer className="bg-lotus-dark text-white">
@@ -76,11 +83,12 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4 font-['Playfair_Display']">More</h3>
             <ul className="space-y-3">
               {[
-                { name: "We're Hiring", href: '/careers' },
-                { name: 'Gift Cards', href: '/gift-cards' },
+                ...(siteContent.footerSettings?.showHiring !== false ? [{ name: "We're Hiring", href: '/careers' }] : []),
+                ...(siteContent.footerSettings?.showGiftCards !== false ? [{ name: 'Gift Cards', href: '/gift-cards' }] : []),
                 { name: 'Contact Us', href: '/contact' },
                 { name: 'Sitemap', href: '/sitemap' },
                 { name: 'Terms of Service', href: '/terms' },
+                { name: 'Privacy Policy', href: '/privacy' },
                 { name: 'Accessibility', href: '/accessibility' },
               ].map((link) => (
                 <li key={link.name}>
