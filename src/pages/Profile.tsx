@@ -1,389 +1,1313 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, MapPin, ShoppingBag, Star, Loader2, Plus, Trash2, Edit, Check, Package, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
+import { 
+  User, MapPin, ShoppingBag, Star, Loader2, Plus, Trash2, Edit2, Check, Package, 
+  ChevronDown, ChevronUp, LogOut, Camera, Phone, Mail, Calendar, Home, 
+  Briefcase, MapPinned, X, AlertCircle, CheckCircle2 
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import SEO from '@/components/SEO';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
 
 type Tab = 'personal' | 'addresses' | 'orders' | 'loyalty';
 
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: 'personal', label: 'Personal Info', icon: User },
-    { key: 'addresses', label: 'My Addresses', icon: MapPin },
-    { key: 'orders', label: 'Order History', icon: ShoppingBag },
-    { key: 'loyalty', label: 'Loyalty Points', icon: Star },
-];
+interface Address { 
+  _id: string; 
+  id?: string;
+  label: string; 
+  fullName?: string;
+  phone?: string;
+  street: string; 
+  apt?: string; 
+  city: string; 
+  state: string; 
+  zip: string;
+  landmark?: string;
+  isDefault: boolean 
+}
 
-interface Address { id: string; label: string; street: string; apt: string; city: string; state: string; zip: string; isDefault: boolean }
 interface OrderItem { name: string; price: number; quantity: number }
-interface Order { id: string; orderNumber: string; createdAt: string; items: OrderItem[]; total: number; status: string; paymentMethod: string; orderType: string }
+interface Order { 
+  id: string; 
+  orderNumber: string; 
+  createdAt: string; 
+  items: OrderItem[]; 
+  total: number; 
+  status: string; 
+  paymentMethod: string; 
+  orderType: string 
+}
+
 interface LoyaltyEntry { date: string; orderId: string; action: string; points: number }
 
+const TABS: { key: Tab; label: string; icon: React.ElementType; description: string }[] = [
+  { key: 'personal', label: 'Personal Info', icon: User, description: 'Manage your profile details' },
+  { key: 'addresses', label: 'Addresses', icon: MapPin, description: 'Manage delivery addresses' },
+  { key: 'orders', label: 'Orders', icon: ShoppingBag, description: 'View your order history' },
+  { key: 'loyalty', label: 'Loyalty', icon: Star, description: 'Check your reward points' },
+];
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  confirmed: 'bg-blue-100 text-blue-800 border-blue-200',
+  preparing: 'bg-purple-100 text-purple-800 border-purple-200',
+  ready: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+  out_for_delivery: 'bg-orange-100 text-orange-800 border-orange-200',
+  delivered: 'bg-green-100 text-green-800 border-green-200',
+  completed: 'bg-green-100 text-green-800 border-green-200',
+  cancelled: 'bg-red-100 text-red-800 border-red-200',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  preparing: 'Preparing',
+  ready: 'Ready',
+  out_for_delivery: 'Out for Delivery',
+  delivered: 'Delivered',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
 export default function Profile() {
-    const { user: authUser, token, isLoggedIn, logout, updateUser } = useAuth();
-    const navigate = useNavigate();
-    const [tab, setTab] = useState<Tab>('personal');
-    const [profileData, setProfileData] = useState({
-        fullName: authUser?.name || '',
-        email: authUser?.email || '',
-        phone: authUser?.phone || '',
-        dateOfBirth: '',
-        avatar: authUser?.avatar || ''
-    });
-    const [loading, setLoading] = useState(true);
+  const { user: authUser, token, isLoggedIn, logout } = useAuth();
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<Tab>('personal');
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-    useEffect(() => { if (!isLoggedIn) navigate('/login?redirect=/profile'); }, [isLoggedIn, navigate]);
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/login?redirect=/profile');
+    } else {
+      // Simulate a brief loading to ensure auth is ready
+      const timer = setTimeout(() => setLoading(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedIn, navigate]);
 
-    useEffect(() => {
-        if (isLoggedIn && token) {
-            fetchProfile();
-        }
-    }, [isLoggedIn, token]);
+  if (!isLoggedIn || !authUser) return null;
 
-    const fetchProfile = async () => {
-        try {
-            const res = await fetch('/api/users?action=profile', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                const user = data.user || data;
-                setProfileData({
-                    fullName: user.fullName || user.name || user.full_name || '',
-                    email: user.email || '',
-                    phone: user.phone || user.phoneNumber || user.phone_number || '',
-                    dateOfBirth: user.dateOfBirth || user.dob || '',
-                    avatar: user.avatar || user.photo || ''
-                });
-            }
-        } catch (error) {
-            console.error('Failed to fetch profile:', error);
-            const saved = localStorage.getItem('user_data');
-            if (saved) {
-                const user = JSON.parse(saved);
-                setProfileData({
-                    fullName: user.fullName || user.name || '',
-                    email: user.email || '',
-                    phone: user.phone || '',
-                    dateOfBirth: user.dateOfBirth || '',
-                    avatar: user.avatar || ''
-                });
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-orange-50/50 to-white pt-24 pb-16 px-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <div className="grid lg:grid-cols-4 gap-6">
+            <Skeleton className="lg:col-span-1 h-80 rounded-2xl" />
+            <Skeleton className="lg:col-span-3 h-96 rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-    if (!isLoggedIn || !authUser) return null;
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
-                <div className="max-w-5xl mx-auto animate-pulse">
-                    <div className="h-32 bg-orange-200 rounded-2xl mb-6" />
-                    <div className="grid lg:grid-cols-4 gap-6">
-                        <div className="lg:col-span-1 h-64 bg-gray-200 rounded-2xl" />
-                        <div className="lg:col-span-3 h-96 bg-gray-200 rounded-2xl" />
-                    </div>
+  return (
+    <>
+      <SEO 
+        title="My Profile | Golden Lotus Rewards"
+        description="Manage your Golden Lotus account. View order history, update personal information, track loyalty points, and manage saved addresses."
+        url="https://www.goldenlotusgrill.com/profile"
+        noIndex={true}
+      />
+      <Toaster />
+      <div className="min-h-screen bg-gradient-to-b from-orange-50/50 to-white pt-24 pb-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Profile Header */}
+          <Card className="mb-6 overflow-hidden border-0 shadow-lg">
+            <div className="bg-gradient-to-r from-[#F97316] via-[#ea6c10] to-[#F97316] p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <Avatar className="w-24 h-24 border-4 border-white/30 shadow-xl">
+                  <AvatarImage src={authUser?.avatar || ''} />
+                  <AvatarFallback className="bg-white/20 text-white text-3xl font-bold">
+                    {(authUser?.name?.charAt(0) || authUser?.email?.charAt(0) || 'U').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-center sm:text-left">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+                    {authUser?.name || 'Welcome!'}
+                  </h1>
+                  <p className="text-white/80 flex items-center justify-center sm:justify-start gap-2 mb-3">
+                    <Mail className="w-4 h-4" />
+                    {authUser?.email}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                      <Star className="w-3 h-3 mr-1 fill-current" />
+                      {authUser?.loyaltyPoints || 0} Points
+                    </Badge>
+                    <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                      Member
+                    </Badge>
+                  </div>
                 </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => { logout(); navigate('/'); }}
+                  className="bg-white/20 text-white border-0 hover:bg-white/30 backdrop-blur-sm"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             </div>
-        );
+          </Card>
+
+          <div className="grid lg:grid-cols-4 gap-6">
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <Card className="border-0 shadow-md sticky top-24">
+                <CardContent className="p-2">
+                  <nav className="space-y-1">
+                    {TABS.map((t) => {
+                      const Icon = t.icon;
+                      const isActive = tab === t.key;
+                      return (
+                        <button
+                          key={t.key}
+                          onClick={() => setTab(t.key)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white shadow-md' 
+                              : 'text-gray-600 hover:bg-orange-50 hover:text-[#F97316]'
+                          }`}
+                        >
+                          <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{t.label}</p>
+                            <p className={`text-xs ${isActive ? 'text-white/80' : 'text-gray-400'}`}>
+                              {t.description}
+                            </p>
+                          </div>
+                          {isActive && <ChevronDown className="w-4 h-4 rotate-[-90deg]" />}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Main Content */}
+            <div className="lg:col-span-3">
+              {tab === 'personal' && <PersonalInfoTab token={token} />}
+              {tab === 'addresses' && <AddressesTab token={token} />}
+              {tab === 'orders' && <OrderHistoryTab token={token} />}
+              {tab === 'loyalty' && <LoyaltyTab token={token} userPoints={authUser.loyaltyPoints || 0} />}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERSONAL INFO TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function PersonalInfoTab({ token }: { token: string | null }) {
+  const { user, updateUser } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch('/api/users?action=profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const userData = data.user || data;
+        setFormData({
+          fullName: userData.fullName || userData.name || '',
+          email: userData.email || '',
+          phone: userData.phone || userData.phoneNumber || '',
+          dateOfBirth: userData.dateOfBirth || userData.dob || '',
+        });
+      } else {
+        // Fallback to localStorage data
+        const saved = localStorage.getItem('user_data');
+        if (saved) {
+          const userData = JSON.parse(saved);
+          setFormData({
+            fullName: userData.name || '',
+            email: userData.email || '',
+            phone: userData.phone || '',
+            dateOfBirth: userData.dateOfBirth || '',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    } else if (formData.fullName.length < 2) {
+      newErrors.fullName = 'Name must be at least 2 characters';
+    }
+    
+    if (formData.phone && !/^\+?[\d\s\-\(\)]{10,}$/.test(formData.phone.replace(/\s/g, ''))) {
+      newErrors.phone = 'Please enter a valid phone number';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form",
+        variant: "destructive",
+      });
+      return;
     }
 
-    return (
-        <>
-            <SEO 
-                title="My Profile | Golden Lotus Rewards"
-                description="Manage your Golden Lotus account. View order history, update personal information, track loyalty points, and manage saved addresses."
-                url="https://www.goldenlotusgrill.com/profile"
-                noIndex={true}
-            />
-        <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
-            <div className="max-w-5xl mx-auto">
-                {/* Profile Header */}
-                <div className="bg-gradient-to-r from-[#F97316] to-[#ea6c10] rounded-2xl p-6 mb-6 text-white shadow-lg shadow-orange-200/50">
-                    <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
-                            {profileData.fullName?.charAt(0).toUpperCase() || profileData.email?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                        <div className="flex-1">
-                            <h1 className="text-2xl font-bold">{profileData.fullName || 'Welcome!'}</h1>
-                            <p className="opacity-90 text-sm">{profileData.email}</p>
-                        </div>
-                        <button onClick={() => { logout(); navigate('/'); }} className="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors"><LogOut className="w-5 h-5" /></button>
-                    </div>
-                </div>
-
-                <div className="grid lg:grid-cols-4 gap-6">
-                    {/* Sidebar Tabs */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 flex lg:flex-col gap-1 overflow-x-auto">
-                            {TABS.map((t) => {
-                                const Icon = t.icon;
-                                return (
-                                    <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${tab === t.key ? 'bg-[#F97316] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
-                                        <Icon className="w-4 h-4" />{t.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="lg:col-span-3">
-                        {tab === 'personal' && <PersonalInfo profileData={profileData} setProfileData={setProfileData} token={token} updateUser={updateUser} />}
-                        {tab === 'addresses' && <Addresses token={token} />}
-                        {tab === 'orders' && <OrderHistory token={token} />}
-                        {tab === 'loyalty' && <LoyaltyPoints token={token} userPoints={authUser.loyaltyPoints || 0} />}
-                    </div>
-                </div>
-            </div>
-        </div>
-        </>
-    );
-}
-
-// ─── PERSONAL INFO TAB ───
-function PersonalInfo({ profileData, setProfileData, token, updateUser }: { profileData: any; setProfileData: any; token: string | null; updateUser: (d: Record<string, string>) => void }) {
-    const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
-
-    const save = async () => {
-        setSaving(true);
-        try {
-            const res = await fetch('/api/users?action=update-profile', { 
-                method: 'PATCH', 
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, 
-                body: JSON.stringify({
-                    fullName: profileData.fullName,
-                    phone: profileData.phone,
-                    dateOfBirth: profileData.dateOfBirth
-                }) 
-            });
-            
-            if (res.ok) {
-                updateUser({ name: profileData.fullName, fullName: profileData.fullName, phone: profileData.phone } as any);
-                setSaved(true);
-                setTimeout(() => setSaved(false), 2000);
-            }
-        } catch { 
-            console.error('Failed to update profile');
-        } finally { 
-            setSaving(false); 
-        }
-    };
-
-    const inputCls = "w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all";
-
-    return (
-        <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 space-y-5">
-            <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
-
-            <div className="flex items-center gap-4">
-                <div className="w-20 h-20 bg-gradient-to-br from-[#F97316] to-[#ea6c10] rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                    {profileData.fullName?.charAt(0).toUpperCase() || profileData.email?.charAt(0).toUpperCase() || 'U'}
-                </div>
-                <button className="text-sm text-[#F97316] hover:underline font-medium">Upload Photo</button>
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
-                    <input type="text" value={profileData.fullName} onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })} placeholder="Enter your full name" className={inputCls} />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                    <input type="email" value={profileData.email} disabled className={inputCls + ' opacity-60 cursor-not-allowed bg-gray-50'} />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
-                    <input type="tel" value={profileData.phone} onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} placeholder="(555) 123-4567" className={inputCls} />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Date of Birth</label>
-                    <input type="date" value={profileData.dateOfBirth} onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })} className={inputCls} />
-                </div>
-            </div>
-
-            <button onClick={save} disabled={saving} className="px-8 py-3 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all disabled:opacity-50 flex items-center gap-2">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><Check className="w-4 h-4" /> Saved!</> : 'Save Changes'}
-            </button>
-        </div>
-    );
-}
-
-// ─── ADDRESSES TAB ───
-function Addresses({ token }: { token: string | null }) {
-    const [addresses, setAddresses] = useState<Address[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({ label: 'Home', street: '', apt: '', city: '', state: '', zip: '' });
-
-    useEffect(() => {
-        fetch('/api/users?action=addresses', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(setAddresses).catch(() => { }).finally(() => setLoading(false));
-    }, [token]);
-
-    const addAddress = async () => {
-        const res = await fetch('/api/users?action=addresses', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
-        if (res.ok) { const addr = await res.json(); setAddresses(p => [...p, addr]); setShowForm(false); setForm({ label: 'Home', street: '', apt: '', city: '', state: '', zip: '' }); }
-    };
-
-    const inputCls = "w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all";
-
-    if (loading) return <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100"><Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" /></div>;
-
-    return (
-        <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 space-y-5">
-            <div className="flex items-center justify-between"><h2 className="text-xl font-bold text-gray-900">My Addresses</h2><button onClick={() => setShowForm(!showForm)} className="text-sm text-[#F97316] hover:underline font-medium flex items-center gap-1"><Plus className="w-4 h-4" /> Add New</button></div>
-
-            {addresses.length === 0 && !showForm && (
-                <div className="text-center py-8"><MapPin className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">No saved addresses</p></div>
-            )}
-
-            <div className="space-y-3">
-                {addresses.map((a) => (
-                    <div key={a.id} className="flex items-start gap-4 p-4 border border-gray-200 rounded-xl">
-                        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center shrink-0"><MapPin className="w-5 h-5 text-[#F97316]" /></div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2"><span className="font-medium text-gray-900">{a.label}</span>{a.isDefault && <span className="text-xs bg-[#F97316] text-white px-2 py-0.5 rounded-full">Default</span>}</div>
-                            <p className="text-sm text-gray-600">{a.street}{a.apt ? `, ${a.apt}` : ''}, {a.city}, {a.state} {a.zip}</p>
-                        </div>
-                        <div className="flex gap-1"><button className="p-2 text-gray-400 hover:text-blue-600 transition-colors"><Edit className="w-4 h-4" /></button><button className="p-2 text-gray-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button></div>
-                    </div>
-                ))}
-            </div>
-
-            {showForm && (
-                <div className="border border-[#F97316]/30 rounded-xl p-4 bg-orange-50/30 space-y-3">
-                    <div className="flex gap-2">{['Home', 'Office', 'Other'].map(l => (<button key={l} onClick={() => setForm(p => ({ ...p, label: l }))} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${form.label === l ? 'bg-[#F97316] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{l}</button>))}</div>
-                    <input value={form.street} onChange={e => setForm(p => ({ ...p, street: e.target.value }))} placeholder="Street Address" className={inputCls} />
-                    <div className="grid grid-cols-2 gap-3">
-                        <input value={form.apt} onChange={e => setForm(p => ({ ...p, apt: e.target.value }))} placeholder="Apt" className={inputCls} />
-                        <input value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} placeholder="City" className={inputCls} />
-                        <input value={form.state} onChange={e => setForm(p => ({ ...p, state: e.target.value }))} placeholder="State" className={inputCls} />
-                        <input value={form.zip} onChange={e => setForm(p => ({ ...p, zip: e.target.value }))} placeholder="ZIP" className={inputCls} />
-                    </div>
-                    <div className="flex gap-2"><button onClick={addAddress} className="px-6 py-2.5 bg-[#F97316] text-white rounded-xl font-medium text-sm hover:bg-[#ea6c10] transition-colors">Save Address</button><button onClick={() => setShowForm(false)} className="px-6 py-2.5 border border-gray-200 rounded-xl text-sm hover:bg-gray-50">Cancel</button></div>
-                </div>
-            )}
-        </div>
-    );
-}
-
-// ─── ORDER HISTORY TAB ───
-function OrderHistory({ token }: { token: string | null }) {
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [expanded, setExpanded] = useState<string | null>(null);
-
-    const fetchOrderHistory = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/orders?action=history', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/users?action=update-profile', {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          phone: formData.phone,
+          dateOfBirth: formData.dateOfBirth
+        })
+      });
+      
+      if (res.ok) {
+        updateUser({ 
+          name: formData.fullName, 
+          fullName: formData.fullName, 
+          phone: formData.phone 
         });
-        if (!res.ok) {
-          setOrders([]);
-          return;
-        }
+        toast({
+          title: "Profile Updated",
+          description: "Your personal information has been saved successfully.",
+          variant: "default",
+        });
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="border-0 shadow-md">
+        <CardHeader>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-20 w-20 rounded-full" />
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-0 shadow-md">
+      <CardHeader>
+        <CardTitle className="text-xl flex items-center gap-2">
+          <User className="w-5 h-5 text-[#F97316]" />
+          Personal Information
+        </CardTitle>
+        <CardDescription>
+          Update your personal details and contact information
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Avatar Section */}
+        <div className="flex items-center gap-4">
+          <Avatar className="w-20 h-20">
+            <AvatarImage src={user?.avatar || ''} />
+            <AvatarFallback className="bg-gradient-to-br from-[#F97316] to-[#ea6c10] text-white text-2xl font-bold">
+              {(formData.fullName?.charAt(0) || formData.email?.charAt(0) || 'U').toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Camera className="w-4 h-4" />
+              Change Photo
+            </Button>
+            <p className="text-xs text-gray-500 mt-1">JPG, PNG or GIF. Max 2MB.</p>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Form Fields */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="fullName" className="flex items-center gap-2">
+              <User className="w-4 h-4 text-gray-400" />
+              Full Name
+            </Label>
+            <Input
+              id="fullName"
+              value={formData.fullName}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, fullName: e.target.value }));
+                if (errors.fullName) setErrors(prev => ({ ...prev, fullName: '' }));
+              }}
+              placeholder="Enter your full name"
+              className={errors.fullName ? 'border-red-500 focus-visible:ring-red-500' : ''}
+            />
+            {errors.fullName && (
+              <p className="text-xs text-red-500 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.fullName}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-gray-400" />
+              Email Address
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              disabled
+              className="bg-gray-50 text-gray-500"
+            />
+            <p className="text-xs text-gray-500">Email cannot be changed</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-gray-400" />
+              Phone Number
+            </Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, phone: e.target.value }));
+                if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+              }}
+              placeholder="(555) 123-4567"
+              className={errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
+            />
+            {errors.phone && (
+              <p className="text-xs text-red-500 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.phone}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dob" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              Date of Birth
+            </Label>
+            <Input
+              id="dob"
+              type="date"
+              value={formData.dateOfBirth}
+              onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4">
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="bg-gradient-to-r from-[#F97316] to-[#ea6c10] hover:shadow-lg hover:shadow-orange-200 transition-all"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4 mr-2" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADDRESSES TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function AddressesTab({ token }: { token: string | null }) {
+  const { toast } = useToast();
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [form, setForm] = useState({ 
+    label: 'Home', 
+    fullName: '',
+    phone: '',
+    street: '', 
+    apt: '', 
+    city: '', 
+    state: '', 
+    zip: '',
+    landmark: ''
+  });
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const fetchAddresses = async () => {
+    try {
+      const res = await fetch('/api/users?action=addresses', { 
+        headers: { 'Authorization': `Bearer ${token}` } 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAddresses(data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch addresses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setForm({ 
+      label: 'Home', 
+      fullName: '',
+      phone: '',
+      street: '', 
+      apt: '', 
+      city: '', 
+      state: '', 
+      zip: '',
+      landmark: ''
+    });
+  };
+
+  const handleAdd = async () => {
+    if (!form.street || !form.city || !form.state || !form.zip) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/users?action=add-address', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(form)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setAddresses(prev => [...prev, data.address]);
+        setShowAddForm(false);
+        resetForm();
+        toast({
+          title: "Address Added",
+          description: "Your new address has been saved successfully.",
+        });
+      } else {
+        throw new Error('Failed to add address');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add address. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!editingAddress || !form.street || !form.city || !form.state || !form.zip) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const addressId = editingAddress._id || editingAddress.id;
+      const res = await fetch(`/api/users?action=edit-address&id=${addressId}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(form)
+      });
+      
+      if (res.ok) {
+        setAddresses(prev => prev.map(addr => {
+          const addrId = addr._id || addr.id;
+          if (addrId === addressId) {
+            return { ...addr, ...form };
+          }
+          return addr;
+        }));
+        setEditingAddress(null);
+        resetForm();
+        toast({
+          title: "Address Updated",
+          description: "Your address has been updated successfully.",
+        });
+      } else {
+        throw new Error('Failed to update address');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update address. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (addressId: string) => {
+    try {
+      const res = await fetch(`/api/users?action=delete-address&id=${addressId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        setAddresses(prev => prev.filter(addr => (addr._id || addr.id) !== addressId));
+        toast({
+          title: "Address Deleted",
+          description: "The address has been removed from your account.",
+        });
+      } else {
+        throw new Error('Failed to delete address');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete address. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSetDefault = async (addressId: string) => {
+    try {
+      const res = await fetch(`/api/users?action=set-default-address&id=${addressId}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        setAddresses(prev => prev.map(addr => ({
+          ...addr,
+          isDefault: (addr._id || addr.id) === addressId
+        })));
+        toast({
+          title: "Default Updated",
+          description: "Your default address has been updated.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update default address.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startEdit = (addr: Address) => {
+    setEditingAddress(addr);
+    setForm({
+      label: addr.label || 'Home',
+      fullName: addr.fullName || '',
+      phone: addr.phone || '',
+      street: addr.street || '',
+      apt: addr.apt || '',
+      city: addr.city || '',
+      state: addr.state || '',
+      zip: addr.zip || '',
+      landmark: addr.landmark || ''
+    });
+  };
+
+  const getLabelIcon = (label: string) => {
+    switch (label?.toLowerCase()) {
+      case 'home': return Home;
+      case 'office': return Briefcase;
+      default: return MapPinned;
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const AddressForm = ({ onSubmit, onCancel, title }: { onSubmit: () => void, onCancel: () => void, title: string }) => (
+    <Card className="border-orange-200 bg-orange-50/30">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg flex items-center justify-between">
+          {title}
+          <Button variant="ghost" size="icon" onClick={onCancel}>
+            <X className="w-4 h-4" />
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Label Selection */}
+        <div className="flex gap-2">
+          {['Home', 'Office', 'Other'].map(l => (
+            <button
+              key={l}
+              onClick={() => setForm(p => ({ ...p, label: l }))}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                form.label === l 
+                  ? 'bg-[#F97316] text-white shadow-sm' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input 
+            placeholder="Full Name" 
+            value={form.fullName}
+            onChange={e => setForm(p => ({ ...p, fullName: e.target.value }))}
+          />
+          <Input 
+            placeholder="Phone Number" 
+            value={form.phone}
+            onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+          />
+        </div>
+
+        <Input 
+          placeholder="Street Address *" 
+          value={form.street}
+          onChange={e => setForm(p => ({ ...p, street: e.target.value }))}
+        />
+        
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Input 
+            placeholder="Apt/Suite" 
+            value={form.apt}
+            onChange={e => setForm(p => ({ ...p, apt: e.target.value }))}
+          />
+          <Input 
+            placeholder="City *" 
+            value={form.city}
+            onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
+          />
+          <Input 
+            placeholder="State *" 
+            value={form.state}
+            onChange={e => setForm(p => ({ ...p, state: e.target.value }))}
+          />
+          <Input 
+            placeholder="ZIP *" 
+            value={form.zip}
+            onChange={e => setForm(p => ({ ...p, zip: e.target.value }))}
+          />
+        </div>
+
+        <Input 
+          placeholder="Landmark (optional)" 
+          value={form.landmark}
+          onChange={e => setForm(p => ({ ...p, landmark: e.target.value }))}
+        />
+
+        <div className="flex gap-2 pt-2">
+          <Button 
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            className="bg-[#F97316] hover:bg-[#ea6c10]"
+          >
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Address'}
+          </Button>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-0 shadow-md">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-[#F97316]" />
+              Saved Addresses
+            </CardTitle>
+            <CardDescription>Manage your delivery addresses</CardDescription>
+          </div>
+          {!showAddForm && !editingAddress && (
+            <Button 
+              onClick={() => setShowAddForm(true)}
+              className="bg-[#F97316] hover:bg-[#ea6c10]"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add New
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {showAddForm && (
+            <AddressForm 
+              onSubmit={handleAdd}
+              onCancel={() => { setShowAddForm(false); resetForm(); }}
+              title="Add New Address"
+            />
+          )}
+
+          {editingAddress && (
+            <AddressForm 
+              onSubmit={handleEdit}
+              onCancel={() => { setEditingAddress(null); resetForm(); }}
+              title="Edit Address"
+            />
+          )}
+
+          {addresses.length === 0 && !showAddForm ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MapPin className="w-8 h-8 text-[#F97316]" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">No saved addresses</h3>
+              <p className="text-gray-500 mb-4">Add an address to make checkout faster</p>
+              <Button 
+                onClick={() => setShowAddForm(true)}
+                variant="outline"
+                className="border-[#F97316] text-[#F97316] hover:bg-orange-50"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Your First Address
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {addresses.map((addr) => {
+                const addrId = addr._id || addr.id;
+                const LabelIcon = getLabelIcon(addr.label);
+                return (
+                  <Card key={addrId} className={`border ${addr.isDefault ? 'border-[#F97316] bg-orange-50/20' : 'border-gray-200'} hover:shadow-md transition-shadow`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${addr.isDefault ? 'bg-[#F97316] text-white' : 'bg-orange-100 text-[#F97316]'}`}>
+                          <LabelIcon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-gray-900">{addr.label || 'Address'}</span>
+                            {addr.isDefault && (
+                              <Badge className="bg-[#F97316] text-white hover:bg-[#ea6c10]">
+                                Default
+                              </Badge>
+                            )}
+                          </div>
+                          {addr.fullName && (
+                            <p className="text-sm text-gray-600 font-medium">{addr.fullName}</p>
+                          )}
+                          <p className="text-sm text-gray-600 mt-0.5">
+                            {addr.street}{addr.apt ? `, ${addr.apt}` : ''}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {addr.city}, {addr.state} {addr.zip}
+                          </p>
+                          {addr.landmark && (
+                            <p className="text-xs text-gray-500 mt-1">Near: {addr.landmark}</p>
+                          )}
+                          {addr.phone && (
+                            <p className="text-sm text-gray-500 mt-1">{addr.phone}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-blue-600">
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Edit Address</DialogTitle>
+                              </DialogHeader>
+                              {/* Inline edit form would go here */}
+                              <p className="text-sm text-gray-500">Use the edit button on the card to edit this address.</p>
+                            </DialogContent>
+                          </Dialog>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-gray-400 hover:text-red-600"
+                            onClick={() => handleDelete(addrId || '')}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {!addr.isDefault && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-[#F97316] hover:text-[#ea6c10] hover:bg-orange-50"
+                            onClick={() => handleSetDefault(addrId || '')}
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            Set as Default
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ORDER HISTORY TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function OrderHistoryTab({ token }: { token: string | null }) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchOrderHistory();
+  }, []);
+
+  const fetchOrderHistory = async () => {
+    try {
+      const res = await fetch('/api/orders?action=history', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
         const data = await res.json();
         setOrders(data.orders || []);
-      } catch (error) {
-        console.error('Failed to fetch orders:', error);
-        setOrders([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        fetchOrderHistory();
-    }, []);
+  const handleReorder = (order: Order) => {
+    // Navigate to menu with items pre-selected
+    toast({
+      title: "Reorder Feature",
+      description: "This feature will be available soon!",
+    });
+  };
 
-    const statusColors: Record<string, string> = {
-        pending: 'bg-yellow-100 text-yellow-700', confirmed: 'bg-blue-100 text-blue-700', preparing: 'bg-purple-100 text-purple-700',
-        ready: 'bg-indigo-100 text-indigo-700', out_for_delivery: 'bg-orange-100 text-orange-700', delivered: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-700',
-    };
-
-    if (loading) return <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100"><Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" /></div>;
-
+  if (loading) {
     return (
-        <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 space-y-5">
-            <h2 className="text-xl font-bold text-gray-900">Order History</h2>
-            {orders.length === 0 && <div className="text-center py-8"><ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">No orders yet</p></div>}
-            <div className="space-y-3">
-                {orders.map((o) => (
-                    <div key={o.id} className="border border-gray-200 rounded-xl overflow-hidden">
-                        <button onClick={() => setExpanded(expanded === o.id ? null : o.id)} className="w-full p-4 flex items-center gap-4 text-left">
-                            <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center shrink-0"><Package className="w-5 h-5 text-[#F97316]" /></div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2"><span className="font-medium text-gray-900">{o.orderNumber}</span><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[o.status] || 'bg-gray-100'}`}>{o.status}</span></div>
-                                <p className="text-sm text-gray-500">{new Date(o.createdAt).toLocaleDateString()} · {o.items.length} items · ${o.total.toFixed(2)}</p>
-                            </div>
-                            {expanded === o.id ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                        </button>
-                        {expanded === o.id && (
-                            <div className="px-4 pb-4 border-t pt-3 space-y-2">
-                                {o.items.map((item, i) => (<div key={i} className="flex justify-between text-sm"><span className="text-gray-600">{item.name} x{item.quantity}</span><span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span></div>))}
-                                <div className="flex justify-between font-bold pt-2 border-t"><span>Total</span><span className="text-[#F97316]">${o.total.toFixed(2)}</span></div>
-                                <button className="mt-2 px-4 py-2 bg-[#F97316] text-white rounded-lg text-sm font-medium hover:bg-[#ea6c10] transition-colors">Reorder</button>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-        </div>
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" />
+        </CardContent>
+      </Card>
     );
+  }
+
+  return (
+    <Card className="border-0 shadow-md">
+      <CardHeader>
+        <CardTitle className="text-xl flex items-center gap-2">
+          <ShoppingBag className="w-5 h-5 text-[#F97316]" />
+          Order History
+        </CardTitle>
+        <CardDescription>View and track your past orders</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {orders.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-8 h-8 text-[#F97316]" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
+            <p className="text-gray-500 mb-4">Start ordering to see your history here</p>
+            <Button 
+              onClick={() => window.location.href = '/menu'}
+              className="bg-[#F97316] hover:bg-[#ea6c10]"
+            >
+              Browse Menu
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order) => (
+              <Card key={order.id} className="border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                <div 
+                  className="p-4 cursor-pointer"
+                  onClick={() => setExpanded(expanded === order.id ? null : order.id)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
+                      <Package className="w-6 h-6 text-[#F97316]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="font-semibold text-gray-900">{order.orderNumber}</span>
+                        <Badge className={STATUS_COLORS[order.status] || 'bg-gray-100'}>
+                          {STATUS_LABELS[order.status] || order.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })} · {order.items?.length || 0} items · ${order.total?.toFixed(2)}
+                      </p>
+                    </div>
+                    {expanded === order.id ? 
+                      <ChevronUp className="w-5 h-5 text-gray-400" /> : 
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    }
+                  </div>
+                </div>
+                
+                {expanded === order.id && (
+                  <div className="px-4 pb-4 border-t bg-gray-50/50">
+                    <div className="pt-4 space-y-3">
+                      <h4 className="font-medium text-sm text-gray-700">Order Items</h4>
+                      {order.items?.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">
+                            {item.name} <span className="text-gray-400">×{item.quantity}</span>
+                          </span>
+                          <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                      
+                      <Separator />
+                      
+                      <div className="flex justify-between items-center font-bold">
+                        <span>Total</span>
+                        <span className="text-[#F97316]">${order.total?.toFixed(2)}</span>
+                      </div>
+                      
+                      <div className="flex gap-2 pt-2">
+                        <Button 
+                          size="sm" 
+                          className="bg-[#F97316] hover:bg-[#ea6c10]"
+                          onClick={() => handleReorder(order)}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Reorder
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => window.location.href = `/order-tracking?id=${order.id}`}
+                        >
+                          Track Order
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
-// ─── LOYALTY POINTS TAB ───
-function LoyaltyPoints({ token, userPoints }: { token: string | null; userPoints: number }) {
-    const [points, setPoints] = useState(userPoints);
-    const [history, setHistory] = useState<LoyaltyEntry[]>([]);
-    const [loading, setLoading] = useState(true);
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOYALTY TAB
+// ═══════════════════════════════════════════════════════════════════════════════
 
-    useEffect(() => {
-        fetch('/api/users?action=loyalty', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(d => { setPoints(d.points); setHistory(d.history || []); }).catch(() => { }).finally(() => setLoading(false));
-    }, [token]);
+function LoyaltyTab({ token, userPoints }: { token: string | null; userPoints: number }) {
+  const [points, setPoints] = useState(userPoints);
+  const [history, setHistory] = useState<LoyaltyEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-    if (loading) return <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100"><Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" /></div>;
+  useEffect(() => {
+    fetchLoyaltyData();
+  }, []);
 
+  const fetchLoyaltyData = async () => {
+    try {
+      const res = await fetch('/api/users?action=loyalty', { 
+        headers: { 'Authorization': `Bearer ${token}` } 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPoints(data.points || 0);
+        setHistory(data.history || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch loyalty data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRedeem = async () => {
+    const redeemAmount = Math.floor(points / 100) * 100;
+    if (redeemAmount < 100) return;
+
+    try {
+      const res = await fetch('/api/users?action=redeem-points', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ pointsToRedeem: redeemAmount })
+      });
+      
+      if (res.ok) {
+        setPoints(prev => prev - redeemAmount);
+        toast({
+          title: "Points Redeemed!",
+          description: `${redeemAmount} points have been redeemed for $${(redeemAmount / 100).toFixed(2)} off your next order.`,
+        });
+        fetchLoyaltyData();
+      } else {
+        throw new Error('Failed to redeem points');
+      }
+    } catch (error) {
+      toast({
+        title: "Redemption Failed",
+        description: "Could not redeem points. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
     return (
-        <div className="space-y-6">
-            {/* Points Card */}
-            <div className="bg-gradient-to-r from-[#F97316] to-[#ea6c10] rounded-2xl p-6 text-white shadow-lg shadow-orange-200/50">
-                <p className="text-sm opacity-90">Your Loyalty Points</p>
-                <p className="text-5xl font-bold mt-1">{points}</p>
-                <p className="text-sm opacity-80 mt-2">= ${(points / 100).toFixed(2)} value</p>
-                <div className="flex gap-3 mt-4">
-                    <div className="bg-white/20 rounded-xl px-4 py-2 flex-1 text-center"><p className="text-xs opacity-80">Earn</p><p className="font-bold">1 pt / $1</p></div>
-                    <div className="bg-white/20 rounded-xl px-4 py-2 flex-1 text-center"><p className="text-xs opacity-80">Redeem</p><p className="font-bold">100 pts = $1</p></div>
-                </div>
-            </div>
-
-            {points >= 100 && (
-                <button className="w-full py-3 bg-white border-2 border-[#F97316] text-[#F97316] font-semibold rounded-xl hover:bg-[#F97316]/5 transition-all">
-                    Redeem {Math.floor(points / 100) * 100} Points (${Math.floor(points / 100).toFixed(2)} off next order)
-                </button>
-            )}
-
-            {/* History */}
-            <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-                <h3 className="font-bold text-gray-900 mb-4">Transaction History</h3>
-                {history.length === 0 && <p className="text-center text-gray-500 py-4">No transactions yet</p>}
-                <div className="space-y-3">
-                    {history.map((entry, i) => (
-                        <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                            <div>
-                                <p className="font-medium text-gray-900 text-sm">{entry.action === 'earned' ? 'Points Earned' : 'Points Redeemed'}</p>
-                                <p className="text-xs text-gray-500">{new Date(entry.date).toLocaleDateString()}</p>
-                            </div>
-                            <span className={`font-bold ${entry.points > 0 ? 'text-green-600' : 'text-red-600'}`}>{entry.points > 0 ? '+' : ''}{entry.points}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" />
+        </CardContent>
+      </Card>
     );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Points Card */}
+      <Card className="border-0 shadow-lg overflow-hidden">
+        <div className="bg-gradient-to-r from-[#F97316] via-[#ea6c10] to-[#F97316] p-8 text-white">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center">
+              <Star className="w-10 h-10 fill-current" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <p className="text-white/80 text-sm font-medium mb-1">Your Loyalty Points</p>
+              <p className="text-5xl font-bold">{points}</p>
+              <p className="text-white/80 mt-1">= ${(points / 100).toFixed(2)} value</p>
+            </div>
+            {points >= 100 && (
+              <Button 
+                onClick={handleRedeem}
+                className="bg-white text-[#F97316] hover:bg-white/90 font-semibold"
+              >
+                Redeem {Math.floor(points / 100) * 100} Points
+              </Button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 mt-8">
+            <div className="bg-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
+              <p className="text-xs text-white/70 mb-1">Earn Rate</p>
+              <p className="text-xl font-bold">1 pt / $1</p>
+              <p className="text-xs text-white/70">On every order</p>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
+              <p className="text-xs text-white/70 mb-1">Redeem Rate</p>
+              <p className="text-xl font-bold">100 pts = $1</p>
+              <p className="text-xs text-white/70">Min. 100 points</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Progress to next reward */}
+      <Card className="border-0 shadow-md">
+        <CardHeader>
+          <CardTitle className="text-lg">Progress to Next Reward</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">{points % 100} points</span>
+              <span className="font-medium text-[#F97316]">100 points = $1 off</span>
+            </div>
+            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-[#F97316] to-[#ea6c10] rounded-full transition-all duration-500"
+                style={{ width: `${(points % 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              {100 - (points % 100)} more points until your next $1 reward
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Transaction History */}
+      <Card className="border-0 shadow-md">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Package className="w-5 h-5 text-[#F97316]" />
+            Transaction History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {history.length === 0 ? (
+            <div className="text-center py-8">
+              <Star className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No transactions yet</p>
+              <p className="text-sm text-gray-400">Start ordering to earn points!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {history.map((entry, i) => (
+                <div 
+                  key={i} 
+                  className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      entry.points > 0 ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-[#F97316]'
+                    }`}>
+                      {entry.points > 0 ? <Plus className="w-5 h-5" /> : <Star className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">
+                        {entry.action === 'earned' ? 'Points Earned' : 'Points Redeemed'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(entry.date).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                        {entry.orderId && entry.orderId !== 'Redemption' && ` · Order #${entry.orderId.slice(-6)}`}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`font-bold text-lg ${entry.points > 0 ? 'text-green-600' : 'text-[#F97316]'}`}>
+                    {entry.points > 0 ? '+' : ''}{entry.points}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
