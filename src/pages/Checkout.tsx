@@ -14,6 +14,9 @@ const PROMOS: Record<string, { type: string; value: number; minOrder: number; la
     BOBAMONDAY: { type: 'fixed', value: 5, minOrder: 0, label: '$5 off on Mondays', dayOnly: 1 },
 };
 
+// Check if Stripe is configured
+const isStripeConfigured = !!(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
 function StepIndicator({ step }: { step: number }) {
     const steps = ['Delivery', 'Payment', 'Review'];
     return (
@@ -36,6 +39,18 @@ function StepIndicator({ step }: { step: number }) {
 function CardForm({ name, setName, error, setError }: { name: string; setName: (v: string) => void; error: string; setError: (v: string) => void }) {
     return (
         <div className="space-y-4 mt-4">
+            {/* Test Mode Notice */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-sm font-medium text-blue-900 mb-2">🧪 Test Mode Active</p>
+                <p className="text-xs text-blue-700 mb-2">Use these test card numbers:</p>
+                <div className="space-y-1 text-xs text-blue-800">
+                    <p>✅ <strong>Success:</strong> 4242 4242 4242 4242</p>
+                    <p>❌ <strong>Decline:</strong> 4000 0000 0000 0002</p>
+                    <p>📅 <strong>Any future expiry date</strong> (e.g., 12/30)</p>
+                    <p>🔒 <strong>Any 3-digit CVC</strong> (e.g., 123)</p>
+                    <p>📮 <strong>Any ZIP code</strong> (e.g., 12345)</p>
+                </div>
+            </div>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Cardholder Name</label>
                 <div className="relative">
@@ -50,7 +65,7 @@ function CardForm({ name, setName, error, setError }: { name: string; setName: (
                 </div>
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
             </div>
-            <div className="flex items-center gap-2 text-gray-400 text-xs"><Lock className="w-3.5 h-3.5" /><span>Secured by Stripe</span></div>
+            <div className="flex items-center gap-2 text-gray-400 text-xs"><Lock className="w-3.5 h-3.5" /><span>Secured by Stripe (Test Mode)</span></div>
         </div>
     );
 }
@@ -183,6 +198,17 @@ function CheckoutInner() {
                     <ArrowLeft className="w-5 h-5" />{step > 1 ? 'Back' : 'Back to Menu'}
                 </button>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
+                
+                {/* Stripe Configuration Warning */}
+                {!isStripeConfigured && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                        <p className="text-sm text-yellow-800">
+                            <strong>⚠️ Stripe Not Configured:</strong> To enable card payments, add your Stripe test publishable key to the environment variables as <code className="bg-yellow-100 px-1 rounded">VITE_STRIPE_PUBLISHABLE_KEY</code>.
+                            Cash on Delivery is still available.
+                        </p>
+                    </div>
+                )}
+                
                 <StepIndicator step={step} />
 
                 <div className="grid lg:grid-cols-3 gap-8">

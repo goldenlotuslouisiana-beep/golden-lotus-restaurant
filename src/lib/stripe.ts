@@ -1,5 +1,16 @@
 import { loadStripe } from '@stripe/stripe-js';
 
-const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51MqKXvSIWhmCSNykFjkCPJfE9hLXGChyfnqOGz2V1X7v1k1C3EJ2HzpV3DRrw6MZHFboVH9kYKj0wfXz5LBjz2Gm00DfS8ZQKZ';
+// Stripe Configuration
+// Set VITE_STRIPE_PUBLISHABLE_KEY in your environment variables
+// For testing, use your Stripe test publishable key (pk_test_...)
+// Test card numbers:
+// - Success: 4242 4242 4242 4242
+// - Decline: 4000 0000 0000 0002
+// - Any future expiry date, any 3-digit CVC, any ZIP
+const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
-export const stripePromise = loadStripe(publishableKey);
+if (!publishableKey) {
+    console.warn('VITE_STRIPE_PUBLISHABLE_KEY not set. Please add it to your environment variables.');
+}
+
+export const stripePromise = loadStripe(publishableKey || '');

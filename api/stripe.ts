@@ -2,7 +2,19 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import clientPromise from '../src/lib/db.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+// Stripe configuration
+// For testing, set STRIPE_SECRET_KEY in your Vercel environment variables
+// Test card numbers:
+// - Success: 4242 4242 4242 4242
+// - Decline: 4000 0000 0000 0002
+// - Any future expiry date, any 3-digit CVC, any ZIP
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+if (!stripeKey) {
+    console.warn('STRIPE_SECRET_KEY not set. Stripe payments will not work.');
+}
+
+const stripe = new Stripe(stripeKey || 'sk_test_placeholder', {
     apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
 });
 
