@@ -34,14 +34,15 @@ export default function AdminContent() {
     fetch('/api/menu?action=site-content')
       .then(res => res.json())
       .then(data => {
-        setContent(data);
+        const contentData = data || { hero: {}, about: {}, cuisine: {}, bar: {}, ambience: {}, catering: {}, events: { hennaParty: {} }, visitUs: {}, rewards: {}, story: { sections: [] }, orderCTA: {}, settings: {}, legal: {}, footerSettings: {}, socialLinks: {}, contactInfo: {} };
+        setContent(contentData);
         // Initialize previews from existing data
         setImageStates(prev => ({
-          'hero.backgroundImage': { ...prev['hero.backgroundImage'], preview: data?.hero?.backgroundImage || null },
-          'about.image': { ...prev['about.image'], preview: data?.about?.image || null },
-          'cuisine.image': { ...prev['cuisine.image'], preview: data?.cuisine?.image || null },
-          'bar.image': { ...prev['bar.image'], preview: data?.bar?.image || null },
-          'catering.image': { ...prev['catering.image'], preview: data?.catering?.image || null },
+          'hero.backgroundImage': { ...prev['hero.backgroundImage'], preview: contentData?.hero?.backgroundImage || null },
+          'about.image': { ...prev['about.image'], preview: contentData?.about?.image || null },
+          'cuisine.image': { ...prev['cuisine.image'], preview: contentData?.cuisine?.image || null },
+          'bar.image': { ...prev['bar.image'], preview: contentData?.bar?.image || null },
+          'catering.image': { ...prev['catering.image'], preview: contentData?.catering?.image || null },
         }));
       })
       .catch(console.error);
