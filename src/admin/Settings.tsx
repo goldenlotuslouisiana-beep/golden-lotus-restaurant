@@ -38,7 +38,8 @@ export default function AdminSettings() {
     try {
       const res = await fetch('/api/menu?action=site-content');
       if (res.ok) {
-        const content = await res.json();
+        let content = await res.json();
+        if (!content) content = {};
         setSiteContent(content);
         setSocialLinks({
           facebook: content.socialLinks?.facebook || '',
