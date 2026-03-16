@@ -8,23 +8,12 @@ import type {
   FAQ,
   Coupon,
   SiteContent,
-  AdminUser,
   Feature,
-  Order,
-  Analytics,
   Event,
   EventPackage,
   CateringPackage,
   CateringInquiry,
 } from '@/types';
-
-// Default Admin User
-const defaultAdmin: AdminUser = {
-  id: '1',
-  username: 'admin',
-  password: 'admin123',
-  email: 'admin@goldenlotus.com',
-};
 
 // Default Menu Categories
 export const defaultMenuCategories: MenuCategory[] = [
@@ -498,67 +487,6 @@ export const defaultEventPackages: EventPackage[] = [
     price: '$85',
     per: 'per person',
     features: ['4-hour henna session', 'Premium bar', 'Gourmet dinner', 'Live entertainment', 'Photo booth', 'Private dining room', 'Minimum 20 guests'],
-  },
-];
-
-// Default Orders
-const defaultOrders: Order[] = [
-  {
-    id: '1',
-    orderNumber: 'ORD-001',
-    customer: {
-      id: 'c1',
-      name: 'John Smith',
-      email: 'john@example.com',
-      phone: '(305) 555-0101',
-      address: '123 Main St',
-      city: 'Miami',
-      zip: '33101',
-    },
-    items: [
-      { id: 'i1', menuItemId: '2', name: 'Soup Dumplings', price: 12.50, quantity: 2 },
-      { id: 'i2', menuItemId: '6', name: 'Kung Pao Chicken', price: 18.00, quantity: 1 },
-    ],
-    subtotal: 43.00,
-    tax: 3.44,
-    deliveryFee: 3.99,
-    discount: 0,
-    total: 50.43,
-    orderType: 'pickup',
-    status: 'picked_up',
-    paymentStatus: 'paid',
-    paymentMethod: 'online',
-    createdAt: '2025-03-09T18:30:00Z',
-    updatedAt: '2025-03-09T19:45:00Z',
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-002',
-    customer: {
-      id: 'c2',
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      phone: '(305) 555-0102',
-      address: '456 Oak Ave',
-      city: 'Pinecrest',
-      zip: '33156',
-    },
-    items: [
-      { id: 'i3', menuItemId: '1', name: 'Peking Duck', price: 45.00, quantity: 1 },
-      { id: 'i4', menuItemId: '9', name: 'Brown Sugar Boba Milk Tea', price: 6.50, quantity: 2 },
-    ],
-    subtotal: 58.00,
-    tax: 4.64,
-    deliveryFee: 0,
-    discount: 0,
-    total: 62.64,
-    orderType: 'pickup',
-    status: 'ready',
-    paymentStatus: 'paid',
-    paymentMethod: 'card',
-    createdAt: '2025-03-10T11:15:00Z',
-    updatedAt: '2025-03-10T12:00:00Z',
-    estimatedReadyTime: '2025-03-10T12:30:00Z',
   },
 ];
 
