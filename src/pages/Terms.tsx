@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { DataStore } from '@/data/store';
 import SEO from '@/components/SEO';
 
 export default function Terms() {
   const [content, setContent] = useState('');
 
   useEffect(() => {
-    const siteContent = DataStore.getSiteContent();
-    setContent(siteContent.legal?.termsOfService || '');
+    fetch('/api/menu?action=site-content')
+      .then(r => r.json())
+      .then(data => setContent(data?.legal?.termsOfService || ''))
+      .catch(err => console.error('Error loading terms:', err));
   }, []);
 
   return (

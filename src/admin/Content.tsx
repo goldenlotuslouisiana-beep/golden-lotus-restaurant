@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Save, Check, UploadCloud, Link as LinkIcon } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import { uploadImage } from '@/lib/uploadImage';
 import type { SiteContent } from '@/types';
+
+const authHeaders = () => {
+  const token = localStorage.getItem('admin_jwt');
+  return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
 
 type UploadMethod = 'url' | 'file';
 
@@ -27,24 +31,33 @@ export default function AdminContent() {
   });
 
   useEffect(() => {
-    const data = DataStore.getSiteContent();
-    setContent(data);
-    
-    // Initialize previews from existing data
-    setImageStates(prev => ({
-      'hero.backgroundImage': { ...prev['hero.backgroundImage'], preview: data?.hero?.backgroundImage || null },
-      'about.image': { ...prev['about.image'], preview: data?.about?.image || null },
-      'cuisine.image': { ...prev['cuisine.image'], preview: data?.cuisine?.image || null },
-      'bar.image': { ...prev['bar.image'], preview: data?.bar?.image || null },
-      'catering.image': { ...prev['catering.image'], preview: data?.catering?.image || null },
-    }));
+    fetch('/api/menu?action=site-content')
+      .then(res => res.json())
+      .then(data => {
+        setContent(data);
+        // Initialize previews from existing data
+        setImageStates(prev => ({
+          'hero.backgroundImage': { ...prev['hero.backgroundImage'], preview: data?.hero?.backgroundImage || null },
+          'about.image': { ...prev['about.image'], preview: data?.about?.image || null },
+          'cuisine.image': { ...prev['cuisine.image'], preview: data?.cuisine?.image || null },
+          'bar.image': { ...prev['bar.image'], preview: data?.bar?.image || null },
+          'catering.image': { ...prev['catering.image'], preview: data?.catering?.image || null },
+        }));
+      })
+      .catch(console.error);
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (content) {
-      DataStore.setSiteContent(content);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      try {
+        const res = await fetch('/api/admin?action=save-site-content', {
+          method: 'POST', headers: authHeaders(), body: JSON.stringify(content),
+        });
+        if (res.ok) {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        }
+      } catch (err) { console.error('Error saving content:', err); }
     }
   };
 

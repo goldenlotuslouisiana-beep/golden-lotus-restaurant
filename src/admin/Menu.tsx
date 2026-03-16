@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Pencil, Trash2, X, Check, Star, Leaf, UploadCloud, Link as LinkIcon } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import { uploadImage } from '@/lib/uploadImage';
 import type { MenuItem } from '@/types';
 
@@ -38,9 +37,11 @@ export default function AdminMenu() {
         const items = await res.json();
         setMenuItems(items);
       }
-      // Categories stay in local storage for now
-      const cats = DataStore.getMenuCategories();
-      setCategories(cats.map((c) => c.name));
+      const catsRes = await fetch('/api/menu?action=menu-categories');
+      if (catsRes.ok) {
+        const cats = await catsRes.json();
+        setCategories(cats.map((c: any) => c.name));
+      }
     } catch (error) {
       console.error('Failed to load menu items:', error);
     } finally {

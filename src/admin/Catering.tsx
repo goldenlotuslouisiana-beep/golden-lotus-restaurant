@@ -5,9 +5,13 @@ import {
   Star, Utensils, Check,
   Upload
 } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import { uploadImage } from '@/lib/uploadImage';
 import type { CateringInquiry, CateringPackage } from '@/types';
+
+const authHeaders = () => {
+  const token = localStorage.getItem('admin_jwt');
+  return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
 
 // Status badge configurations
 const STATUS_CONFIG = {
@@ -58,9 +62,51 @@ export default function AdminCatering() {
     filterInquiries();
   }, [inquiries, searchQuery, statusFilter, priorityFilter]);
 
-  const loadData = () => {
-    setInquiries(DataStore.getCateringInquiries());
-    setPackages(DataStore.getCateringPackages());
+  const loadData = async () => {
+    try {
+      const [iRes, pRes] = await Promise.all([
+        fetch('/api/admin?action=save-catering-inquiries', { headers: authHeaders() }),
+        fetch('/api/menu?action=catering-packages')
+      ]);
+      if (iRes.ok) setInquiries(await iRes.json());
+      if (pRes.ok) setPackages(await pRes.json());
+    } catch (err) { console.error('Error loading catering data:', err); }
+  };
+
+  const updateInquiry = async (id: string, updates: Partial<CateringInquiry>) => {
+    try {
+      const res = await fetch(`/api/admin?action=save-catering-inquiries&id=${id}`, {
+        method: 'PATCH', headers: authHeaders(), body: JSON.stringify(updates)
+      });
+      if (res.ok) loadData();
+    } catch (err) { console.error('Error updating inquiry:', err); }
+  };
+
+  const deleteInquiry = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin?action=save-catering-inquiries&id=${id}`, {
+        method: 'DELETE', headers: authHeaders()
+      });
+      if (res.ok) loadData();
+    } catch (err) { console.error('Error deleting inquiry:', err); }
+  };
+
+  const saveCateringPackage = async (pkg: CateringPackage, isNew: boolean = false) => {
+    try {
+      const method = isNew ? 'POST' : 'PATCH';
+      const url = '/api/admin?action=save-catering-packages' + (!isNew ? `&id=${pkg.id}` : '');
+      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(pkg) });
+      if (res.ok) loadData();
+    } catch (err) { console.error('Error saving package:', err); }
+  };
+
+  const deleteCateringPackage = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin?action=save-catering-packages&id=${id}`, {
+        method: 'DELETE', headers: authHeaders()
+      });
+      if (res.ok) loadData();
+    } catch (err) { console.error('Error deleting package:', err); }
   };
 
   const filterInquiries = () => {
@@ -88,83 +134,53 @@ export default function AdminCatering() {
   };
 
   const handleUpdateStatus = (inquiryId: string, status: CateringInquiry['status']) => {
-    DataStore.updateCateringInquiryStatus(inquiryId, status);
-    loadData();
+    updateInquiry(inquiryId, { status });
   };
 
   const handleUpdatePriority = (inquiryId: string, priority: CateringInquiry['priority']) => {
-    DataStore.updateCateringInquiry(inquiryId, { priority });
-    loadData();
+    updateInquiry(inquiryId, { priority });
   };
 
   const handleAddCommunication = (inquiryId: string, type: 'email' | 'phone' | 'meeting' | 'note', notes: string) => {
-    DataStore.addCateringInquiryCommunication(inquiryId, {
-      date: new Date().toISOString(),
-      type,
-      notes,
-      staffName: 'Admin',
-    });
-    loadData();
+    const inquiry = inquiries.find(i => i.id === inquiryId);
+    if (!inquiry) return;
+    const newComm = { date: new Date().toISOString(), type, notes, staffName: 'Admin' };
+    updateInquiry(inquiryId, { communicationLog: [...(inquiry.communicationLog || []), newComm] });
   };
 
   const handleDeleteInquiry = (inquiryId: string) => {
     if (confirm('Are you sure you want to delete this inquiry?')) {
-      DataStore.deleteCateringInquiry(inquiryId);
-      loadData();
+      deleteInquiry(inquiryId);
     }
   };
 
   const handleSavePackage = (pkg: CateringPackage) => {
-    const existingPackages = DataStore.getCateringPackages();
-    let updatedPackages;
-    
     if (editingPackage) {
-      // Update existing
-      updatedPackages = existingPackages.map(p => 
-        p.id === pkg.id ? { ...pkg, updatedAt: new Date().toISOString() } : p
-      );
+      saveCateringPackage({ ...pkg, updatedAt: new Date().toISOString() }, false);
     } else {
-      // Create new
-      const newPackage = {
+      saveCateringPackage({
         ...pkg,
         id: Date.now().toString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
-      updatedPackages = [...existingPackages, newPackage];
+      }, true);
     }
-    
-    DataStore.setCateringPackages(updatedPackages);
     setIsPackageModalOpen(false);
     setEditingPackage(null);
-    loadData();
   };
 
   const handleDeletePackage = (pkgId: string) => {
     if (confirm('Are you sure you want to delete this package?')) {
-      const existingPackages = DataStore.getCateringPackages();
-      const updatedPackages = existingPackages.filter(p => p.id !== pkgId);
-      DataStore.setCateringPackages(updatedPackages);
-      loadData();
+      deleteCateringPackage(pkgId);
     }
   };
 
   const handleTogglePackageActive = (pkg: CateringPackage) => {
-    const existingPackages = DataStore.getCateringPackages();
-    const updatedPackages = existingPackages.map(p => 
-      p.id === pkg.id ? { ...p, active: !p.active, updatedAt: new Date().toISOString() } : p
-    );
-    DataStore.setCateringPackages(updatedPackages);
-    loadData();
+    saveCateringPackage({ ...pkg, active: !pkg.active, updatedAt: new Date().toISOString() }, false);
   };
 
   const handleTogglePackageFeatured = (pkg: CateringPackage) => {
-    const existingPackages = DataStore.getCateringPackages();
-    const updatedPackages = existingPackages.map(p => 
-      p.id === pkg.id ? { ...p, featured: !p.featured, updatedAt: new Date().toISOString() } : p
-    );
-    DataStore.setCateringPackages(updatedPackages);
-    loadData();
+    saveCateringPackage({ ...pkg, featured: !pkg.featured, updatedAt: new Date().toISOString() }, false);
   };
 
   const exportToCSV = () => {
@@ -1029,17 +1045,22 @@ function InquiryDetailModal({
   const [quotedAmount, setQuotedAmount] = useState(inquiry.quotedAmount || '');
   const [adminNotes, setAdminNotes] = useState(inquiry.adminNotes || '');
 
-  const handleSaveQuote = () => {
-    DataStore.updateCateringInquiry(inquiry.id, { 
-      quotedAmount: Number(quotedAmount),
-      status: 'quoted'
-    });
-    onUpdate();
+  const handleSaveQuote = async () => {
+    try {
+      await fetch(`/api/admin?action=save-catering-inquiries&id=${inquiry.id}`, {
+        method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ quotedAmount: Number(quotedAmount), status: 'quoted' })
+      });
+      onUpdate();
+    } catch (err) { console.error(err); }
   };
 
-  const handleSaveNotes = () => {
-    DataStore.updateCateringInquiry(inquiry.id, { adminNotes });
-    onUpdate();
+  const handleSaveNotes = async () => {
+    try {
+      await fetch(`/api/admin?action=save-catering-inquiries&id=${inquiry.id}`, {
+        method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ adminNotes })
+      });
+      onUpdate();
+    } catch (err) { console.error(err); }
   };
 
   const handleAddNote = () => {
@@ -1284,9 +1305,13 @@ function InquiryDetailModal({
             <span className="text-sm text-gray-500">Current Status:</span>
             <select
               value={inquiry.status}
-              onChange={(e) => {
-                DataStore.updateCateringInquiryStatus(inquiry.id, e.target.value as any);
-                onUpdate();
+              onChange={async (e) => {
+                try {
+                  await fetch(`/api/admin?action=save-catering-inquiries&id=${inquiry.id}`, {
+                    method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ status: e.target.value as any })
+                  });
+                  onUpdate();
+                } catch (err) { console.error(err); }
               }}
               className={`px-3 py-1 rounded-full text-sm font-medium border ${STATUS_CONFIG[inquiry.status].color}`}
             >

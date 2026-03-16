@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { DataStore } from '@/data/store';
 import type { StorySection } from '@/types';
 import SEO, { breadcrumbSchema } from '@/components/SEO';
 
@@ -7,8 +6,12 @@ export default function Story() {
   const [storySections, setStorySections] = useState<StorySection[]>([]);
 
   useEffect(() => {
-    const content = DataStore.getSiteContent();
-    setStorySections(content.story.sections);
+    fetch('/api/menu?action=site-content')
+      .then(r => r.json())
+      .then(data => {
+        if (data?.story?.sections) setStorySections(data.story.sections);
+      })
+      .catch(err => console.error('Error loading story:', err));
   }, []);
 
   return (

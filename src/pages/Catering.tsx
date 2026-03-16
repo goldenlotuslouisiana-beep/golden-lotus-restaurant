@@ -4,7 +4,6 @@ import {
   Check, ArrowRight, ChevronLeft, ChevronRight,
   Utensils, Leaf, Clock, Award, MapPin, Users
 } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { CateringPackage, CateringInquiry } from '@/types';
 
 const WHY_CHOOSE_US = [
@@ -41,12 +40,15 @@ export default function Catering() {
   });
 
   useEffect(() => {
-    const loadedPackages = DataStore.getCateringPackages();
-    // Only show active packages, sorted by order
-    const activePackages = loadedPackages
-      .filter(p => p.active)
-      .sort((a, b) => a.order - b.order);
-    setPackages(activePackages);
+    fetch('/api/menu?action=catering-packages')
+      .then(r => r.json())
+      .then(data => {
+        const activePackages = data
+          .filter((p: CateringPackage) => p.active)
+          .sort((a: CateringPackage, b: CateringPackage) => a.order - b.order);
+        setPackages(activePackages);
+      })
+      .catch(err => console.error('Error loading catering packages:', err));
   }, []);
 
   const handlePackageSelect = (pkg: CateringPackage) => {
@@ -92,7 +94,16 @@ export default function Catering() {
       updatedAt: new Date().toISOString(),
     };
 
-    DataStore.addCateringInquiry(newInquiry);
+    try {
+      const res = await fetch('/api/admin?action=save-catering-inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newInquiry),
+      });
+      if (!res.ok) throw new Error('Failed to submit inquiry');
+    } catch (err) {
+      console.error('Error submitting catering inquiry:', err);
+    }
     setIsSubmitting(false);
     setSubmitSuccess(true);
   };

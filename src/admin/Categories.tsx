@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X, Check, GripVertical } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { MenuCategory } from '@/types';
+
+const getToken = () => localStorage.getItem('admin_jwt');
+const authHeaders = () => {
+  const token = getToken();
+  return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
@@ -14,7 +19,26 @@ export default function AdminCategories() {
   }, []);
 
   const loadData = () => {
-    setCategories(DataStore.getMenuCategories());
+    fetch('/api/menu?action=menu-categories')
+      .then(r => r.json())
+      .then(data => setCategories(data))
+      .catch(err => console.error('Error loading categories:', err));
+  };
+
+  const saveCategories = async (data: MenuCategory[]) => {
+    try {
+      const res = await fetch('/api/admin?action=save-menu-categories', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setCategories(updated);
+      }
+    } catch (err) {
+      console.error('Error saving categories:', err);
+    }
   };
 
   const handleAdd = () => {
@@ -32,8 +56,7 @@ export default function AdminCategories() {
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this category?')) {
       const updated = categories.filter((cat) => cat.id !== id);
-      DataStore.setMenuCategories(updated);
-      loadData();
+      saveCategories(updated);
     }
   };
 
@@ -44,18 +67,17 @@ export default function AdminCategories() {
       const updated = categories.map((cat) =>
         cat.id === editingCategory.id ? { ...cat, ...formData } : cat
       );
-      DataStore.setMenuCategories(updated);
+      saveCategories(updated);
     } else {
       const newCategory: MenuCategory = {
         id: Date.now().toString(),
         name: formData.name,
         order: formData.order,
       };
-      DataStore.setMenuCategories([...categories, newCategory]);
+      saveCategories([...categories, newCategory]);
     }
     
     setIsModalOpen(false);
-    loadData();
   };
 
   return (

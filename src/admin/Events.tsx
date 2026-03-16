@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Star, Eye, EyeOff, Package, Image } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { Event, EventPackage } from '@/types';
+
+const authHeaders = () => {
+  const token = localStorage.getItem('admin_jwt');
+  return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
 
 export default function AdminEvents() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -39,14 +43,38 @@ export default function AdminEvents() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const loadedEvents = DataStore.getEvents();
-    const loadedPackages = DataStore.getEventPackages();
-    setEvents(loadedEvents);
-    setPackages(loadedPackages);
-    if (loadedEvents.length > 0 && !activeEventId) {
-      setActiveEventId(loadedEvents[0].id);
-    }
+  const loadData = async () => {
+    try {
+      const [eRes, pRes] = await Promise.all([
+        fetch('/api/menu?action=events'),
+        fetch('/api/menu?action=event-packages')
+      ]);
+      const loadedEvents = eRes.ok ? await eRes.json() : [];
+      const loadedPackages = pRes.ok ? await pRes.json() : [];
+      setEvents(loadedEvents);
+      setPackages(loadedPackages);
+      if (loadedEvents.length > 0 && !activeEventId) {
+        setActiveEventId(loadedEvents[0].id);
+      }
+    } catch (err) { console.error('Error loading events data:', err); }
+  };
+
+  const saveEvents = async (data: Event[]) => {
+    try {
+      const res = await fetch('/api/admin?action=save-events', {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+      });
+      if (res.ok) setEvents(await res.json());
+    } catch (err) { console.error('Error saving events:', err); }
+  };
+
+  const saveEventPackages = async (data: EventPackage[]) => {
+    try {
+      const res = await fetch('/api/admin?action=save-event-packages', {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+      });
+      if (res.ok) setPackages(await res.json());
+    } catch (err) { console.error('Error saving event packages:', err); }
   };
 
   const activeEvent = events.find(e => e.id === activeEventId);
@@ -79,12 +107,11 @@ export default function AdminEvents() {
     if (confirm('Are you sure you want to delete this event? All associated packages will also be deleted.')) {
       const updatedEvents = events.filter(e => e.id !== id);
       const updatedPackages = packages.filter(p => p.eventId !== id);
-      DataStore.setEvents(updatedEvents);
-      DataStore.setEventPackages(updatedPackages);
+      saveEvents(updatedEvents);
+      saveEventPackages(updatedPackages);
       if (activeEventId === id) {
         setActiveEventId(updatedEvents[0]?.id || null);
       }
-      loadData();
     }
   };
 
@@ -92,8 +119,7 @@ export default function AdminEvents() {
     const updated = events.map(e => 
       e.id === event.id ? { ...e, active: !e.active } : e
     );
-    DataStore.setEvents(updated);
-    loadData();
+    saveEvents(updated);
   };
 
   const handleSaveEvent = (e: React.FormEvent) => {
@@ -104,7 +130,7 @@ export default function AdminEvents() {
       const updated = events.map(ev => 
         ev.id === editingEvent.id ? { ...ev, ...eventForm } as Event : ev
       );
-      DataStore.setEvents(updated);
+      saveEvents(updated);
     } else {
       const newEvent: Event = {
         ...eventForm as Event,
@@ -112,11 +138,10 @@ export default function AdminEvents() {
         features: eventForm.features || [],
         gallery: eventForm.gallery || [],
       };
-      DataStore.setEvents([...events, newEvent]);
+      saveEvents([...events, newEvent]);
       setActiveEventId(newEvent.id);
     }
     setIsEventModalOpen(false);
-    loadData();
   };
 
   // Package handlers
@@ -144,8 +169,7 @@ export default function AdminEvents() {
   const handleDeletePackage = (id: string) => {
     if (confirm('Are you sure you want to delete this package?')) {
       const updated = packages.filter(p => p.id !== id);
-      DataStore.setEventPackages(updated);
-      loadData();
+      saveEventPackages(updated);
     }
   };
 
@@ -157,7 +181,7 @@ export default function AdminEvents() {
       const updated = packages.map(p => 
         p.id === editingPackage.id ? { ...p, ...packageForm } as EventPackage : p
       );
-      DataStore.setEventPackages(updated);
+      saveEventPackages(updated);
     } else {
       const newPackage: EventPackage = {
         ...packageForm as EventPackage,
@@ -165,10 +189,9 @@ export default function AdminEvents() {
         eventId: activeEventId,
         features: packageForm.features || [],
       };
-      DataStore.setEventPackages([...packages, newPackage]);
+      saveEventPackages([...packages, newPackage]);
     }
     setIsPackageModalOpen(false);
-    loadData();
   };
 
   const addFeature = () => {

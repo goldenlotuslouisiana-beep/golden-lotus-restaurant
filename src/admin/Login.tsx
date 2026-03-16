@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, User, Shield } from 'lucide-react';
-import { DataStore } from '@/data/store';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -35,9 +34,6 @@ export default function AdminLogin() {
 
       // Store JWT token securely
       localStorage.setItem('admin_jwt', data.token);
-
-      // Update the legacy mock auth state so the app routing allows access immediately
-      DataStore.setAuthenticated(true);
 
       navigate('/admin');
     } catch (err: any) {

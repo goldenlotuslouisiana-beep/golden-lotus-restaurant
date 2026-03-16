@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X, Check, MapPin } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { Location } from '@/types';
+
+const authHeaders = () => {
+  const token = localStorage.getItem('admin_jwt');
+  return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
 
 export default function AdminLocations() {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -22,8 +26,20 @@ export default function AdminLocations() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setLocations(DataStore.getLocations());
+  const loadData = async () => {
+    try {
+      const res = await fetch('/api/menu?action=locations');
+      if (res.ok) setLocations(await res.json());
+    } catch (err) { console.error('Error loading locations:', err); }
+  };
+
+  const saveLocations = async (data: Location[]) => {
+    try {
+      const res = await fetch('/api/admin?action=save-locations', {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+      });
+      if (res.ok) setLocations(await res.json());
+    } catch (err) { console.error('Error saving locations:', err); }
   };
 
   const handleAdd = () => {
@@ -50,8 +66,7 @@ export default function AdminLocations() {
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this location?')) {
       const updated = locations.filter((loc) => loc.id !== id);
-      DataStore.setLocations(updated);
-      loadData();
+      saveLocations(updated);
     }
   };
 
@@ -62,7 +77,7 @@ export default function AdminLocations() {
       const updated = locations.map((loc) =>
         loc.id === editingLocation.id ? { ...loc, ...formData } as Location : loc
       );
-      DataStore.setLocations(updated);
+      saveLocations(updated);
     } else {
       const newLocation: Location = {
         ...formData as Location,
@@ -77,11 +92,10 @@ export default function AdminLocations() {
           { day: 'Sunday', open: '11:30 AM', close: '10:00 PM' },
         ],
       };
-      DataStore.setLocations([...locations, newLocation]);
+      saveLocations([...locations, newLocation]);
     }
     
     setIsModalOpen(false);
-    loadData();
   };
 
   return (

@@ -28,6 +28,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'categories': return handleGetCategories(req, res);
         case 'item': return handleGetItem(req, res);
         case 'search': return handleSearch(req, res);
+        // Public read endpoints for site data
+        case 'locations': return handlePublicGet(req, res, 'locations');
+        case 'testimonials': return handlePublicGet(req, res, 'testimonials');
+        case 'gallery': return handlePublicGet(req, res, 'gallery');
+        case 'site-content': return handlePublicGetOne(req, res, 'site_content');
+        case 'features': return handlePublicGet(req, res, 'features');
+        case 'events': return handlePublicGet(req, res, 'events');
+        case 'event-packages': return handlePublicGet(req, res, 'event_packages');
+        case 'catering-packages': return handlePublicGet(req, res, 'catering_packages');
+        case 'faqs': return handlePublicGet(req, res, 'faqs');
+        case 'menu-categories': return handlePublicGet(req, res, 'menu_categories');
         // Admin CRUD actions preserved for existing functionality
         case 'add': return handleAddItem(req, res);
         case 'edit': return handleEditItem(req, res);
@@ -160,5 +171,36 @@ async function handleDeleteItem(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true });
     } catch (error) {
         return res.status(401).json({ error: 'Unauthorized' });
+    }
+}
+
+// ─── Generic Public Read Handlers ───
+async function handlePublicGet(req: VercelRequest, res: VercelResponse, collectionName: string) {
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const client = await clientPromise;
+        const db = client.db(DB_NAME);
+        const docs = await db.collection(collectionName).find({}).toArray();
+        const formatted = docs.map(doc => ({
+            ...doc,
+            id: doc._id.toString(),
+            _id: undefined,
+        }));
+        return res.status(200).json(formatted);
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function handlePublicGetOne(req: VercelRequest, res: VercelResponse, collectionName: string) {
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const client = await clientPromise;
+        const db = client.db(DB_NAME);
+        const doc = await db.collection(collectionName).findOne({});
+        if (!doc) return res.status(200).json(null);
+        return res.status(200).json({ ...doc, id: doc._id.toString(), _id: undefined });
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error' });
     }
 }

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Plus, Minus, X, Tag, Flame, Leaf, Sparkles, ChevronRight, Trash2 } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { MenuItem, MenuCategory, Coupon } from '@/types';
 import SEO, { breadcrumbSchema } from '@/components/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,24 +22,26 @@ export default function Menu() {
   const [showAddedToast, setShowAddedToast] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchMenu = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/menu?action=items');
-        if (res.ok) {
-          const items = await res.json();
-          setMenuItems(items);
-        } else {
-          setMenuItems(DataStore.getMenuItems());
+        const [menuRes, catRes, couponRes] = await Promise.all([
+          fetch('/api/menu?action=items'),
+          fetch('/api/menu?action=menu-categories'),
+          fetch('/api/admin?action=coupons'),
+        ]);
+        if (menuRes.ok) setMenuItems(await menuRes.json());
+        if (catRes.ok) setCategories(await catRes.json());
+        if (couponRes.ok) {
+          const allCoupons = await couponRes.json();
+          setCoupons(Array.isArray(allCoupons) ? allCoupons.filter((c: Coupon) => c.active) : []);
         }
-      } catch (e) {
-        setMenuItems(DataStore.getMenuItems());
+      } catch (err) {
+        console.error('Error loading menu data:', err);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchMenu();
-    setCategories(DataStore.getMenuCategories());
-    setCoupons(DataStore.getCoupons().filter(c => c.active));
+    fetchData();
   }, []);
 
   const filteredItems = useMemo(() => {

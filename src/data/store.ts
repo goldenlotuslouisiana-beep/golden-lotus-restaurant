@@ -27,7 +27,7 @@ const defaultAdmin: AdminUser = {
 };
 
 // Default Menu Categories
-const defaultMenuCategories: MenuCategory[] = [
+export const defaultMenuCategories: MenuCategory[] = [
   { id: '1', name: 'Popular', order: 1 },
   { id: '2', name: 'Dim Sum', order: 2 },
   { id: '3', name: 'Appetizers', order: 3 },
@@ -44,7 +44,7 @@ const defaultMenuCategories: MenuCategory[] = [
 ];
 
 // Default Menu Items
-const defaultMenuItems: MenuItem[] = [
+export const defaultMenuItems: MenuItem[] = [
   {
     id: '1',
     name: 'Peking Duck',
@@ -154,7 +154,7 @@ const defaultMenuItems: MenuItem[] = [
 ];
 
 // Default Locations
-const defaultLocations: Location[] = [
+export const defaultLocations: Location[] = [
   {
     id: '1',
     name: 'Golden Lotus Indian Restaurant',
@@ -178,7 +178,7 @@ const defaultLocations: Location[] = [
 ];
 
 // Default Testimonials
-const defaultTestimonials: Testimonial[] = [
+export const defaultTestimonials: Testimonial[] = [
   {
     id: '1',
     name: 'Wei C.',
@@ -203,7 +203,7 @@ const defaultTestimonials: Testimonial[] = [
 ];
 
 // Default Gallery Images
-const defaultGalleryImages: GalleryImage[] = [
+export const defaultGalleryImages: GalleryImage[] = [
   { id: '1', src: 'https://images.unsplash.com/photo-1544025162-811c03632906?w=600', alt: 'Peking Duck', category: 'food' },
   { id: '2', src: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=600', alt: 'Soup Dumplings', category: 'food' },
   { id: '3', src: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?w=600', alt: 'Dan Dan Noodles', category: 'food' },
@@ -213,7 +213,7 @@ const defaultGalleryImages: GalleryImage[] = [
 ];
 
 // Default Featured Dishes
-const defaultFeaturedDishes: FeaturedDish[] = [
+export const defaultFeaturedDishes: FeaturedDish[] = [
   { id: '1', name: 'Peking Duck', image: 'https://images.unsplash.com/photo-1544025162-811c03632906?w=500', menuItemId: '1' },
   { id: '2', name: 'Soup Dumplings', image: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=500', menuItemId: '2' },
   { id: '3', name: 'Kung Pao Chicken', image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=500', menuItemId: '6' },
@@ -225,7 +225,7 @@ const defaultFeaturedDishes: FeaturedDish[] = [
 ];
 
 // Default FAQs
-const defaultFAQs: FAQ[] = [
+export const defaultFAQs: FAQ[] = [
   {
     id: '1',
     question: 'What are you known for?',
@@ -249,7 +249,7 @@ const defaultFAQs: FAQ[] = [
 ];
 
 // Default Coupons
-const defaultCoupons: Coupon[] = [
+export const defaultCoupons: Coupon[] = [
   {
     id: '1',
     code: 'DIMSUM10',
@@ -280,7 +280,7 @@ const defaultCoupons: Coupon[] = [
 ];
 
 // Default Site Content
-const defaultSiteContent: SiteContent = {
+export const defaultSiteContent: SiteContent = {
   hero: {
     title: 'Experience Authentic Flavors',
     subtitle: 'Golden Lotus brings you a modern take on traditional Asian cuisine.',
@@ -436,7 +436,7 @@ const defaultSiteContent: SiteContent = {
 };
 
 // Features list
-const defaultFeatures: Feature[] = [
+export const defaultFeatures: Feature[] = [
   { id: '1', name: 'Delivery', icon: 'truck' },
   { id: '2', name: 'Takeout', icon: 'package' },
   { id: '3', name: 'Reservations recommended', icon: 'calendar' },
@@ -447,7 +447,7 @@ const defaultFeatures: Feature[] = [
 ];
 
 // Default Events
-const defaultEvents: Event[] = [
+export const defaultEvents: Event[] = [
   {
     id: '1',
     title: 'Henna Party Events',
@@ -473,7 +473,7 @@ const defaultEvents: Event[] = [
 ];
 
 // Default Event Packages
-const defaultEventPackages: EventPackage[] = [
+export const defaultEventPackages: EventPackage[] = [
   {
     id: '1',
     eventId: '1',
@@ -563,7 +563,7 @@ const defaultOrders: Order[] = [
 ];
 
 // Professional Catering Packages
-const defaultCateringPackages: CateringPackage[] = [
+export const defaultCateringPackages: CateringPackage[] = [
   {
     id: '1',
     name: 'Royal Wedding Feast',
@@ -935,7 +935,7 @@ const defaultCateringPackages: CateringPackage[] = [
 ];
 
 // Empty Catering Inquiries (will be populated by customer submissions)
-const defaultCateringInquiries: CateringInquiry[] = [
+export const defaultCateringInquiries: CateringInquiry[] = [
   {
     id: 'demo-1',
     inquiryNumber: 'CAT-2024-001',
@@ -1029,320 +1029,4 @@ const defaultCateringInquiries: CateringInquiry[] = [
   }
 ];
 
-// Storage Keys
-const STORAGE_KEYS = {
-  adminUser: 'golden_lotus_admin_user',
-  menuItems: 'golden_lotus_menu_items',
-  menuCategories: 'golden_lotus_menu_categories',
-  locations: 'golden_lotus_locations',
-  testimonials: 'golden_lotus_testimonials',
-  galleryImages: 'golden_lotus_gallery_images',
-  featuredDishes: 'golden_lotus_featured_dishes',
-  faqs: 'golden_lotus_faqs',
-  coupons: 'golden_lotus_coupons',
-  siteContent: 'golden_lotus_site_content',
-  features: 'golden_lotus_features',
-  orders: 'golden_lotus_orders',
-  isAuthenticated: 'golden_lotus_admin_auth',
-  events: 'golden_lotus_events',
-  eventPackages: 'golden_lotus_event_packages',
-  cateringPackages: 'golden_lotus_catering_packages',
-  cateringInquiries: 'golden_lotus_catering_inquiries',
-};
-
-// Initialize data in localStorage
-export function initializeData() {
-  if (!localStorage.getItem(STORAGE_KEYS.adminUser)) {
-    localStorage.setItem(STORAGE_KEYS.adminUser, JSON.stringify(defaultAdmin));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.menuCategories)) {
-    localStorage.setItem(STORAGE_KEYS.menuCategories, JSON.stringify(defaultMenuCategories));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.menuItems)) {
-    localStorage.setItem(STORAGE_KEYS.menuItems, JSON.stringify(defaultMenuItems));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.locations)) {
-    localStorage.setItem(STORAGE_KEYS.locations, JSON.stringify(defaultLocations));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.testimonials)) {
-    localStorage.setItem(STORAGE_KEYS.testimonials, JSON.stringify(defaultTestimonials));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.galleryImages)) {
-    localStorage.setItem(STORAGE_KEYS.galleryImages, JSON.stringify(defaultGalleryImages));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.featuredDishes)) {
-    localStorage.setItem(STORAGE_KEYS.featuredDishes, JSON.stringify(defaultFeaturedDishes));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.faqs)) {
-    localStorage.setItem(STORAGE_KEYS.faqs, JSON.stringify(defaultFAQs));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.coupons)) {
-    localStorage.setItem(STORAGE_KEYS.coupons, JSON.stringify(defaultCoupons));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.siteContent)) {
-    localStorage.setItem(STORAGE_KEYS.siteContent, JSON.stringify(defaultSiteContent));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.features)) {
-    localStorage.setItem(STORAGE_KEYS.features, JSON.stringify(defaultFeatures));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.orders)) {
-    localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(defaultOrders));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.events)) {
-    localStorage.setItem(STORAGE_KEYS.events, JSON.stringify(defaultEvents));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.eventPackages)) {
-    localStorage.setItem(STORAGE_KEYS.eventPackages, JSON.stringify(defaultEventPackages));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.cateringPackages)) {
-    localStorage.setItem(STORAGE_KEYS.cateringPackages, JSON.stringify(defaultCateringPackages));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.cateringInquiries)) {
-    localStorage.setItem(STORAGE_KEYS.cateringInquiries, JSON.stringify(defaultCateringInquiries));
-  }
-}
-
-// Generic get/set functions
-export function getData<T>(key: string): T | null {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : null;
-}
-
-export function setData<T>(key: string, data: T): void {
-  localStorage.setItem(key, JSON.stringify(data));
-}
-
-// Specific data getters/setters
-export const DataStore = {
-  // Admin
-  getAdmin: (): AdminUser | null => getData(STORAGE_KEYS.adminUser),
-  setAdmin: (admin: AdminUser) => setData(STORAGE_KEYS.adminUser, admin),
-
-  // Auth
-  isAuthenticated: (): boolean => localStorage.getItem(STORAGE_KEYS.isAuthenticated) === 'true',
-  setAuthenticated: (value: boolean) => localStorage.setItem(STORAGE_KEYS.isAuthenticated, value ? 'true' : 'false'),
-  logout: () => localStorage.removeItem(STORAGE_KEYS.isAuthenticated),
-
-  // Menu
-  getMenuItems: (): MenuItem[] => getData(STORAGE_KEYS.menuItems) || defaultMenuItems,
-  setMenuItems: (items: MenuItem[]) => setData(STORAGE_KEYS.menuItems, items),
-
-  getMenuCategories: (): MenuCategory[] => getData(STORAGE_KEYS.menuCategories) || defaultMenuCategories,
-  setMenuCategories: (categories: MenuCategory[]) => setData(STORAGE_KEYS.menuCategories, categories),
-
-  // Locations
-  getLocations: (): Location[] => getData(STORAGE_KEYS.locations) || defaultLocations,
-  setLocations: (locations: Location[]) => setData(STORAGE_KEYS.locations, locations),
-
-  // Testimonials
-  getTestimonials: (): Testimonial[] => getData(STORAGE_KEYS.testimonials) || defaultTestimonials,
-  setTestimonials: (testimonials: Testimonial[]) => setData(STORAGE_KEYS.testimonials, testimonials),
-
-  // Gallery
-  getGalleryImages: (): GalleryImage[] => getData(STORAGE_KEYS.galleryImages) || defaultGalleryImages,
-  setGalleryImages: (images: GalleryImage[]) => setData(STORAGE_KEYS.galleryImages, images),
-
-  // Featured Dishes
-  getFeaturedDishes: (): FeaturedDish[] => getData(STORAGE_KEYS.featuredDishes) || defaultFeaturedDishes,
-  setFeaturedDishes: (dishes: FeaturedDish[]) => setData(STORAGE_KEYS.featuredDishes, dishes),
-
-  // FAQs
-  getFAQs: (): FAQ[] => getData(STORAGE_KEYS.faqs) || defaultFAQs,
-  setFAQs: (faqs: FAQ[]) => setData(STORAGE_KEYS.faqs, faqs),
-
-  // Coupons
-  getCoupons: (): Coupon[] => getData(STORAGE_KEYS.coupons) || defaultCoupons,
-  setCoupons: (coupons: Coupon[]) => setData(STORAGE_KEYS.coupons, coupons),
-
-  // Site Content
-  getSiteContent: (): SiteContent => getData(STORAGE_KEYS.siteContent) || defaultSiteContent,
-  setSiteContent: (content: SiteContent) => setData(STORAGE_KEYS.siteContent, content),
-
-  // Features
-  getFeatures: (): Feature[] => getData(STORAGE_KEYS.features) || defaultFeatures,
-  setFeatures: (features: Feature[]) => setData(STORAGE_KEYS.features, features),
-
-  // Orders
-  getOrders: (): Order[] => getData(STORAGE_KEYS.orders) || defaultOrders,
-  setOrders: (orders: Order[]) => setData(STORAGE_KEYS.orders, orders),
-  getOrderById: (id: string): Order | undefined => {
-    const orders = getData<Order[]>(STORAGE_KEYS.orders) || defaultOrders;
-    return orders.find((o) => o.id === id);
-  },
-  updateOrderStatus: (id: string, status: Order['status']): boolean => {
-    const orders = getData<Order[]>(STORAGE_KEYS.orders) || defaultOrders;
-    const index = orders.findIndex((o) => o.id === id);
-    if (index !== -1) {
-      orders[index].status = status;
-      orders[index].updatedAt = new Date().toISOString();
-      setData(STORAGE_KEYS.orders, orders);
-      return true;
-    }
-    return false;
-  },
-  addOrder: (order: Order): void => {
-    const orders = getData<Order[]>(STORAGE_KEYS.orders) || defaultOrders;
-    setData(STORAGE_KEYS.orders, [...orders, order]);
-  },
-  deleteOrder: (id: string): boolean => {
-    const orders = getData<Order[]>(STORAGE_KEYS.orders) || defaultOrders;
-    const filtered = orders.filter((o) => o.id !== id);
-    if (filtered.length !== orders.length) {
-      setData(STORAGE_KEYS.orders, filtered);
-      return true;
-    }
-    return false;
-  },
-
-  // Analytics
-  getAnalytics: (): Analytics => {
-    const orders = getData<Order[]>(STORAGE_KEYS.orders) || defaultOrders;
-    const today = new Date().toISOString().split('T')[0];
-
-    const todayOrders = orders.filter((o) => o.createdAt.startsWith(today));
-    const todayRevenue = todayOrders.reduce((sum, o) => sum + o.total, 0);
-
-    const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-    const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
-
-    const pendingOrders = orders.filter((o) =>
-      ['pending', 'confirmed', 'preparing'].includes(o.status)
-    ).length;
-
-    // Generate weekly stats
-    const weeklyStats = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      const dayOrders = orders.filter((o) => o.createdAt.startsWith(dateStr));
-      const dayRevenue = dayOrders.reduce((sum, o) => sum + o.total, 0);
-      weeklyStats.push({
-        date: dateStr,
-        orders: dayOrders.length,
-        revenue: dayRevenue,
-        averageOrderValue: dayOrders.length > 0 ? dayRevenue / dayOrders.length : 0,
-      });
-    }
-
-    // Get popular items
-    const itemCounts: Record<string, number> = {};
-    orders.forEach((order) => {
-      order.items.forEach((item) => {
-        itemCounts[item.name] = (itemCounts[item.name] || 0) + item.quantity;
-      });
-    });
-    const popularItems = Object.entries(itemCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    return {
-      totalOrders: orders.length,
-      totalRevenue,
-      averageOrderValue,
-      pendingOrders,
-      todayOrders: todayOrders.length,
-      todayRevenue,
-      weeklyStats,
-      popularItems,
-    };
-  },
-
-  // Events
-  getEvents: (): Event[] => getData(STORAGE_KEYS.events) || defaultEvents,
-  setEvents: (events: Event[]) => setData(STORAGE_KEYS.events, events),
-  getEventById: (id: string): Event | undefined => {
-    const events = getData<Event[]>(STORAGE_KEYS.events) || defaultEvents;
-    return events.find((e) => e.id === id);
-  },
-
-  // Event Packages
-  getEventPackages: (): EventPackage[] => getData(STORAGE_KEYS.eventPackages) || defaultEventPackages,
-  setEventPackages: (packages: EventPackage[]) => setData(STORAGE_KEYS.eventPackages, packages),
-  getPackagesByEventId: (eventId: string): EventPackage[] => {
-    const packages = getData<EventPackage[]>(STORAGE_KEYS.eventPackages) || defaultEventPackages;
-    return packages.filter((p) => p.eventId === eventId);
-  },
-
-  // Catering Packages
-  getCateringPackages: (): CateringPackage[] => getData(STORAGE_KEYS.cateringPackages) || defaultCateringPackages,
-  setCateringPackages: (packages: CateringPackage[]) => setData(STORAGE_KEYS.cateringPackages, packages),
-  getCateringPackageById: (id: string): CateringPackage | undefined => {
-    const packages = getData<CateringPackage[]>(STORAGE_KEYS.cateringPackages) || defaultCateringPackages;
-    return packages.find((p) => p.id === id);
-  },
-  getCateringPackagesByType: (type: CateringPackage['cateringType']): CateringPackage[] => {
-    const packages = getData<CateringPackage[]>(STORAGE_KEYS.cateringPackages) || defaultCateringPackages;
-    return packages.filter((p) => p.cateringType === type && p.active);
-  },
-
-  // Catering Inquiries (Professional CRM System)
-  getCateringInquiries: (): CateringInquiry[] => getData(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries,
-  setCateringInquiries: (inquiries: CateringInquiry[]) => setData(STORAGE_KEYS.cateringInquiries, inquiries),
-  
-  getCateringInquiryById: (id: string): CateringInquiry | undefined => {
-    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
-    return inquiries.find((i) => i.id === id);
-  },
-  
-  addCateringInquiry: (inquiry: CateringInquiry): void => {
-    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
-    setData(STORAGE_KEYS.cateringInquiries, [...inquiries, inquiry]);
-  },
-  
-  updateCateringInquiry: (id: string, updates: Partial<CateringInquiry>): boolean => {
-    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
-    const index = inquiries.findIndex((i) => i.id === id);
-    if (index !== -1) {
-      inquiries[index] = { ...inquiries[index], ...updates, updatedAt: new Date().toISOString() };
-      setData(STORAGE_KEYS.cateringInquiries, inquiries);
-      return true;
-    }
-    return false;
-  },
-  
-  updateCateringInquiryStatus: (id: string, status: CateringInquiry['status']): boolean => {
-    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
-    const index = inquiries.findIndex((i) => i.id === id);
-    if (index !== -1) {
-      inquiries[index].status = status;
-      inquiries[index].updatedAt = new Date().toISOString();
-      setData(STORAGE_KEYS.cateringInquiries, inquiries);
-      return true;
-    }
-    return false;
-  },
-  
-  addCateringInquiryCommunication: (id: string, communication: NonNullable<CateringInquiry['communicationLog']>[0]): boolean => {
-    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
-    const index = inquiries.findIndex((i) => i.id === id);
-    if (index !== -1) {
-      if (!inquiries[index].communicationLog) {
-        inquiries[index].communicationLog = [];
-      }
-      inquiries[index].communicationLog.push(communication);
-      inquiries[index].updatedAt = new Date().toISOString();
-      setData(STORAGE_KEYS.cateringInquiries, inquiries);
-      return true;
-    }
-    return false;
-  },
-  
-  deleteCateringInquiry: (id: string): boolean => {
-    const inquiries = getData<CateringInquiry[]>(STORAGE_KEYS.cateringInquiries) || defaultCateringInquiries;
-    const filtered = inquiries.filter((i) => i.id !== id);
-    if (filtered.length !== inquiries.length) {
-      setData(STORAGE_KEYS.cateringInquiries, filtered);
-      return true;
-    }
-    return false;
-  },
-  
-  // Legacy support for Catering Orders (map to inquiries)
-  getCateringOrders: function() { return this.getCateringInquiries(); },
-  addCateringOrder: function(order: any) { return this.addCateringInquiry(order as CateringInquiry); },
-};
-
-export { STORAGE_KEYS };
 export type { Feature };

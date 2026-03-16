@@ -1,16 +1,23 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, MapPin, Phone, Mail, Clock, Heart, Twitter, Youtube } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import { useEffect, useState } from 'react';
-import type { SiteContent } from '@/types';
+import type { SiteContent, Location } from '@/types';
+import { defaultSiteContent } from '@/data/store';
 import { motion } from 'framer-motion';
 
 export default function Footer() {
-  const locations = DataStore.getLocations();
-  const [siteContent, setSiteContent] = useState<SiteContent>(DataStore.getSiteContent());
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [siteContent, setSiteContent] = useState<SiteContent>(defaultSiteContent);
 
   useEffect(() => {
-    setSiteContent(DataStore.getSiteContent());
+    fetch('/api/menu?action=locations')
+      .then(r => r.json())
+      .then(data => setLocations(data))
+      .catch(err => console.error('Error loading footer locations:', err));
+    fetch('/api/menu?action=site-content')
+      .then(r => r.json())
+      .then(data => { if (data) setSiteContent(data); })
+      .catch(err => console.error('Error loading footer content:', err));
   }, []);
 
   const currentYear = new Date().getFullYear();

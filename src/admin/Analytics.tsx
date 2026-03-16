@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, Calendar } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { Analytics } from '@/types';
 
 export default function AdminAnalytics() {
@@ -8,7 +7,13 @@ export default function AdminAnalytics() {
   const [dateRange, setDateRange] = useState<'7days' | '30days' | 'all'>('7days');
 
   useEffect(() => {
-    setAnalytics(DataStore.getAnalytics());
+    const token = localStorage.getItem('admin_jwt');
+    fetch('/api/admin?action=dashboard-stats', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => setAnalytics(data))
+      .catch(err => console.error('Error loading analytics:', err));
   }, []);
 
   if (!analytics) return null;

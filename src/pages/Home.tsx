@@ -4,8 +4,8 @@ import {
   ChevronRight, Star, Truck, Package, Calendar, Wine, Leaf, 
   UtensilsCrossed, ChevronLeft, ArrowRight, MapPin, Phone
 } from 'lucide-react';
-import { DataStore } from '@/data/store';
-import type { Testimonial, FeaturedDish } from '@/types';
+import type { Testimonial, FeaturedDish, SiteContent, Feature, GalleryImage } from '@/types';
+import { defaultSiteContent } from '@/data/store';
 import SEO, { restaurantSchema, breadcrumbSchema } from '@/components/SEO';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
@@ -14,8 +14,9 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 export default function Home() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [featuredDishes, setFeaturedDishes] = useState<FeaturedDish[]>([]);
-  const [siteContent, setSiteContent] = useState(DataStore.getSiteContent());
-  const [features, setFeatures] = useState(DataStore.getFeatures());
+  const [siteContent, setSiteContent] = useState<SiteContent>(defaultSiteContent);
+  const [features, setFeatures] = useState<Feature[]>([]);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const galleryRef = useRef<HTMLDivElement>(null);
   const dishesRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -30,15 +31,26 @@ export default function Home() {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 100]);
 
   useEffect(() => {
-    setTestimonials(DataStore.getTestimonials());
-    setSiteContent(DataStore.getSiteContent());
-    setFeatures(DataStore.getFeatures());
-
-    const fetchFeatured = async () => {
+    const loadData = async () => {
       try {
-        const res = await fetch('/api/menu?action=items');
-        if (res.ok) {
-          const items = await res.json();
+        const [scRes, featRes, testRes, galRes, menuRes] = await Promise.all([
+          fetch('/api/menu?action=site-content'),
+          fetch('/api/menu?action=features'),
+          fetch('/api/menu?action=testimonials'),
+          fetch('/api/menu?action=gallery'),
+          fetch('/api/menu?action=items'),
+        ]);
+
+        if (scRes.ok) {
+          const sc = await scRes.json();
+          if (sc) setSiteContent(sc);
+        }
+        if (featRes.ok) setFeatures(await featRes.json());
+        if (testRes.ok) setTestimonials(await testRes.json());
+        if (galRes.ok) setGalleryImages(await galRes.json());
+
+        if (menuRes.ok) {
+          const items = await menuRes.json();
           const featured = items
             .filter((item: any) => item.popular)
             .slice(0, 6)
@@ -49,14 +61,12 @@ export default function Home() {
               menuItemId: item.id || item._id,
             }));
           setFeaturedDishes(featured);
-        } else {
-          setFeaturedDishes(DataStore.getFeaturedDishes());
         }
-      } catch (e) {
-        setFeaturedDishes(DataStore.getFeaturedDishes());
+      } catch (err) {
+        console.error('Error loading home page data:', err);
       }
     };
-    fetchFeatured();
+    loadData();
   }, []);
 
   const scrollGallery = (direction: 'left' | 'right') => {
@@ -483,7 +493,7 @@ export default function Home() {
                   ref={galleryRef}
                   className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth px-14"
                 >
-                  {DataStore.getGalleryImages().map((image, idx) => (
+                  {galleryImages.map((image, idx) => (
                     <motion.div
                       key={image.id}
                       initial={{ opacity: 0, y: 20 }}

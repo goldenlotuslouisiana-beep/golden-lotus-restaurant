@@ -46,6 +46,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'send-email': return handleSendEmail(req, res);
         case 'riders': return handleRiders(req, res);
         case 'zones': return handleZones(req, res);
+        case 'coupons': return handleCoupons(req, res);
+        // ─── New CRUD actions for localStorage→MongoDB migration ───
+        case 'save-locations': return handleAdminSaveCollection(req, res, 'locations');
+        case 'save-testimonials': return handleAdminSaveCollection(req, res, 'testimonials');
+        case 'save-gallery': return handleAdminSaveCollection(req, res, 'gallery');
+        case 'save-features': return handleAdminSaveCollection(req, res, 'features');
+        case 'save-faqs': return handleAdminSaveCollection(req, res, 'faqs');
+        case 'save-menu-categories': return handleAdminSaveCollection(req, res, 'menu_categories');
+        case 'save-site-content': return handleAdminSaveSiteContent(req, res);
+        case 'save-events': return handleAdminCrudItem(req, res, 'events');
+        case 'save-event-packages': return handleAdminCrudItem(req, res, 'event_packages');
+        case 'save-catering-packages': return handleAdminCrudItem(req, res, 'catering_packages');
+        case 'save-catering-inquiries': return handleAdminCrudItem(req, res, 'catering_inquiries');
         default:
             // Fallback for old route payloads like method based deletions or updates
             if (action === 'user-detail' && req.method === 'DELETE') return handleUserDetail(req, res);
@@ -257,6 +270,77 @@ async function handleUserDetail(req: VercelRequest, res: VercelResponse) {
         await db.collection('users').deleteOne({ _id: new ObjectId(userId) });
         return res.status(200).json({ success: true });
     }
+    return res.status(405).json({ error: 'Method not allowed' });
+}
+
+// Default coupons for Special Offers
+const defaultCoupons = [
+    { id: '1', code: 'DIMSUM10', description: 'Grab 10% off on Dim Sum orders over $50!', discountType: 'percentage', discountValue: 10, minOrder: 50, active: true },
+    { id: '2', code: 'FREEDELIVERY', description: 'Enjoy FREE delivery on all orders over $40!', discountType: 'free_delivery', discountValue: 0, minOrder: 40, active: true },
+    { id: '3', code: 'BOBAMONDAY', description: 'Use code BOBAMONDAY for $5 off your total order on Mondays.', discountType: 'fixed', discountValue: 5, minOrder: 25, active: true },
+];
+
+async function handleCoupons(req: VercelRequest, res: VercelResponse) {
+    const client = await clientPromise;
+    const db = client.db(DB);
+    
+    if (req.method === 'GET') {
+        try {
+            const coupons = await db.collection('coupons').find({}).toArray();
+            if (coupons.length === 0) {
+                // Seed default coupons
+                await db.collection('coupons').insertMany(defaultCoupons);
+                return res.status(200).json(defaultCoupons);
+            }
+            return res.status(200).json(coupons.map(c => ({ ...c, id: c._id?.toString() || c.id })));
+        } catch (e) {
+            return res.status(200).json(defaultCoupons);
+        }
+    }
+    
+    if (req.method === 'POST') {
+        const coupon = {
+            ...req.body,
+            createdAt: new Date().toISOString(),
+        };
+        try {
+            const result = await db.collection('coupons').insertOne(coupon);
+            return res.status(201).json({ ...coupon, id: result.insertedId.toString() });
+        } catch (e) {
+            return res.status(500).json({ error: 'Failed to create coupon' });
+        }
+    }
+    
+    if (req.method === 'PATCH') {
+        const couponId = req.query.id as string;
+        const updates = req.body;
+        delete updates.id; delete updates._id;
+        
+        try {
+            if (ObjectId.isValid(couponId)) {
+                await db.collection('coupons').updateOne(
+                    { _id: new ObjectId(couponId) },
+                    { $set: updates }
+                );
+            }
+            return res.status(200).json({ success: true });
+        } catch (e) {
+            return res.status(500).json({ error: 'Failed to update coupon' });
+        }
+    }
+    
+    if (req.method === 'DELETE') {
+        const couponId = req.query.id as string;
+        try {
+            if (ObjectId.isValid(couponId)) {
+                await db.collection('coupons').deleteOne({ _id: new ObjectId(couponId) });
+            }
+            return res.status(200).json({ success: true });
+        } catch (e) {
+            return res.status(500).json({ error: 'Failed to delete coupon' });
+        }
+    }
+    
     return res.status(405).json({ error: 'Method not allowed' });
 }
 
@@ -547,4 +631,132 @@ async function handleZones(req: VercelRequest, res: VercelResponse) {
     }
     
     return res.status(405).json({ error: 'Method not allowed' });
+}
+
+// ─── Generic Admin CRUD Handlers (localStorage→MongoDB migration) ───
+
+/**
+ * Replaces an entire collection with the provided array of items.
+ * Used for: locations, testimonials, gallery, features, faqs, menu_categories
+ */
+async function handleAdminSaveCollection(req: VercelRequest, res: VercelResponse, collectionName: string) {
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(401).json({ error: 'Unauthorized' });
+    if (req.method !== 'POST' && req.method !== 'PUT') return res.status(405).json({ error: 'Method not allowed' });
+
+    try {
+        const items = req.body;
+        if (!Array.isArray(items)) return res.status(400).json({ error: 'Body must be an array' });
+
+        const client = await clientPromise;
+        const db = client.db(DB);
+        const col = db.collection(collectionName);
+
+        // Replace entire collection
+        await col.deleteMany({});
+        if (items.length > 0) {
+            // Strip client-side 'id' and let MongoDB generate _id for new docs
+            const docs = items.map(({ id, _id, ...rest }: any) => ({ ...rest }));
+            await col.insertMany(docs);
+        }
+
+        // Return the updated list
+        const updated = await col.find({}).toArray();
+        const formatted = updated.map(doc => ({ ...doc, id: doc._id.toString(), _id: undefined }));
+        return res.status(200).json(formatted);
+    } catch (error) {
+        console.error(`Error saving ${collectionName}:`, error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+/**
+ * Upserts the single site_content document.
+ */
+async function handleAdminSaveSiteContent(req: VercelRequest, res: VercelResponse) {
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(401).json({ error: 'Unauthorized' });
+    if (req.method !== 'POST' && req.method !== 'PUT') return res.status(405).json({ error: 'Method not allowed' });
+
+    try {
+        const content = req.body;
+        if (!content || typeof content !== 'object') return res.status(400).json({ error: 'Body must be an object' });
+
+        const client = await clientPromise;
+        const db = client.db(DB);
+        const col = db.collection('site_content');
+
+        // Remove client IDs
+        const { id, _id, ...rest } = content;
+
+        // Upsert: replace the single document
+        await col.deleteMany({});
+        await col.insertOne(rest);
+
+        const doc = await col.findOne({});
+        if (!doc) return res.status(500).json({ error: 'Failed to save' });
+        return res.status(200).json({ ...doc, id: doc._id.toString(), _id: undefined });
+    } catch (error) {
+        console.error('Error saving site_content:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+/**
+ * Individual item CRUD: POST=add, PUT/PATCH=update, DELETE=remove.
+ * Used for: events, event_packages, catering_packages, catering_inquiries
+ */
+async function handleAdminCrudItem(req: VercelRequest, res: VercelResponse, collectionName: string) {
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        const client = await clientPromise;
+        const db = client.db(DB);
+        const col = db.collection(collectionName);
+
+        if (req.method === 'POST') {
+            const { id, _id, ...item } = req.body;
+            const result = await col.insertOne({ ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+            return res.status(201).json({ ...item, id: result.insertedId.toString() });
+        }
+
+        if (req.method === 'PUT' || req.method === 'PATCH') {
+            const { id, _id, ...updates } = req.body;
+            const targetId = id || req.query.id as string;
+            if (!targetId) return res.status(400).json({ error: 'Missing id' });
+            
+            if (ObjectId.isValid(targetId)) {
+                await col.updateOne({ _id: new ObjectId(targetId) }, { $set: { ...updates, updatedAt: new Date().toISOString() } });
+            } else {
+                // Fallback: try matching by string id field
+                await col.updateOne({ id: targetId } as any, { $set: { ...updates, updatedAt: new Date().toISOString() } });
+            }
+            return res.status(200).json({ success: true });
+        }
+
+        if (req.method === 'DELETE') {
+            const targetId = req.query.id as string || req.body?.id;
+            if (!targetId) return res.status(400).json({ error: 'Missing id' });
+
+            if (ObjectId.isValid(targetId)) {
+                await col.deleteOne({ _id: new ObjectId(targetId) });
+            } else {
+                await col.deleteOne({ id: targetId } as any);
+            }
+            return res.status(200).json({ success: true });
+        }
+
+        // GET: return all items
+        if (req.method === 'GET') {
+            const docs = await col.find({}).toArray();
+            const formatted = docs.map(doc => ({ ...doc, id: doc._id.toString(), _id: undefined }));
+            return res.status(200).json(formatted);
+        }
+
+        return res.status(405).json({ error: 'Method not allowed' });
+    } catch (error) {
+        console.error(`Error in CRUD ${collectionName}:`, error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
 }

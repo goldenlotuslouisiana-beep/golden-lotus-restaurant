@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Edit, Trash2, X, Loader2, Copy, ToggleLeft, ToggleRight, Sparkles, Percent } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { Coupon } from '@/types';
+
+const authHeaders = () => {
+  const token = localStorage.getItem('admin_jwt');
+  return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
 
 interface Promo { id: string; code: string; discountType: string; value: number; minOrder: number; maxUses: number; uses: number; expires: string; status: string; createdAt: string }
 
@@ -46,9 +50,12 @@ export default function AdminPromos() {
     try { const r = await fetch('/api/admin?action=promos'); setPromos(await r.json()); } catch {} finally { setPromoLoading(false); }
   };
 
-  // Load display coupons from DataStore
-  const loadCoupons = () => {
-    setCoupons(DataStore.getCoupons());
+  // Load display coupons from API
+  const loadCoupons = async () => {
+    try {
+      const res = await fetch('/api/admin?action=coupons', { headers: authHeaders() });
+      if (res.ok) setCoupons(await res.json());
+    } catch (err) { console.error('Error loading coupons:', err); }
   };
 
   useEffect(() => { 
@@ -82,36 +89,42 @@ export default function AdminPromos() {
   const deletePromo = async (id: string) => { await fetch(`/api/admin?action=promos&id=${id}`, { method: 'DELETE' }); fetchPromos(); };
 
   // Display Coupon functions
-  const saveCoupon = () => {
-    const existing = DataStore.getCoupons();
-    if (editingCoupon) {
-      const updated = existing.map(c => c.id === editingCoupon ? { ...c, ...couponForm } : c);
-      DataStore.setCoupons(updated);
-    } else {
-      const newCoupon: Coupon = {
-        id: Date.now().toString(),
-        ...couponForm,
-      };
-      DataStore.setCoupons([...existing, newCoupon]);
-    }
-    setShowCouponForm(false);
-    setEditingCoupon(null);
-    setCouponForm({ code: '', description: '', discountType: 'percentage', discountValue: 0, minOrder: 0, active: true });
-    loadCoupons();
+  const saveCoupon = async () => {
+    try {
+      if (editingCoupon) {
+        await fetch(`/api/admin?action=coupons&id=${editingCoupon}`, {
+          method: 'PATCH', headers: authHeaders(), body: JSON.stringify(couponForm)
+        });
+      } else {
+        await fetch('/api/admin?action=coupons', {
+          method: 'POST', headers: authHeaders(), body: JSON.stringify(couponForm)
+        });
+      }
+      setShowCouponForm(false);
+      setEditingCoupon(null);
+      setCouponForm({ code: '', description: '', discountType: 'percentage', discountValue: 0, minOrder: 0, active: true });
+      loadCoupons();
+    } catch (err) { console.error('Error saving coupon:', err); }
   };
 
-  const toggleCoupon = (id: string) => {
-    const existing = DataStore.getCoupons();
-    const updated = existing.map(c => c.id === id ? { ...c, active: !c.active } : c);
-    DataStore.setCoupons(updated);
-    loadCoupons();
+  const toggleCoupon = async (id: string) => {
+    const coupon = coupons.find(c => c.id === id);
+    if (!coupon) return;
+    try {
+      await fetch(`/api/admin?action=coupons&id=${id}`, {
+        method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ active: !coupon.active })
+      });
+      loadCoupons();
+    } catch (err) { console.error('Error toggling coupon:', err); }
   };
 
-  const deleteCoupon = (id: string) => {
-    const existing = DataStore.getCoupons();
-    const updated = existing.filter(c => c.id !== id);
-    DataStore.setCoupons(updated);
-    loadCoupons();
+  const deleteCoupon = async (id: string) => {
+    try {
+      await fetch(`/api/admin?action=coupons&id=${id}`, {
+        method: 'DELETE', headers: authHeaders()
+      });
+      loadCoupons();
+    } catch (err) { console.error('Error deleting coupon:', err); }
   };
 
   const inputCls = "w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold focus:border-transparent";

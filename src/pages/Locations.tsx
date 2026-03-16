@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Clock, ExternalLink, Navigation } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { Location } from '@/types';
 import SEO, { breadcrumbSchema } from '@/components/SEO';
 
@@ -8,7 +7,10 @@ export default function Locations() {
   const [locations, setLocations] = useState<Location[]>([]);
 
   useEffect(() => {
-    setLocations(DataStore.getLocations());
+    fetch('/api/menu?action=locations')
+      .then(r => r.json())
+      .then(data => setLocations(data))
+      .catch(err => console.error('Error loading locations:', err));
   }, []);
 
   return (

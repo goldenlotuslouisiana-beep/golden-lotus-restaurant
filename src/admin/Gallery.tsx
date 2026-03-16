@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, X, Check, Image, UploadCloud, Link as LinkIcon } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import { uploadImage } from '@/lib/uploadImage';
 import type { GalleryImage } from '@/types';
+
+const authHeaders = () => {
+  const token = localStorage.getItem('admin_jwt');
+  return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
 
 export default function AdminGallery() {
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -15,8 +19,20 @@ export default function AdminGallery() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setImages(DataStore.getGalleryImages());
+  const loadData = async () => {
+    try {
+      const res = await fetch('/api/menu?action=gallery');
+      if (res.ok) setImages(await res.json());
+    } catch (err) { console.error('Error loading gallery:', err); }
+  };
+
+  const saveImages = async (data: GalleryImage[]) => {
+    try {
+      const res = await fetch('/api/admin?action=save-gallery', {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+      });
+      if (res.ok) setImages(await res.json());
+    } catch (err) { console.error('Error saving gallery:', err); }
   };
 
   const handleAdd = () => {
@@ -27,8 +43,7 @@ export default function AdminGallery() {
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this image?')) {
       const updated = images.filter((img) => img.id !== id);
-      DataStore.setGalleryImages(updated);
-      loadData();
+      saveImages(updated);
     }
   };
 
@@ -44,10 +59,9 @@ export default function AdminGallery() {
       ...formData,
       id: Date.now().toString(),
     };
-    DataStore.setGalleryImages([...images, newImage]);
+    saveImages([...images, newImage]);
 
     setIsModalOpen(false);
-    loadData();
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

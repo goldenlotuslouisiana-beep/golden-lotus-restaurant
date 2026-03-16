@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Star, Eye, EyeOff, Settings } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { Testimonial, SiteContent } from '@/types';
+
+const authHeaders = () => {
+  const token = localStorage.getItem('admin_jwt');
+  return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
 
 export default function AdminTestimonials() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -14,9 +18,35 @@ export default function AdminTestimonials() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setTestimonials(DataStore.getTestimonials());
-    setSiteContent(DataStore.getSiteContent());
+  const loadData = async () => {
+    try {
+      const [tRes, scRes] = await Promise.all([
+        fetch('/api/menu?action=testimonials'),
+        fetch('/api/menu?action=site-content'),
+      ]);
+      if (tRes.ok) setTestimonials(await tRes.json());
+      if (scRes.ok) setSiteContent(await scRes.json());
+    } catch (err) {
+      console.error('Error loading testimonials:', err);
+    }
+  };
+
+  const saveTestimonials = async (data: Testimonial[]) => {
+    try {
+      const res = await fetch('/api/admin?action=save-testimonials', {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+      });
+      if (res.ok) setTestimonials(await res.json());
+    } catch (err) { console.error('Error saving testimonials:', err); }
+  };
+
+  const saveSiteContent = async (data: SiteContent) => {
+    try {
+      const res = await fetch('/api/admin?action=save-site-content', {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+      });
+      if (res.ok) setSiteContent(await res.json());
+    } catch (err) { console.error('Error saving site content:', err); }
   };
 
   const handleAdd = () => {
@@ -39,8 +69,7 @@ export default function AdminTestimonials() {
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this testimonial?')) {
       const updated = testimonials.filter((t) => t.id !== id);
-      DataStore.setTestimonials(updated);
-      loadData();
+      saveTestimonials(updated);
     }
   };
 
@@ -48,8 +77,7 @@ export default function AdminTestimonials() {
     const updated = testimonials.map((t) =>
       t.id === testimonial.id ? { ...t, published: !t.published } : t
     );
-    DataStore.setTestimonials(updated);
-    loadData();
+    saveTestimonials(updated);
   };
 
   const toggleSectionVisibility = () => {
@@ -61,8 +89,7 @@ export default function AdminTestimonials() {
         showTestimonials: !siteContent.settings?.showTestimonials
       }
     };
-    DataStore.setSiteContent(updatedContent);
-    loadData();
+    saveSiteContent(updatedContent);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -72,18 +99,17 @@ export default function AdminTestimonials() {
       const updated = testimonials.map((t) =>
         t.id === editingTestimonial.id ? { ...t, ...formData } : t
       );
-      DataStore.setTestimonials(updated);
+      saveTestimonials(updated);
     } else {
       const newTestimonial: Testimonial = {
         ...formData,
         id: Date.now().toString(),
         date: new Date().toISOString(),
       };
-      DataStore.setTestimonials([...testimonials, newTestimonial]);
+      saveTestimonials([...testimonials, newTestimonial]);
     }
     
     setIsModalOpen(false);
-    loadData();
   };
 
   const publishedCount = testimonials.filter(t => t.published !== false).length;

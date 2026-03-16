@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Users, Music, Palette, Sparkles, Camera, UtensilsCrossed, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
-import { DataStore } from '@/data/store';
 import type { Event, EventPackage } from '@/types';
 import SEO, { breadcrumbSchema } from '@/components/SEO';
 
@@ -27,14 +26,23 @@ export default function Events() {
   const [galleryRef, setGalleryRef] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const loadedEvents = DataStore.getEvents().filter(e => e.active !== false);
-    const loadedPackages = DataStore.getEventPackages();
-    setEvents(loadedEvents);
-    setPackages(loadedPackages);
-    
-    if (loadedEvents.length > 0) {
-      setActiveEvent(loadedEvents[0]);
-    }
+    const loadData = async () => {
+      try {
+        const [evRes, pkgRes] = await Promise.all([
+          fetch('/api/menu?action=events'),
+          fetch('/api/menu?action=event-packages'),
+        ]);
+        if (evRes.ok) {
+          const loadedEvents = (await evRes.json()).filter((e: Event) => e.active !== false);
+          setEvents(loadedEvents);
+          if (loadedEvents.length > 0) setActiveEvent(loadedEvents[0]);
+        }
+        if (pkgRes.ok) setPackages(await pkgRes.json());
+      } catch (err) {
+        console.error('Error loading events:', err);
+      }
+    };
+    loadData();
   }, []);
 
   const activeEventPackages = activeEvent 

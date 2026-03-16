@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { DataStore } from '@/data/store';
 import SEO from '@/components/SEO';
 
 export default function Privacy() {
   const [content, setContent] = useState('');
 
   useEffect(() => {
-    const siteContent = DataStore.getSiteContent();
-    setContent(siteContent.legal?.privacyPolicy || '');
+    fetch('/api/menu?action=site-content')
+      .then(r => r.json())
+      .then(data => setContent(data?.legal?.privacyPolicy || ''))
+      .catch(err => console.error('Error loading privacy policy:', err));
   }, []);
 
   return (

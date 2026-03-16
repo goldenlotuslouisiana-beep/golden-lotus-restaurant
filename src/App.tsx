@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { initializeData, DataStore } from '@/data/store';
 import { AuthProvider } from '@/context/AuthContext';
 
 // Layout
@@ -47,13 +46,13 @@ import AdminCatering from '@/admin/Catering';
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = DataStore.isAuthenticated();
+  const isAuthenticated = !!localStorage.getItem('admin_jwt');
   return isAuthenticated ? <>{children}</> : <Navigate to="/admin/login" replace />;
 }
 
 function App() {
   useEffect(() => {
-    initializeData();
+    // Data now initialized from database
   }, []);
 
   return (

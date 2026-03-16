@@ -23,7 +23,6 @@ import {
   Calendar,
   ChefHat,
 } from 'lucide-react';
-import { DataStore } from '@/data/store';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -51,7 +50,7 @@ export default function AdminLayout() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    DataStore.logout();
+    localStorage.removeItem('admin_jwt');
     navigate('/admin/login');
   };
 
