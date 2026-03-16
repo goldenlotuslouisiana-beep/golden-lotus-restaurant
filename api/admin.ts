@@ -655,14 +655,18 @@ async function handleAdminSaveCollection(req: VercelRequest, res: VercelResponse
         // Replace entire collection
         await col.deleteMany({});
         if (items.length > 0) {
-            // Strip client-side 'id' and let MongoDB generate _id for new docs
-            const docs = items.map(({ id, _id, ...rest }: any) => ({ ...rest }));
+            // Preserve 'id' if exists, strip MongoDB's internal _id to allow new ones
+            const docs = items.map(({ _id, ...rest }: any) => ({ ...rest }));
             await col.insertMany(docs);
         }
 
         // Return the updated list
         const updated = await col.find({}).toArray();
-        const formatted = updated.map(doc => ({ ...doc, id: doc._id.toString(), _id: undefined }));
+        const formatted = updated.map(doc => ({ 
+            ...doc, 
+            id: doc.id || doc._id.toString(), 
+            _id: undefined 
+        }));
         return res.status(200).json(formatted);
     } catch (error) {
         console.error(`Error saving ${collectionName}:`, error);

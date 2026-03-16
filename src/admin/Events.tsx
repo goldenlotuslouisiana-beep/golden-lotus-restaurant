@@ -68,7 +68,18 @@ export default function AdminEvents() {
       });
       if (res.ok) {
         const raw = await res.json();
-        setEvents(Array.isArray(raw) ? raw : []);
+        const updatedEvents = Array.isArray(raw) ? raw : [];
+        setEvents(updatedEvents);
+        
+        // If we have an activeEventId but it's not in the new list, try to recover it
+        // This happens after the first save of a new event when Date.now() id is replaced by DB id
+        if (activeEventId && !updatedEvents.find(e => e.id === activeEventId)) {
+          // Look for an event that matches the one we likely just saved
+          // For now, simpler to just set the last one as active if it was a new save
+          if (updatedEvents.length > 0) {
+            setActiveEventId(updatedEvents[updatedEvents.length - 1].id);
+          }
+        }
       }
     } catch (err) { console.error('Error saving events:', err); }
   };
