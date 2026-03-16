@@ -44,6 +44,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'loyalty-leaderboard': return handleLoyaltyLeaderboard(req, res);
         case 'new-orders': return handleNewOrders(req, res);
         case 'send-email': return handleSendEmail(req, res);
+        case 'riders': return handleRiders(req, res);
+        case 'zones': return handleZones(req, res);
         default:
             // Fallback for old route payloads like method based deletions or updates
             if (action === 'user-detail' && req.method === 'DELETE') return handleUserDetail(req, res);
@@ -396,4 +398,153 @@ async function handleSendEmail(req: VercelRequest, res: VercelResponse) {
         });
         return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: 'Failed' }); }
+}
+
+// In-memory storage for riders and zones (will use MongoDB in production)
+let ridersCache: any[] = [];
+let zonesCache: any[] = [
+    { id: '1', name: 'Alexandria City Center', fee: 3.99, minOrderFree: 40, estimatedTime: '20-30 min' },
+    { id: '2', name: 'Pineville', fee: 5.99, minOrderFree: 50, estimatedTime: '30-45 min' },
+    { id: '3', name: 'Ball', fee: 6.99, minOrderFree: 60, estimatedTime: '35-50 min' },
+];
+
+async function handleRiders(req: VercelRequest, res: VercelResponse) {
+    const client = await clientPromise;
+    const db = client.db(DB);
+    
+    if (req.method === 'GET') {
+        try {
+            const riders = await db.collection('riders').find({}).toArray();
+            return res.status(200).json(riders.map(r => ({ ...r, id: r._id.toString() })));
+        } catch {
+            // Fallback to cache if DB fails
+            return res.status(200).json(ridersCache);
+        }
+    }
+    
+    if (req.method === 'POST') {
+        const rider = {
+            ...req.body,
+            status: 'available',
+            totalDeliveries: 0,
+            todayDeliveries: 0,
+            createdAt: new Date().toISOString(),
+        };
+        try {
+            const result = await db.collection('riders').insertOne(rider);
+            return res.status(201).json({ ...rider, id: result.insertedId.toString() });
+        } catch {
+            const id = Date.now().toString();
+            ridersCache.push({ ...rider, id });
+            return res.status(201).json({ ...rider, id });
+        }
+    }
+    
+    if (req.method === 'PATCH') {
+        const riderId = req.query.id as string;
+        const updates = req.body;
+        delete updates.id; delete updates._id;
+        
+        try {
+            if (ObjectId.isValid(riderId)) {
+                await db.collection('riders').updateOne(
+                    { _id: new ObjectId(riderId) },
+                    { $set: updates }
+                );
+            }
+            return res.status(200).json({ success: true });
+        } catch {
+            const idx = ridersCache.findIndex(r => r.id === riderId);
+            if (idx !== -1) {
+                ridersCache[idx] = { ...ridersCache[idx], ...updates };
+            }
+            return res.status(200).json({ success: true });
+        }
+    }
+    
+    if (req.method === 'DELETE') {
+        const riderId = req.query.id as string;
+        try {
+            if (ObjectId.isValid(riderId)) {
+                await db.collection('riders').deleteOne({ _id: new ObjectId(riderId) });
+            }
+            return res.status(200).json({ success: true });
+        } catch {
+            ridersCache = ridersCache.filter(r => r.id !== riderId);
+            return res.status(200).json({ success: true });
+        }
+    }
+    
+    return res.status(405).json({ error: 'Method not allowed' });
+}
+
+async function handleZones(req: VercelRequest, res: VercelResponse) {
+    const client = await clientPromise;
+    const db = client.db(DB);
+    
+    if (req.method === 'GET') {
+        try {
+            const zones = await db.collection('zones').find({}).toArray();
+            if (zones.length === 0) {
+                // Seed default zones
+                await db.collection('zones').insertMany(zonesCache);
+                return res.status(200).json(zonesCache);
+            }
+            return res.status(200).json(zones.map(z => ({ ...z, id: z._id.toString() })));
+        } catch {
+            return res.status(200).json(zonesCache);
+        }
+    }
+    
+    if (req.method === 'POST') {
+        const zone = {
+            ...req.body,
+            createdAt: new Date().toISOString(),
+        };
+        try {
+            const result = await db.collection('zones').insertOne(zone);
+            return res.status(201).json({ ...zone, id: result.insertedId.toString() });
+        } catch {
+            const id = Date.now().toString();
+            zonesCache.push({ ...zone, id });
+            return res.status(201).json({ ...zone, id });
+        }
+    }
+    
+    if (req.method === 'PATCH') {
+        const zoneId = req.query.id as string;
+        const updates = req.body;
+        delete updates.id; delete updates._id;
+        
+        try {
+            if (ObjectId.isValid(zoneId)) {
+                await db.collection('zones').updateOne(
+                    { _id: new ObjectId(zoneId) },
+                    { $set: updates }
+                );
+            }
+            return res.status(200).json({ success: true });
+        } catch {
+            const idx = zonesCache.findIndex(z => z.id === zoneId);
+            if (idx !== -1) {
+                zonesCache[idx] = { ...zonesCache[idx], ...updates };
+            }
+            return res.status(200).json({ success: true });
+        }
+    }
+    
+    if (req.method === 'DELETE') {
+        const zoneId = req.query.id as string;
+        try {
+            if (ObjectId.isValid(zoneId)) {
+                await db.collection('zones').deleteOne({ _id: new ObjectId(zoneId) });
+            }
+            return res.status(200).json({ success: true });
+        } catch {
+            zonesCache = zonesCache.filter(z => z.id !== zoneId);
+            return res.status(200).json({ success: true });
+        }
+    }
+    
+    return res.status(405).json({ error: 'Method not allowed' });
 }
