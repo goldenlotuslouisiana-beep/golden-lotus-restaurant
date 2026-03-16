@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, MapPin, Phone, Mail } from 'lucide-react';
+import { Facebook, Instagram, MapPin, Phone, Mail, Clock, Heart } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import { useEffect, useState } from 'react';
 import type { SiteContent } from '@/types';
+import { motion } from 'framer-motion';
 
 export default function Footer() {
   const locations = DataStore.getLocations();
@@ -12,91 +13,93 @@ export default function Footer() {
     setSiteContent(DataStore.getSiteContent());
   }, []);
 
+  const currentYear = new Date().getFullYear();
+
+  const footerLinks = {
+    explore: [
+      { name: 'Our Menu', href: '/menu' },
+      { name: 'Catering', href: '/catering' },
+      { name: 'Locations', href: '/locations' },
+      { name: 'Our Story', href: '/story' },
+      { name: 'Events', href: '/events' },
+    ],
+    company: [
+      ...(siteContent.footerSettings?.showHiring !== false ? [{ name: "Join Our Team", href: '/careers' }] : []),
+      ...(siteContent.footerSettings?.showGiftCards !== false ? [{ name: 'Gift Cards', href: '/gift-cards' }] : []),
+      { name: 'Contact Us', href: '/contact' },
+    ],
+    legal: [
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Terms of Service', href: '/terms' },
+      { name: 'Accessibility', href: '/accessibility' },
+    ],
+  };
+
   return (
-    <footer className="bg-lotus-dark text-white">
+    <footer className="bg-gradient-to-b from-lotus-dark to-black text-white">
       {/* Main Footer */}
-      <div className="section-padding py-12 lg:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 text-center sm:text-left">
-          {/* Brand */}
-          <div className="lg:col-span-1 flex flex-col items-center sm:items-start">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <img 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
+          {/* Brand Column */}
+          <div className="lg:col-span-4 space-y-6">
+            <Link to="/" className="flex items-center gap-3 group">
+              <motion.img 
+                whileHover={{ scale: 1.05, rotate: 5 }}
                 src="/golden_lotus_logo.png" 
-                alt="Golden Lotus" 
-                className="w-12 h-12 object-contain"
+                alt="" 
+                className="w-12 h-12 object-contain drop-shadow-lg"
               />
-              <span className="text-2xl font-bold font-['Playfair_Display']">
-                Golden Lotus
-              </span>
+              <div>
+                <span className="text-2xl font-bold font-serif block group-hover:text-lotus-gold transition-colors">
+                  Golden Lotus
+                </span>
+                <span className="text-xs text-gray-400 tracking-wider uppercase">Indian Restaurant</span>
+              </div>
             </Link>
-            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+            
+            <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
               Experience the art of authentic Indian cuisine at Golden Lotus Grill.
               Located in Alexandria, Louisiana, serving the finest Indian food with 
-              dine-in, takeout, and catering services.
+              dine-in, takeout, and catering services since 2010.
             </p>
-            <div className="flex items-center gap-4">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-lotus-gold transition-colors"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-lotus-gold transition-colors"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
+
+            {/* Social Links */}
+            <div className="flex items-center gap-3">
+              <SocialLink href="https://facebook.com" icon={<Facebook className="w-5 h-5" />} label="Facebook" />
+              <SocialLink href="https://instagram.com" icon={<Instagram className="w-5 h-5" />} label="Instagram" />
             </div>
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 font-['Playfair_Display']">Quick Links</h3>
+          <div className="lg:col-span-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Explore</h3>
             <ul className="space-y-3">
-              {[
-                { name: 'Home', href: '/' },
-                { name: 'Menu', href: '/menu' },
-                { name: 'Catering', href: '/catering' },
-                { name: 'Locations', href: '/locations' },
-                { name: 'Our Story', href: '/story' },
-                { name: 'Events', href: '/events' },
-              ].map((link) => (
+              {footerLinks.explore.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-gray-400 hover:text-lotus-gold transition-colors text-sm"
+                    className="text-gray-400 hover:text-lotus-gold transition-colors text-sm inline-flex items-center gap-1 group"
                   >
                     {link.name}
+                    <span className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">→</span>
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* More Links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 font-['Playfair_Display']">More</h3>
+          {/* Company Links */}
+          <div className="lg:col-span-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Company</h3>
             <ul className="space-y-3">
-              {[
-                ...(siteContent.footerSettings?.showHiring !== false ? [{ name: "We're Hiring", href: '/careers' }] : []),
-                ...(siteContent.footerSettings?.showGiftCards !== false ? [{ name: 'Gift Cards', href: '/gift-cards' }] : []),
-                { name: 'Contact Us', href: '/contact' },
-                { name: 'Sitemap', href: '/sitemap' },
-                { name: 'Terms of Service', href: '/terms' },
-                { name: 'Privacy Policy', href: '/privacy' },
-                { name: 'Accessibility', href: '/accessibility' },
-              ].map((link) => (
+              {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-gray-400 hover:text-lotus-gold transition-colors text-sm"
+                    className="text-gray-400 hover:text-lotus-gold transition-colors text-sm inline-flex items-center gap-1 group"
                   >
                     {link.name}
+                    <span className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">→</span>
                   </Link>
                 </li>
               ))}
@@ -104,32 +107,56 @@ export default function Footer() {
           </div>
 
           {/* Contact Info */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 font-['Playfair_Display']">Contact Us</h3>
-            <div className="space-y-6 sm:space-y-4">
+          <div className="lg:col-span-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Contact Us</h3>
+            <div className="space-y-4">
               {locations.map((location) => (
-                <div key={location.id} className="text-sm flex flex-col items-center sm:items-start group">
-                  <p className="font-medium text-white mb-1 group-hover:text-lotus-gold transition-colors">{location.name}</p>
-                  <p className="text-gray-400 flex items-start gap-2 text-center sm:text-left">
-                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>
-                      {location.address}, {location.city}, {location.state} {location.zip}
-                    </span>
-                  </p>
-                  <p className="text-gray-400 flex items-center gap-2 mt-1">
-                    <Phone className="w-4 h-4 flex-shrink-0" />
-                    <a href={`tel:${location.phone}`} className="hover:text-lotus-gold transition-colors">
+                <div key={location.id} className="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition-colors">
+                  <p className="font-medium text-white mb-2">{location.name}</p>
+                  <div className="space-y-2 text-sm">
+                    <a 
+                      href={`https://maps.google.com/?q=${encodeURIComponent(`${location.address}, ${location.city}, ${location.state} ${location.zip}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-2 text-gray-400 hover:text-lotus-gold transition-colors"
+                    >
+                      <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>{location.address}, {location.city}, {location.state} {location.zip}</span>
+                    </a>
+                    <a 
+                      href={`tel:${location.phone}`} 
+                      className="flex items-center gap-2 text-gray-400 hover:text-lotus-gold transition-colors"
+                    >
+                      <Phone className="w-4 h-4 flex-shrink-0" />
                       {location.phone}
                     </a>
-                  </p>
+                  </div>
                 </div>
               ))}
-              <p className="text-gray-400 flex items-center justify-center sm:justify-start gap-2 text-sm mt-4 sm:mt-0">
-                <Mail className="w-4 h-4 flex-shrink-0" />
-                <a href="mailto:golden_lotusmiami@gmail.com" className="hover:text-lotus-gold transition-colors">
-                  golden_lotusmiami@gmail.com
-                </a>
-              </p>
+              
+              <a 
+                href="mailto:golden_lotusmiami@gmail.com" 
+                className="flex items-center gap-2 text-gray-400 hover:text-lotus-gold transition-colors text-sm"
+              >
+                <Mail className="w-4 h-4" />
+                golden_lotusmiami@gmail.com
+              </a>
+
+              {/* Hours */}
+              <div className="flex items-start gap-2 text-sm text-gray-400 pt-2 border-t border-white/10">
+                <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-medium mb-1">Opening Hours</p>
+                  {locations[0]?.hours.slice(0, 3).map((hour, idx) => (
+                    <p key={idx} className="text-xs">
+                      {hour.day}: {hour.isClosed ? 'Closed' : `${hour.open} - ${hour.close}`}
+                    </p>
+                  ))}
+                  <Link to="/locations" className="text-lotus-gold text-xs hover:underline mt-1 inline-block">
+                    View all hours →
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -137,20 +164,46 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
-        <div className="section-padding py-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-gray-400 text-sm text-center sm:text-left">
-              &copy; {new Date().getFullYear()} Golden Lotus Indian Cuisine Inc. All rights reserved.
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-gray-500 text-sm text-center md:text-left">
+              © {currentYear} Golden Lotus Indian Cuisine Inc. All rights reserved.
+              <span className="hidden sm:inline"> · </span>
+              <br className="sm:hidden" />
+              <span className="inline-flex items-center gap-1">
+                Made with <Heart className="w-3 h-3 text-red-500 fill-current" /> in Alexandria, LA
+              </span>
             </p>
-            <Link
-              to="/menu?order=true"
-              className="px-6 py-2 bg-lotus-gold text-white text-sm font-medium rounded-lg hover:bg-lotus-gold-dark transition-colors"
-            >
-              Order online
-            </Link>
+            
+            <div className="flex items-center gap-6">
+              {footerLinks.legal.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className="text-gray-500 hover:text-lotus-gold transition-colors text-xs"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     </footer>
+  );
+}
+
+// Social Link Component
+function SocialLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center hover:bg-lotus-gold hover:scale-110 transition-all duration-300"
+    >
+      {icon}
+    </a>
   );
 }
