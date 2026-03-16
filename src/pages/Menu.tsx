@@ -29,8 +29,14 @@ export default function Menu() {
           fetch('/api/menu?action=menu-categories'),
           fetch('/api/admin?action=coupons'),
         ]);
-        if (menuRes.ok) setMenuItems(await menuRes.json());
-        if (catRes.ok) setCategories(await catRes.json());
+        if (menuRes.ok) {
+          const raw = await menuRes.json();
+          setMenuItems(Array.isArray(raw) ? raw : []);
+        }
+        if (catRes.ok) {
+          const raw = await catRes.json();
+          setCategories(Array.isArray(raw) ? raw : []);
+        }
         if (couponRes.ok) {
           const allCoupons = await couponRes.json();
           setCoupons(Array.isArray(allCoupons) ? allCoupons.filter((c: Coupon) => c.active) : []);

@@ -47,7 +47,11 @@ export default function AdminPromos() {
   // Fetch checkout promos from API
   const fetchPromos = async () => {
     setPromoLoading(true);
-    try { const r = await fetch('/api/admin?action=promos'); setPromos(await r.json()); } catch {} finally { setPromoLoading(false); }
+    try { 
+      const r = await fetch('/api/admin?action=promos'); 
+      const raw = await r.json();
+      setPromos(Array.isArray(raw) ? raw : []); 
+    } catch {} finally { setPromoLoading(false); }
   };
 
   // Load display coupons from API

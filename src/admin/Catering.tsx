@@ -68,8 +68,16 @@ export default function AdminCatering() {
         fetch('/api/admin?action=save-catering-inquiries', { headers: authHeaders() }),
         fetch('/api/menu?action=catering-packages')
       ]);
-      if (iRes.ok) setInquiries(await iRes.json());
-      if (pRes.ok) setPackages(await pRes.json());
+      if (iRes.ok) {
+        const raw = await iRes.json();
+        const data = Array.isArray(raw) ? raw : [];
+        setInquiries(data);
+        setFilteredInquiries(data);
+      }
+      if (pRes.ok) {
+        const raw = await pRes.json();
+        setPackages(Array.isArray(raw) ? raw : []);
+      }
     } catch (err) { console.error('Error loading catering data:', err); }
   };
 

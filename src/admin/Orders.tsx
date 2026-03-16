@@ -55,6 +55,7 @@ export default function AdminOrders() {
       const res = await fetch('/api/admin?action=orders');
       if (res.ok) {
         let data = await res.json();
+        if (!Array.isArray(data)) data = [];
         data = data.map((o: any) => ({
           ...o,
           id: o._id?.toString() || o.id,

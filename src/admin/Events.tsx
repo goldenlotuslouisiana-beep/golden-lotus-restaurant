@@ -49,8 +49,10 @@ export default function AdminEvents() {
         fetch('/api/menu?action=events'),
         fetch('/api/menu?action=event-packages')
       ]);
-      const loadedEvents = eRes.ok ? await eRes.json() : [];
-      const loadedPackages = pRes.ok ? await pRes.json() : [];
+      const rawEvents = eRes.ok ? await eRes.json() : [];
+      const rawPackages = pRes.ok ? await pRes.json() : [];
+      const loadedEvents = Array.isArray(rawEvents) ? rawEvents : [];
+      const loadedPackages = Array.isArray(rawPackages) ? rawPackages : [];
       setEvents(loadedEvents);
       setPackages(loadedPackages);
       if (loadedEvents.length > 0 && !activeEventId) {
