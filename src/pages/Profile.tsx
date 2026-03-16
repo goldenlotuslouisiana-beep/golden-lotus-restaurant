@@ -23,7 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from '@/components/ui/dialog';
 
 type Tab = 'personal' | 'addresses' | 'orders' | 'loyalty';
@@ -91,7 +90,6 @@ export default function Profile() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('personal');
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -700,21 +698,6 @@ function AddressesTab({ token }: { token: string | null }) {
     }
   };
 
-  const startEdit = (addr: Address) => {
-    setEditingAddress(addr);
-    setForm({
-      label: addr.label || 'Home',
-      fullName: addr.fullName || '',
-      phone: addr.phone || '',
-      street: addr.street || '',
-      apt: addr.apt || '',
-      city: addr.city || '',
-      state: addr.state || '',
-      zip: addr.zip || '',
-      landmark: addr.landmark || ''
-    });
-  };
-
   const getLabelIcon = (label: string) => {
     switch (label?.toLowerCase()) {
       case 'home': return Home;
@@ -995,7 +978,7 @@ function OrderHistoryTab({ token }: { token: string | null }) {
     }
   };
 
-  const handleReorder = (order: Order) => {
+  const handleReorder = (_order: Order) => {
     // Navigate to menu with items pre-selected
     toast({
       title: "Reorder Feature",
