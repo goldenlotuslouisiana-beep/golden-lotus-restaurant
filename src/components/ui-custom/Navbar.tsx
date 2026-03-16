@@ -185,9 +185,17 @@ export default function Navbar() {
                         : 'hover:bg-white/10'
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-lotus-gold to-orange-500 flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                      {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
-                    </div>
+                    {user?.avatar ? (
+                      <img 
+                        src={user.avatar} 
+                        alt={user?.name || 'User'}
+                        className="w-8 h-8 rounded-full object-cover border-2 border-white/30 shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-lotus-gold to-orange-500 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                        {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                    )}
                     <ChevronDown className={`w-4 h-4 transition-colors duration-300 ${isScrolled ? 'text-gray-600' : 'text-white'}`} />
                   </button>
 
@@ -357,9 +365,17 @@ export default function Navbar() {
                   {isLoggedIn && user ? (
                     <div className="space-y-3">
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lotus-gold to-orange-500 flex items-center justify-center text-white font-bold">
-                          {user?.name?.charAt(0).toUpperCase() || 'U'}
-                        </div>
+                        {user?.avatar ? (
+                          <img 
+                            src={user.avatar} 
+                            alt={user?.name || 'User'}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lotus-gold to-orange-500 flex items-center justify-center text-white font-bold">
+                            {user?.name?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate">{user?.name || user?.email}</p>
                           <p className="text-xs text-gray-500">{user.loyaltyPoints || 0} points</p>
