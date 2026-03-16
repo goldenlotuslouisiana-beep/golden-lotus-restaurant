@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Lock, User, Facebook, Instagram, Twitter, Youtube, Globe, Link2 } from 'lucide-react';
+import { Save, Lock, User, Facebook, Instagram, Twitter, Youtube, Globe, Link2, MapPin, Phone, Mail } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import type { AdminUser, SiteContent } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,7 +13,7 @@ export default function AdminSettings() {
   const { toast } = useToast();
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [siteContent, setSiteContent] = useState<SiteContent>(DataStore.getSiteContent());
-  const [activeTab, setActiveTab] = useState<'profile' | 'social' | 'data'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'social' | 'contact' | 'data'>('profile');
   
   const [formData, setFormData] = useState({
     username: '',
@@ -28,6 +28,15 @@ export default function AdminSettings() {
     instagram: '',
     twitter: '',
     youtube: '',
+  });
+
+  const [contactInfo, setContactInfo] = useState({
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
   });
 
   useEffect(() => {
@@ -47,6 +56,14 @@ export default function AdminSettings() {
       instagram: content.socialLinks?.instagram || '',
       twitter: content.socialLinks?.twitter || '',
       youtube: content.socialLinks?.youtube || '',
+    });
+    setContactInfo({
+      email: content.contactInfo?.email || '',
+      phone: content.contactInfo?.phone || '',
+      address: content.contactInfo?.address || '',
+      city: content.contactInfo?.city || '',
+      state: content.contactInfo?.state || '',
+      zip: content.contactInfo?.zip || '',
     });
   }, []);
 
@@ -120,6 +137,27 @@ export default function AdminSettings() {
     });
   };
 
+  const handleSaveContactInfo = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated: SiteContent = {
+      ...siteContent,
+      contactInfo: {
+        email: contactInfo.email,
+        phone: contactInfo.phone,
+        address: contactInfo.address,
+        city: contactInfo.city,
+        state: contactInfo.state,
+        zip: contactInfo.zip,
+      },
+    };
+    DataStore.setSiteContent(updated);
+    setSiteContent(updated);
+    toast({
+      title: "Contact Info Updated",
+      description: "Your contact details have been saved successfully.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -128,10 +166,10 @@ export default function AdminSettings() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-2 border-b overflow-x-auto">
         <button
           onClick={() => setActiveTab('profile')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'profile'
               ? 'border-lotus-gold text-lotus-gold'
               : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -142,7 +180,7 @@ export default function AdminSettings() {
         </button>
         <button
           onClick={() => setActiveTab('social')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'social'
               ? 'border-lotus-gold text-lotus-gold'
               : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -152,8 +190,19 @@ export default function AdminSettings() {
           Social Links
         </button>
         <button
+          onClick={() => setActiveTab('contact')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+            activeTab === 'contact'
+              ? 'border-lotus-gold text-lotus-gold'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <MapPin className="w-4 h-4 inline mr-2" />
+          Contact Info
+        </button>
+        <button
           onClick={() => setActiveTab('data')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'data'
               ? 'border-lotus-gold text-lotus-gold'
               : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -338,6 +387,107 @@ export default function AdminSettings() {
                 <Button type="submit">
                   <Save className="w-4 h-4 mr-2" />
                   Save Social Links
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Contact Info Tab */}
+      {activeTab === 'contact' && (
+        <Card className="max-w-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-lotus-gold" />
+              Contact Information
+            </CardTitle>
+            <CardDescription>Manage your contact details that appear in the footer</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSaveContactInfo} className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contactEmail" className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-gray-500" />
+                    Email Address
+                  </Label>
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    placeholder="contact@example.com"
+                    value={contactInfo.email}
+                    onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contactPhone" className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-gray-500" />
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="contactPhone"
+                    type="tel"
+                    placeholder="(318) 555-0123"
+                    value={contactInfo.phone}
+                    onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contactAddress" className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    Street Address
+                  </Label>
+                  <Input
+                    id="contactAddress"
+                    placeholder="1473 Dorchester Dr"
+                    value={contactInfo.address}
+                    onChange={(e) => setContactInfo({ ...contactInfo, address: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contactCity">City</Label>
+                    <Input
+                      id="contactCity"
+                      placeholder="Alexandria"
+                      value={contactInfo.city}
+                      onChange={(e) => setContactInfo({ ...contactInfo, city: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contactState">State</Label>
+                    <Input
+                      id="contactState"
+                      placeholder="LA"
+                      value={contactInfo.state}
+                      onChange={(e) => setContactInfo({ ...contactInfo, state: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contactZip">ZIP Code</Label>
+                    <Input
+                      id="contactZip"
+                      placeholder="71301"
+                      value={contactInfo.zip}
+                      onChange={(e) => setContactInfo({ ...contactInfo, zip: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-500">
+                  These details will be displayed in the website footer Contact Us section.
+                </p>
+                <Button type="submit">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Contact Info
                 </Button>
               </div>
             </form>

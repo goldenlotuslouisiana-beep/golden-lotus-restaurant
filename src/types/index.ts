@@ -182,6 +182,14 @@ export interface SiteContent {
     twitter?: string;
     youtube?: string;
   };
+  contactInfo?: {
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
 }
 
 export interface StorySection {

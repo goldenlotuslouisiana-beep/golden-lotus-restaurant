@@ -24,8 +24,6 @@ export default function Footer() {
       { name: 'Events', href: '/events' },
     ],
     company: [
-      ...(siteContent.footerSettings?.showHiring !== false ? [{ name: "Join Our Team", href: '/careers' }] : []),
-      ...(siteContent.footerSettings?.showGiftCards !== false ? [{ name: 'Gift Cards', href: '/gift-cards' }] : []),
       { name: 'Contact Us', href: '/contact' },
     ],
     legal: [
@@ -144,13 +142,24 @@ export default function Footer() {
                 </div>
               ))}
               
-              <a 
-                href="mailto:golden_lotusmiami@gmail.com" 
-                className="flex items-center gap-2 text-gray-400 hover:text-lotus-gold transition-colors text-sm"
-              >
-                <Mail className="w-4 h-4" />
-                golden_lotusmiami@gmail.com
-              </a>
+              {siteContent.contactInfo?.email && (
+                <a 
+                  href={`mailto:${siteContent.contactInfo.email}`}
+                  className="flex items-center gap-2 text-gray-400 hover:text-lotus-gold transition-colors text-sm"
+                >
+                  <Mail className="w-4 h-4" />
+                  {siteContent.contactInfo.email}
+                </a>
+              )}
+              {siteContent.contactInfo?.phone && (
+                <a 
+                  href={`tel:${siteContent.contactInfo.phone}`}
+                  className="flex items-center gap-2 text-gray-400 hover:text-lotus-gold transition-colors text-sm"
+                >
+                  <Phone className="w-4 h-4" />
+                  {siteContent.contactInfo.phone}
+                </a>
+              )}
 
               {/* Hours */}
               <div className="flex items-start gap-2 text-sm text-gray-400 pt-2 border-t border-white/10">

@@ -425,6 +425,14 @@ const defaultSiteContent: SiteContent = {
     facebook: 'https://facebook.com',
     instagram: 'https://instagram.com',
   },
+  contactInfo: {
+    email: 'golden_lotusmiami@gmail.com',
+    phone: '(318) 555-0123',
+    address: '1473 Dorchester Dr',
+    city: 'Alexandria',
+    state: 'LA',
+    zip: '71301',
+  },
 };
 
 // Features list
