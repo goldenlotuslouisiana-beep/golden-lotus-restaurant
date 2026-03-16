@@ -421,6 +421,10 @@ const defaultSiteContent: SiteContent = {
     showGiftCards: true,
     showHiring: true,
   },
+  socialLinks: {
+    facebook: 'https://facebook.com',
+    instagram: 'https://instagram.com',
+  },
 };
 
 // Features list

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   User, MapPin, ShoppingBag, Star, Loader2, Plus, Trash2, Edit2, Check, Package, 
-  ChevronDown, ChevronUp, LogOut, Camera, Phone, Mail, Calendar, Home, 
-  Briefcase, MapPinned, X, AlertCircle, CheckCircle2 
+  ChevronDown, ChevronUp, LogOut, Phone, Mail, Calendar, Home, 
+  Briefcase, MapPinned, X, AlertCircle, CheckCircle2, Upload
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import SEO from '@/components/SEO';
@@ -17,13 +17,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 
 type Tab = 'personal' | 'addresses' | 'orders' | 'loyalty';
 
@@ -85,6 +78,10 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelled',
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN PROFILE COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export default function Profile() {
   const { user: authUser, token, isLoggedIn, logout } = useAuth();
   const navigate = useNavigate();
@@ -95,7 +92,6 @@ export default function Profile() {
     if (!isLoggedIn) {
       navigate('/login?redirect=/profile');
     } else {
-      // Simulate a brief loading to ensure auth is ready
       const timer = setTimeout(() => setLoading(false), 500);
       return () => clearTimeout(timer);
     }
@@ -227,6 +223,7 @@ function PersonalInfoTab({ token }: { token: string | null }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -255,7 +252,6 @@ function PersonalInfoTab({ token }: { token: string | null }) {
           dateOfBirth: userData.dateOfBirth || userData.dob || '',
         });
       } else {
-        // Fallback to localStorage data
         const saved = localStorage.getItem('user_data');
         if (saved) {
           const userData = JSON.parse(saved);
@@ -271,6 +267,56 @@ function PersonalInfoTab({ token }: { token: string | null }) {
       console.error('Failed to fetch profile:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "Invalid file", description: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Maximum size is 2MB", variant: "destructive" });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'avatar');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Update user avatar in profile
+        await fetch('/api/users?action=update-profile', {
+          method: 'PATCH',
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ avatar: data.url })
+        });
+        
+        updateUser({ avatar: data.url });
+        toast({ title: "Photo Updated", description: "Your profile picture has been updated." });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      toast({ title: "Upload Failed", description: "Could not upload photo. Please try again.", variant: "destructive" });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -383,10 +429,21 @@ function PersonalInfoTab({ token }: { token: string | null }) {
             </AvatarFallback>
           </Avatar>
           <div>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Camera className="w-4 h-4" />
-              Change Photo
-            </Button>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+                disabled={isUploading}
+              />
+              <Button variant="outline" size="sm" className="gap-2" asChild>
+                <span>
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {isUploading ? 'Uploading...' : 'Change Photo'}
+                </span>
+              </Button>
+            </label>
             <p className="text-xs text-gray-500 mt-1">JPG, PNG or GIF. Max 2MB.</p>
           </div>
         </div>
@@ -499,6 +556,119 @@ function PersonalInfoTab({ token }: { token: string | null }) {
 // ADDRESSES TAB
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Address Form Component - DEFINED OUTSIDE to prevent re-renders causing focus loss
+interface AddressFormProps {
+  form: {
+    label: string;
+    fullName: string;
+    phone: string;
+    street: string;
+    apt: string;
+    city: string;
+    state: string;
+    zip: string;
+    landmark: string;
+  };
+  setForm: React.Dispatch<React.SetStateAction<AddressFormProps['form']>>;
+  onSubmit: () => void;
+  onCancel: () => void;
+  title: string;
+  isSubmitting: boolean;
+}
+
+function AddressForm({ form, setForm, onSubmit, onCancel, title, isSubmitting }: AddressFormProps) {
+  return (
+    <Card className="border-orange-200 bg-orange-50/30">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg flex items-center justify-between">
+          {title}
+          <Button variant="ghost" size="icon" onClick={onCancel}>
+            <X className="w-4 h-4" />
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Label Selection */}
+        <div className="flex gap-2">
+          {['Home', 'Office', 'Other'].map(l => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setForm(p => ({ ...p, label: l }))}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                form.label === l 
+                  ? 'bg-[#F97316] text-white shadow-sm' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input 
+            placeholder="Full Name" 
+            value={form.fullName}
+            onChange={e => setForm(p => ({ ...p, fullName: e.target.value }))}
+          />
+          <Input 
+            placeholder="Phone Number" 
+            value={form.phone}
+            onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+          />
+        </div>
+
+        <Input 
+          placeholder="Street Address *" 
+          value={form.street}
+          onChange={e => setForm(p => ({ ...p, street: e.target.value }))}
+        />
+        
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Input 
+            placeholder="Apt/Suite" 
+            value={form.apt}
+            onChange={e => setForm(p => ({ ...p, apt: e.target.value }))}
+          />
+          <Input 
+            placeholder="City *" 
+            value={form.city}
+            onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
+          />
+          <Input 
+            placeholder="State *" 
+            value={form.state}
+            onChange={e => setForm(p => ({ ...p, state: e.target.value }))}
+          />
+          <Input 
+            placeholder="ZIP *" 
+            value={form.zip}
+            onChange={e => setForm(p => ({ ...p, zip: e.target.value }))}
+          />
+        </div>
+
+        <Input 
+          placeholder="Landmark (optional)" 
+          value={form.landmark}
+          onChange={e => setForm(p => ({ ...p, landmark: e.target.value }))}
+        />
+
+        <div className="flex gap-2 pt-2">
+          <Button 
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            className="bg-[#F97316] hover:bg-[#ea6c10]"
+          >
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Address'}
+          </Button>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function AddressesTab({ token }: { token: string | null }) {
   const { toast } = useToast();
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -539,7 +709,7 @@ function AddressesTab({ token }: { token: string | null }) {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setForm({ 
       label: 'Home', 
       fullName: '',
@@ -551,7 +721,7 @@ function AddressesTab({ token }: { token: string | null }) {
       zip: '',
       landmark: ''
     });
-  };
+  }, []);
 
   const handleAdd = async () => {
     if (!form.street || !form.city || !form.state || !form.zip) {
@@ -698,6 +868,21 @@ function AddressesTab({ token }: { token: string | null }) {
     }
   };
 
+  const startEdit = useCallback((addr: Address) => {
+    setEditingAddress(addr);
+    setForm({
+      label: addr.label || 'Home',
+      fullName: addr.fullName || '',
+      phone: addr.phone || '',
+      street: addr.street || '',
+      apt: addr.apt || '',
+      city: addr.city || '',
+      state: addr.state || '',
+      zip: addr.zip || '',
+      landmark: addr.landmark || ''
+    });
+  }, []);
+
   const getLabelIcon = (label: string) => {
     switch (label?.toLowerCase()) {
       case 'home': return Home;
@@ -715,96 +900,6 @@ function AddressesTab({ token }: { token: string | null }) {
       </Card>
     );
   }
-
-  const AddressForm = ({ onSubmit, onCancel, title }: { onSubmit: () => void, onCancel: () => void, title: string }) => (
-    <Card className="border-orange-200 bg-orange-50/30">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg flex items-center justify-between">
-          {title}
-          <Button variant="ghost" size="icon" onClick={onCancel}>
-            <X className="w-4 h-4" />
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Label Selection */}
-        <div className="flex gap-2">
-          {['Home', 'Office', 'Other'].map(l => (
-            <button
-              key={l}
-              onClick={() => setForm(p => ({ ...p, label: l }))}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                form.label === l 
-                  ? 'bg-[#F97316] text-white shadow-sm' 
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-              }`}
-            >
-              {l}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Input 
-            placeholder="Full Name" 
-            value={form.fullName}
-            onChange={e => setForm(p => ({ ...p, fullName: e.target.value }))}
-          />
-          <Input 
-            placeholder="Phone Number" 
-            value={form.phone}
-            onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-          />
-        </div>
-
-        <Input 
-          placeholder="Street Address *" 
-          value={form.street}
-          onChange={e => setForm(p => ({ ...p, street: e.target.value }))}
-        />
-        
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Input 
-            placeholder="Apt/Suite" 
-            value={form.apt}
-            onChange={e => setForm(p => ({ ...p, apt: e.target.value }))}
-          />
-          <Input 
-            placeholder="City *" 
-            value={form.city}
-            onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
-          />
-          <Input 
-            placeholder="State *" 
-            value={form.state}
-            onChange={e => setForm(p => ({ ...p, state: e.target.value }))}
-          />
-          <Input 
-            placeholder="ZIP *" 
-            value={form.zip}
-            onChange={e => setForm(p => ({ ...p, zip: e.target.value }))}
-          />
-        </div>
-
-        <Input 
-          placeholder="Landmark (optional)" 
-          value={form.landmark}
-          onChange={e => setForm(p => ({ ...p, landmark: e.target.value }))}
-        />
-
-        <div className="flex gap-2 pt-2">
-          <Button 
-            onClick={onSubmit}
-            disabled={isSubmitting}
-            className="bg-[#F97316] hover:bg-[#ea6c10]"
-          >
-            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Address'}
-          </Button>
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   return (
     <div className="space-y-6">
@@ -830,17 +925,23 @@ function AddressesTab({ token }: { token: string | null }) {
         <CardContent className="space-y-4">
           {showAddForm && (
             <AddressForm 
+              form={form}
+              setForm={setForm}
               onSubmit={handleAdd}
               onCancel={() => { setShowAddForm(false); resetForm(); }}
               title="Add New Address"
+              isSubmitting={isSubmitting}
             />
           )}
 
           {editingAddress && (
             <AddressForm 
+              form={form}
+              setForm={setForm}
               onSubmit={handleEdit}
               onCancel={() => { setEditingAddress(null); resetForm(); }}
               title="Edit Address"
+              isSubmitting={isSubmitting}
             />
           )}
 
@@ -898,20 +999,14 @@ function AddressesTab({ token }: { token: string | null }) {
                           )}
                         </div>
                         <div className="flex flex-col gap-1">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-blue-600">
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Edit Address</DialogTitle>
-                              </DialogHeader>
-                              {/* Inline edit form would go here */}
-                              <p className="text-sm text-gray-500">Use the edit button on the card to edit this address.</p>
-                            </DialogContent>
-                          </Dialog>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-gray-400 hover:text-blue-600"
+                            onClick={() => startEdit(addr)}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -979,7 +1074,6 @@ function OrderHistoryTab({ token }: { token: string | null }) {
   };
 
   const handleReorder = (_order: Order) => {
-    // Navigate to menu with items pre-selected
     toast({
       title: "Reorder Feature",
       description: "This feature will be available soon!",
@@ -1023,36 +1117,34 @@ function OrderHistoryTab({ token }: { token: string | null }) {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <Card key={order.id} className="border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                <div 
-                  className="p-4 cursor-pointer"
+              <div key={order.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                <button 
                   onClick={() => setExpanded(expanded === order.id ? null : order.id)}
+                  className="w-full p-4 flex items-center gap-4 text-left"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
-                      <Package className="w-6 h-6 text-[#F97316]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="font-semibold text-gray-900">{order.orderNumber}</span>
-                        <Badge className={STATUS_COLORS[order.status] || 'bg-gray-100'}>
-                          {STATUS_LABELS[order.status] || order.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {new Date(order.createdAt).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'short', 
-                          day: 'numeric' 
-                        })} · {order.items?.length || 0} items · ${order.total?.toFixed(2)}
-                      </p>
-                    </div>
-                    {expanded === order.id ? 
-                      <ChevronUp className="w-5 h-5 text-gray-400" /> : 
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                    }
+                  <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
+                    <Package className="w-6 h-6 text-[#F97316]" />
                   </div>
-                </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-gray-900">{order.orderNumber}</span>
+                      <Badge className={STATUS_COLORS[order.status] || 'bg-gray-100'}>
+                        {STATUS_LABELS[order.status] || order.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {new Date(order.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })} · {order.items?.length || 0} items · ${order.total?.toFixed(2)}
+                    </p>
+                  </div>
+                  {expanded === order.id ? 
+                    <ChevronUp className="w-5 h-5 text-gray-400" /> : 
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  }
+                </button>
                 
                 {expanded === order.id && (
                   <div className="px-4 pb-4 border-t bg-gray-50/50">
@@ -1094,7 +1186,7 @@ function OrderHistoryTab({ token }: { token: string | null }) {
                     </div>
                   </div>
                 )}
-              </Card>
+              </div>
             ))}
           </div>
         )}
@@ -1180,65 +1272,39 @@ function LoyaltyTab({ token, userPoints }: { token: string | null; userPoints: n
   return (
     <div className="space-y-6">
       {/* Points Card */}
-      <Card className="border-0 shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-[#F97316] via-[#ea6c10] to-[#F97316] p-8 text-white">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center">
-              <Star className="w-10 h-10 fill-current" />
-            </div>
-            <div className="flex-1 text-center sm:text-left">
-              <p className="text-white/80 text-sm font-medium mb-1">Your Loyalty Points</p>
-              <p className="text-5xl font-bold">{points}</p>
-              <p className="text-white/80 mt-1">= ${(points / 100).toFixed(2)} value</p>
-            </div>
-            {points >= 100 && (
-              <Button 
-                onClick={handleRedeem}
-                className="bg-white text-[#F97316] hover:bg-white/90 font-semibold"
-              >
-                Redeem {Math.floor(points / 100) * 100} Points
-              </Button>
-            )}
+      <div className="bg-gradient-to-r from-[#F97316] to-[#ea6c10] rounded-2xl p-8 text-white shadow-xl shadow-orange-500/20">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+          <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center">
+            <Star className="w-10 h-10 fill-current" />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4 mt-8">
-            <div className="bg-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
-              <p className="text-xs text-white/70 mb-1">Earn Rate</p>
-              <p className="text-xl font-bold">1 pt / $1</p>
-              <p className="text-xs text-white/70">On every order</p>
-            </div>
-            <div className="bg-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
-              <p className="text-xs text-white/70 mb-1">Redeem Rate</p>
-              <p className="text-xl font-bold">100 pts = $1</p>
-              <p className="text-xs text-white/70">Min. 100 points</p>
-            </div>
+          <div className="flex-1 text-center sm:text-left">
+            <p className="text-white/80 text-sm font-medium mb-1">Your Loyalty Points</p>
+            <p className="text-5xl font-bold">{points}</p>
+            <p className="text-white/80 mt-1">= ${(points / 100).toFixed(2)} value</p>
+          </div>
+          {points >= 100 && (
+            <Button 
+              onClick={handleRedeem}
+              className="bg-white text-[#F97316] hover:bg-white/90 font-semibold"
+            >
+              Redeem {Math.floor(points / 100) * 100} Points
+            </Button>
+          )}
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4 mt-8">
+          <div className="bg-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
+            <p className="text-xs text-white/70 mb-1">Earn Rate</p>
+            <p className="text-xl font-bold">1 pt / $1</p>
+            <p className="text-xs text-white/70">On every order</p>
+          </div>
+          <div className="bg-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
+            <p className="text-xs text-white/70 mb-1">Redeem Rate</p>
+            <p className="text-xl font-bold">100 pts = $1</p>
+            <p className="text-xs text-white/70">Min. 100 points</p>
           </div>
         </div>
-      </Card>
-
-      {/* Progress to next reward */}
-      <Card className="border-0 shadow-md">
-        <CardHeader>
-          <CardTitle className="text-lg">Progress to Next Reward</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">{points % 100} points</span>
-              <span className="font-medium text-[#F97316]">100 points = $1 off</span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-[#F97316] to-[#ea6c10] rounded-full transition-all duration-500"
-                style={{ width: `${(points % 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-500">
-              {100 - (points % 100)} more points until your next $1 reward
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Transaction History */}
       <Card className="border-0 shadow-md">
@@ -1278,7 +1344,6 @@ function LoyaltyTab({ token, userPoints }: { token: string | null; userPoints: n
                           day: 'numeric', 
                           year: 'numeric' 
                         })}
-                        {entry.orderId && entry.orderId !== 'Redemption' && ` · Order #${entry.orderId.slice(-6)}`}
                       </p>
                     </div>
                   </div>

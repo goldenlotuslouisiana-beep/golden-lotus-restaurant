@@ -176,6 +176,12 @@ export interface SiteContent {
     showGiftCards: boolean;
     showHiring: boolean;
   };
+  socialLinks?: {
+    facebook: string;
+    instagram: string;
+    twitter?: string;
+    youtube?: string;
+  };
 }
 
 export interface StorySection {

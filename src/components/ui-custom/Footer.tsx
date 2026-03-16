@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, MapPin, Phone, Mail, Clock, Heart } from 'lucide-react';
+import { Facebook, Instagram, MapPin, Phone, Mail, Clock, Heart, Twitter, Youtube } from 'lucide-react';
 import { DataStore } from '@/data/store';
 import { useEffect, useState } from 'react';
 import type { SiteContent } from '@/types';
@@ -65,8 +65,18 @@ export default function Footer() {
 
             {/* Social Links */}
             <div className="flex items-center gap-3">
-              <SocialLink href="https://facebook.com" icon={<Facebook className="w-5 h-5" />} label="Facebook" />
-              <SocialLink href="https://instagram.com" icon={<Instagram className="w-5 h-5" />} label="Instagram" />
+              {siteContent.socialLinks?.facebook && (
+                <SocialLink href={siteContent.socialLinks.facebook} icon={<Facebook className="w-5 h-5" />} label="Facebook" />
+              )}
+              {siteContent.socialLinks?.instagram && (
+                <SocialLink href={siteContent.socialLinks.instagram} icon={<Instagram className="w-5 h-5" />} label="Instagram" />
+              )}
+              {siteContent.socialLinks?.twitter && (
+                <SocialLink href={siteContent.socialLinks.twitter} icon={<Twitter className="w-5 h-5" />} label="Twitter" />
+              )}
+              {siteContent.socialLinks?.youtube && (
+                <SocialLink href={siteContent.socialLinks.youtube} icon={<Youtube className="w-5 h-5" />} label="YouTube" />
+              )}
             </div>
           </div>
 
