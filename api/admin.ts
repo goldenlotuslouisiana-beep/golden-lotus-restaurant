@@ -55,8 +55,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'save-faqs': return handleAdminSaveCollection(req, res, 'faqs');
         case 'save-menu-categories': return handleAdminSaveCollection(req, res, 'menu_categories');
         case 'save-site-content': return handleAdminSaveSiteContent(req, res);
-        case 'save-events': return handleAdminCrudItem(req, res, 'events');
-        case 'save-event-packages': return handleAdminCrudItem(req, res, 'event_packages');
+        case 'save-events': return handleAdminSaveCollection(req, res, 'events');
+        case 'save-event-packages': return handleAdminSaveCollection(req, res, 'event_packages');
         case 'save-catering-packages': return handleAdminCrudItem(req, res, 'catering_packages');
         case 'save-catering-inquiries': return handleAdminCrudItem(req, res, 'catering_inquiries');
         default:

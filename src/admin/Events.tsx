@@ -66,7 +66,10 @@ export default function AdminEvents() {
       const res = await fetch('/api/admin?action=save-events', {
         method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
       });
-      if (res.ok) setEvents(await res.json());
+      if (res.ok) {
+        const raw = await res.json();
+        setEvents(Array.isArray(raw) ? raw : []);
+      }
     } catch (err) { console.error('Error saving events:', err); }
   };
 
@@ -75,7 +78,10 @@ export default function AdminEvents() {
       const res = await fetch('/api/admin?action=save-event-packages', {
         method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
       });
-      if (res.ok) setPackages(await res.json());
+      if (res.ok) {
+        const raw = await res.json();
+        setPackages(Array.isArray(raw) ? raw : []);
+      }
     } catch (err) { console.error('Error saving event packages:', err); }
   };
 
