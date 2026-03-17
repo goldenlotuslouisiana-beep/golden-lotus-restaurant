@@ -13,4 +13,4 @@ if (!publishableKey) {
     console.warn('VITE_STRIPE_PUBLISHABLE_KEY not set. Please add it to your environment variables.');
 }
 
-export const stripePromise = loadStripe(publishableKey || '');
+export const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
