@@ -1,128 +1,155 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { SiteContent } from '@/types';
-import { defaultSiteContent } from '@/data/store';
 import SEO, { restaurantSchema, breadcrumbSchema } from '@/components/SEO';
 
-// ─── Local types ────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 
-interface LocalDish {
+interface HeroStat { number: string; suffix: string; label: string; }
+interface HomepageContent {
+  hero: {
+    eyebrow: string;
+    titleLine1: string;
+    titleLine2Italic: string;
+    titleLine3Bold: string;
+    subtitle: string;
+    button1Text: string;
+    button2Text: string;
+    stats: HeroStat[];
+    floatingCard: { label: string; dishName: string; subtitle: string; rating: string; };
+    estYear: string;
+    speedBadgeTitle: string;
+    speedBadgeSubtitle: string;
+  };
+  ticker: string[];
+  featuredSection: { eyebrow: string; titleLine1: string; titleLine2Italic: string; };
+  whyUs: {
+    eyebrow: string;
+    titleLine1: string;
+    titleLine2Italic: string;
+    description: string;
+    features: Array<{ icon: string; title: string; description: string; }>;
+  };
+  testimonials: {
+    eyebrow: string;
+    title: string;
+    titleItalic: string;
+    items: Array<{ name: string; role: string; quote: string; rating: number; featured: boolean; }>;
+  };
+  cta: {
+    eyebrow: string;
+    titleLine1: string;
+    titleItalic: string;
+    titleLine2: string;
+    description: string;
+    button1Text: string;
+    button2Text: string;
+  };
+  footer: { restaurantName: string; description: string; address: string; phone: string; email: string; copyright: string; };
+}
+
+interface FeaturedMenuItem {
   id: string;
   name: string;
   description: string;
   price: number;
-  emoji: string;
-  gradient: string;
-  badge: string;
-  badgeType: 'pop' | 'nw' | 'sp';
+  image?: string;
+  featured?: boolean;
+  featuredOrder?: number;
 }
 
-interface LocalTestimonial {
-  id: string;
-  name: string;
-  initial: string;
-  role: string;
-  text: string;
-  featured: boolean;
-}
+// ─── Default content (always used as fallback) ───────────────────────────────
 
-// ─── Static fallback data ────────────────────────────────────────────────────
+const DEFAULT: HomepageContent = {
+  hero: {
+    eyebrow: 'Alexandria, Louisiana · Est. 2010',
+    titleLine1: 'Taste the art of',
+    titleLine2Italic: 'authentic Indian',
+    titleLine3Bold: 'cuisine.',
+    subtitle: 'Generations-old recipes, the finest spices, and a passion for flavors that transport you straight to the heart of India — one dish at a time.',
+    button1Text: 'Order Online →',
+    button2Text: 'View Our Menu',
+    stats: [
+      { number: '14', suffix: '+', label: 'Years serving' },
+      { number: '80', suffix: '+', label: 'Menu items' },
+      { number: '4.9', suffix: '', label: 'Guest rating' },
+      { number: '3k', suffix: '+', label: 'Happy guests' },
+    ],
+    floatingCard: { label: "Chef's Signature", dishName: 'Butter Chicken', subtitle: 'Most ordered dish', rating: '5.0 · 248 reviews' },
+    estYear: '2010',
+    speedBadgeTitle: 'Ready in 15 min',
+    speedBadgeSubtitle: 'Fast pickup available',
+  },
+  ticker: ['Authentic Indian Cuisine', 'Fresh Ingredients Daily', 'Online Ordering Available', 'Catering Services', 'Family Recipes Since 2010', 'Alexandria Louisiana', 'Pickup in 15 Minutes'],
+  featuredSection: { eyebrow: 'Our Specialties', titleLine1: 'Dishes crafted with', titleLine2Italic: 'love & tradition' },
+  whyUs: {
+    eyebrow: 'Why Golden Lotus',
+    titleLine1: 'A dining experience',
+    titleLine2Italic: 'no other',
+    description: 'From the first bite to the last, we pour our heritage into every dish — sourcing the finest spices, honoring generations-old recipes, and ensuring every visit is extraordinary.',
+    features: [
+      { icon: '🌿', title: 'Fresh Daily', description: 'Ingredients sourced fresh every morning' },
+      { icon: '👨‍🍳', title: 'Master Chefs', description: 'Trained in traditional Indian culinary arts' },
+      { icon: '⚡', title: 'Fast Pickup', description: 'Ready in 15-20 minutes, order anytime' },
+      { icon: '🎪', title: 'Catering', description: 'Events, parties & corporate catering' },
+    ],
+  },
+  testimonials: {
+    eyebrow: 'Guest Reviews',
+    title: 'What our guests',
+    titleItalic: 'say',
+    items: [
+      { name: 'Sarah M.', role: 'Regular · Alexandria', quote: 'The butter chicken is absolutely divine. It tastes exactly like my grandmother used to make in Delhi. Truly authentic!', rating: 5, featured: false },
+      { name: 'James R.', role: 'Food blogger · 5 visits', quote: 'Best Indian food in Louisiana, hands down. The biryani is incredible and the online ordering makes everything so effortless.', rating: 5, featured: true },
+      { name: 'Amanda K.', role: 'Corporate client', quote: 'Hired Golden Lotus for our corporate event — 200 guests and every single person was blown away. Exceptional catering!', rating: 5, featured: false },
+    ],
+  },
+  cta: {
+    eyebrow: 'Ready to order?',
+    titleLine1: 'Experience',
+    titleItalic: 'authentic',
+    titleLine2: 'flavors from the comfort of home',
+    description: 'Order online and pick up your favorite dishes in just 15–20 minutes. Fresh, hot, and made with love every single time.',
+    button1Text: 'Order Online Now →',
+    button2Text: 'View Full Menu',
+  },
+  footer: {
+    restaurantName: 'Golden Lotus',
+    description: 'Experience the art of authentic Indian cuisine at Golden Lotus Grill.',
+    address: '1473 Dorchester Dr, Alexandria, LA 71301',
+    phone: '(318) 445-5688',
+    email: 'hello@goldenlotusgrill.com',
+    copyright: '© 2026 Golden Lotus Indian Cuisine Inc.',
+  },
+};
 
-const DEFAULT_DISHES: LocalDish[] = [
-  {
-    id: '1',
-    name: 'Butter Chicken',
-    description: 'Tender chicken in rich velvety tomato cream sauce with aromatic Indian spices and fresh cream',
-    price: 18.99,
-    emoji: '🍛',
-    gradient: 'linear-gradient(145deg,#3D1C00,#8B4513,#D2691E)',
-    badge: 'Most Popular',
-    badgeType: 'pop',
-  },
-  {
-    id: '2',
-    name: 'Palak Paneer',
-    description: 'Fresh cottage cheese in silky spinach gravy',
-    price: 16.99,
-    emoji: '🥘',
-    gradient: 'linear-gradient(145deg,#1A3A0F,#2D6A18,#4A9B28)',
-    badge: 'New',
-    badgeType: 'nw',
-  },
-  {
-    id: '3',
-    name: 'Chicken Tikka',
-    description: 'Smoky char-grilled marinated chicken',
-    price: 17.99,
-    emoji: '🍢',
-    gradient: 'linear-gradient(145deg,#5C0A0A,#A01818,#D44020)',
-    badge: 'Spicy',
-    badgeType: 'sp',
-  },
-  {
-    id: '4',
-    name: 'Lamb Biryani',
-    description: 'Fragrant basmati layered with tender spiced lamb',
-    price: 21.99,
-    emoji: '🍚',
-    gradient: 'linear-gradient(145deg,#5C3800,#A06818,#D4A040)',
-    badge: 'Popular',
-    badgeType: 'pop',
-  },
+// ─── Visual templates for dish cards (assigned by index) ─────────────────────
+
+const DISH_VISUALS = [
+  { emoji: '🍛', gradient: 'linear-gradient(145deg,#3D1C00,#8B4513,#D2691E)', badge: 'Most Popular', badgeType: 'pop' as const },
+  { emoji: '🥘', gradient: 'linear-gradient(145deg,#1A3A0F,#2D6A18,#4A9B28)', badge: 'New', badgeType: 'nw' as const },
+  { emoji: '🍢', gradient: 'linear-gradient(145deg,#5C0A0A,#A01818,#D44020)', badge: 'Spicy', badgeType: 'sp' as const },
+  { emoji: '🍚', gradient: 'linear-gradient(145deg,#5C3800,#A06818,#D4A040)', badge: 'Popular', badgeType: 'pop' as const },
 ];
 
-const DEFAULT_TESTIMONIALS: LocalTestimonial[] = [
-  {
-    id: '1',
-    name: 'Sarah M.',
-    initial: 'S',
-    role: 'Regular · Alexandria',
-    text: 'The butter chicken is absolutely divine. It tastes exactly like my grandmother used to make in Delhi. Truly authentic!',
-    featured: false,
-  },
-  {
-    id: '2',
-    name: 'James R.',
-    initial: 'J',
-    role: 'Food blogger · 5 visits',
-    text: 'Best Indian food in Louisiana, hands down. The biryani is incredible and the online ordering makes everything so effortless.',
-    featured: true,
-  },
-  {
-    id: '3',
-    name: 'Amanda K.',
-    initial: 'A',
-    role: 'Corporate client',
-    text: 'Hired Golden Lotus for our corporate event — 200 guests and every single person was blown away. Exceptional catering!',
-    featured: false,
-  },
+const STATIC_DISHES: (FeaturedMenuItem & { badgeType: 'pop' | 'nw' | 'sp' })[] = [
+  { id: 's1', name: 'Butter Chicken', description: 'Tender chicken in rich velvety tomato cream sauce with aromatic Indian spices and fresh cream', price: 18.99, badgeType: 'pop' },
+  { id: 's2', name: 'Palak Paneer', description: 'Fresh cottage cheese in silky spinach gravy', price: 16.99, badgeType: 'nw' },
+  { id: 's3', name: 'Chicken Tikka', description: 'Smoky char-grilled marinated chicken', price: 17.99, badgeType: 'sp' },
+  { id: 's4', name: 'Lamb Biryani', description: 'Fragrant basmati layered with tender spiced lamb', price: 21.99, badgeType: 'pop' },
 ];
 
-const TICKER_ITEMS = [
-  'Authentic Indian Cuisine',
-  'Fresh Ingredients Daily',
-  'Online Ordering Available',
-  'Catering Services',
-  'Family Recipes Since 2010',
-  'Alexandria Louisiana',
-  'Pickup in 15 Minutes',
-];
-
-// ─── Badge helpers ───────────────────────────────────────────────────────────
-
-function badgeBg(type: LocalDish['badgeType']): string {
+function badgeBg(type: 'pop' | 'nw' | 'sp'): string {
   if (type === 'nw') return 'rgba(30,92,58,0.85)';
   if (type === 'sp') return 'rgba(120,28,28,0.85)';
   return 'rgba(15,12,8,0.80)';
 }
-
-function badgeDot(type: LocalDish['badgeType']): string {
+function badgeDot(type: 'pop' | 'nw' | 'sp'): string {
   if (type === 'nw') return '#5AC480';
   if (type === 'sp') return '#FF6B6B';
   return '#C9963F';
 }
 
-// ─── Styles injected once ────────────────────────────────────────────────────
+// ─── Scoped CSS ───────────────────────────────────────────────────────────────
 
 const HOME_CSS = `
   .hl-hero { display: grid; grid-template-columns: 52% 48%; min-height: calc(100vh - 64px); }
@@ -170,7 +197,7 @@ const HOME_CSS = `
     .hl-h1 { font-size: clamp(36px,10vw,52px) !important; }
     .hl-hero-acts { flex-direction: column !important; align-items: flex-start !important; }
     .hl-kpis { gap: 12px; }
-    .hl-kpi { padding: 0 16px !important; border-left: none !important; }
+    .hl-kpi { padding: 0 16px !important; }
     .hl-kpi + .hl-kpi { border-left: 1px solid #DDD0BB !important; }
     .hl-sec { padding: 60px 24px !important; }
     .hl-dish-grid { grid-template-columns: 1fr 1fr !important; }
@@ -189,177 +216,108 @@ const HOME_CSS = `
 
 export default function Home() {
   const navigate = useNavigate();
-  const [siteContent, setSiteContent] = useState<SiteContent>(defaultSiteContent);
-  const [dishes, setDishes] = useState<LocalDish[]>(DEFAULT_DISHES);
-  const [testimonials, setTestimonials] = useState<LocalTestimonial[]>(DEFAULT_TESTIMONIALS);
+  const [hc, setHc] = useState<HomepageContent>(DEFAULT);
+  const [featuredItems, setFeaturedItems] = useState<FeaturedMenuItem[]>([]);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [scRes, testRes, menuRes] = await Promise.all([
-          fetch('/api/menu?action=site-content'),
-          fetch('/api/menu?action=testimonials'),
-          fetch('/api/menu?action=items'),
-        ]);
-
-        if (scRes.ok) {
-          const sc = await scRes.json();
-          if (sc) setSiteContent(sc);
-        }
-
-        if (testRes.ok) {
-          const data = await testRes.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setTestimonials(
-              data
-                .filter((t: { published?: boolean }) => t.published !== false)
-                .slice(0, 3)
-                .map((t: { id?: string; _id?: string; name: string; role?: string; text: string }, idx: number) => ({
-                  id: t.id ?? t._id ?? String(idx),
-                  name: t.name,
-                  initial: t.name?.charAt(0) ?? 'G',
-                  role: t.role ?? 'Valued Guest',
-                  text: t.text,
-                  featured: idx === 1,
-                }))
-            );
-          }
-        }
-
-        if (menuRes.ok) {
-          const items = await menuRes.json();
-          if (Array.isArray(items)) {
-            const popular = items
-              .filter((i: { popular?: boolean; active?: boolean }) => i.popular && i.active !== false)
-              .slice(0, 4);
-            if (popular.length >= 2) {
-              setDishes(
-                popular.map((item: { id?: string; _id?: string; name: string; description?: string; price: number }, idx: number) => ({
-                  id: item.id ?? item._id ?? String(idx),
-                  name: item.name,
-                  description: item.description ?? '',
-                  price: item.price,
-                  emoji: DEFAULT_DISHES[idx % DEFAULT_DISHES.length].emoji,
-                  gradient: DEFAULT_DISHES[idx % DEFAULT_DISHES.length].gradient,
-                  badge: DEFAULT_DISHES[idx % DEFAULT_DISHES.length].badge,
-                  badgeType: DEFAULT_DISHES[idx % DEFAULT_DISHES.length].badgeType,
-                }))
-              );
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Home: failed to load data', err);
-      }
-    };
-    load();
+    Promise.all([
+      fetch('/api/admin?action=get-homepage').then(r => r.json()).catch(() => null),
+      fetch('/api/menu?action=featured').then(r => r.json()).catch(() => null),
+    ]).then(([hpRes, featRes]) => {
+      if (hpRes?.success && hpRes.data) setHc(hpRes.data as HomepageContent);
+      if (featRes?.items?.length) setFeaturedItems(featRes.items);
+    });
   }, []);
+
+  // Dishes to display: API featured items (if any), otherwise static fallback
+  const dishes = featuredItems.length > 0
+    ? featuredItems.map((item, idx) => ({ ...item, ...DISH_VISUALS[idx % DISH_VISUALS.length] }))
+    : STATIC_DISHES.map((d, idx) => ({ ...d, ...DISH_VISUALS[idx % DISH_VISUALS.length] }));
 
   return (
     <>
       <SEO
         title="Golden Lotus Indian Restaurant | Authentic Indian Cuisine in Alexandria, LA"
-        description="Golden Lotus offers authentic Indian cuisine, catering services, and unforgettable dining experiences in Alexandria, Louisiana. Located at 1473 Dorchester Dr."
+        description="Golden Lotus offers authentic Indian cuisine, catering services, and unforgettable dining experiences in Alexandria, Louisiana."
         url="https://www.goldenlotusgrill.com"
         schema={[restaurantSchema, breadcrumbSchema([{ name: 'Home', url: 'https://www.goldenlotusgrill.com' }])]}
       />
 
-      {/* Scoped styles for animations & responsive overrides */}
       <style dangerouslySetInnerHTML={{ __html: HOME_CSS }} />
 
       <div style={{ fontFamily: "'Jost', sans-serif", background: '#F9F4EC', color: '#0F0C08', overflowX: 'hidden' }}>
 
         {/* ── HERO ─────────────────────────────────────────────────────── */}
         <section className="hl-hero">
-          {/* Left column */}
           <div className="hl-hero-l">
-            {/* Eyebrow pill */}
+            {/* Eyebrow */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: '#F2E4C8', border: '1px solid #DDD0BB', borderRadius: 40, fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#B8853A', marginBottom: 32, width: 'fit-content' }}>
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#B8853A', display: 'inline-block', flexShrink: 0 }} />
-              Alexandria, Louisiana · Est. 2010
+              {hc.hero.eyebrow}
             </div>
 
             <h1 className="hl-h1">
-              Taste the art of
-              <span style={{ fontStyle: 'italic', color: '#B8853A', fontWeight: 500, display: 'block' }}>authentic Indian</span>
-              <span style={{ fontWeight: 700, display: 'block' }}>cuisine.</span>
+              {hc.hero.titleLine1}
+              <span style={{ fontStyle: 'italic', color: '#B8853A', fontWeight: 500, display: 'block' }}>{hc.hero.titleLine2Italic}</span>
+              <span style={{ fontWeight: 700, display: 'block' }}>{hc.hero.titleLine3Bold}</span>
             </h1>
 
             <p style={{ fontSize: 16, lineHeight: 1.75, color: '#6B5540', fontWeight: 300, maxWidth: 420, margin: '28px 0 48px' }}>
-              Generations-old recipes, the finest spices, and a passion for flavors that transport you straight to the heart of India — one dish at a time.
+              {hc.hero.subtitle}
             </p>
 
             <div className="hl-hero-acts" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 64 }}>
-              <button
-                onClick={() => navigate('/menu?order=true')}
-                className="hl-btn-fill"
-                style={{ padding: '15px 32px', background: '#1E1810', border: 'none', borderRadius: 10, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.25s', letterSpacing: '0.03em', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-              >
-                Order Online <span>→</span>
+              <button onClick={() => navigate('/menu?order=true')} className="hl-btn-fill" style={{ padding: '15px 32px', background: '#1E1810', border: 'none', borderRadius: 10, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.25s', letterSpacing: '0.03em', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                {hc.hero.button1Text}
               </button>
-              <button
-                onClick={() => navigate('/menu')}
-                className="hl-btn-ghost"
-                style={{ padding: '14px 28px', background: 'transparent', border: '1.5px solid #DDD0BB', borderRadius: 10, color: '#6B5540', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.25s', letterSpacing: '0.02em' }}
-              >
-                View Our Menu
+              <button onClick={() => navigate('/menu')} className="hl-btn-ghost" style={{ padding: '14px 28px', background: 'transparent', border: '1.5px solid #DDD0BB', borderRadius: 10, color: '#6B5540', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.25s', letterSpacing: '0.02em' }}>
+                {hc.hero.button2Text}
               </button>
             </div>
 
-            {/* KPIs */}
             <div className="hl-kpis">
-              {[
-                { num: '14', sup: '+', label: 'Years serving' },
-                { num: '80', sup: '+', label: 'Menu items' },
-                { num: '4.9', sup: '', label: 'Guest rating' },
-                { num: '3k', sup: '+', label: 'Happy guests' },
-              ].map((k, i) => (
+              {hc.hero.stats.map((stat, i) => (
                 <div key={i} className="hl-kpi" style={{ paddingLeft: i === 0 ? 0 : undefined }}>
                   <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 700, color: '#0F0C08', lineHeight: 1, letterSpacing: '-0.02em' }}>
-                    {k.num}{k.sup && <sup style={{ fontSize: 16, fontWeight: 500 }}>{k.sup}</sup>}
+                    {stat.number}{stat.suffix && <sup style={{ fontSize: 16, fontWeight: 500 }}>{stat.suffix}</sup>}
                   </div>
-                  <div style={{ fontSize: 11, color: '#9E8870', letterSpacing: '0.04em', marginTop: 4 }}>{k.label}</div>
+                  <div style={{ fontSize: 11, color: '#9E8870', letterSpacing: '0.04em', marginTop: 4 }}>{stat.label}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right column – dark panel */}
+          {/* Right dark panel */}
           <div className="hl-hero-r" style={{ position: 'relative', background: '#1E1810', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 60% 35%,rgba(184,133,58,0.20) 0%,transparent 60%),radial-gradient(ellipse at 20% 75%,rgba(184,133,58,0.08) 0%,transparent 50%),linear-gradient(160deg,#0F0C08 0%,#2A1C0A 100%)' }} />
-
-            {/* Floating food ring */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="hl-food-ring" style={{ width: 320, height: 320, borderRadius: '50%', border: '1px solid rgba(184,133,58,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: 140, filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.6))' }}>🍛</span>
               </div>
             </div>
-
-            {/* Chef's Signature card */}
+            {/* Chef's signature card */}
             <div style={{ position: 'absolute', bottom: 44, left: -20, zIndex: 10, background: 'white', borderRadius: 14, padding: '14px 18px', boxShadow: '0 16px 48px rgba(0,0,0,0.18)', minWidth: 190 }}>
-              <div style={{ fontSize: '9.5px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9E8870', marginBottom: 4, fontWeight: 500 }}>Chef's Signature</div>
-              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: 600, color: '#0F0C08' }}>Butter Chicken</div>
-              <div style={{ fontSize: 11, color: '#9E8870', marginTop: 1 }}>Most ordered dish</div>
+              <div style={{ fontSize: '9.5px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9E8870', marginBottom: 4, fontWeight: 500 }}>{hc.hero.floatingCard.label}</div>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: 600, color: '#0F0C08' }}>{hc.hero.floatingCard.dishName}</div>
+              <div style={{ fontSize: 11, color: '#9E8870', marginTop: 1 }}>{hc.hero.floatingCard.subtitle}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 8 }}>
                 {[...Array(5)].map((_, i) => (
                   <span key={i} style={{ width: 10, height: 10, background: '#C9963F', flexShrink: 0, display: 'inline-block', clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)' }} />
                 ))}
-                <span style={{ fontSize: 11, color: '#9E8870', fontWeight: 500, marginLeft: 2 }}>5.0 · 248 reviews</span>
+                <span style={{ fontSize: 11, color: '#9E8870', fontWeight: 500, marginLeft: 2 }}>{hc.hero.floatingCard.rating}</span>
               </div>
             </div>
-
             {/* Est. badge */}
             <div style={{ position: 'absolute', top: 36, right: 28, zIndex: 10, background: '#B8853A', borderRadius: '50%', width: 80, height: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 28px rgba(184,133,58,0.5)' }}>
               <span style={{ fontSize: '7.5px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>Est.</span>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 700, color: 'white', lineHeight: 1 }}>2010</span>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 700, color: 'white', lineHeight: 1 }}>{hc.hero.estYear}</span>
             </div>
-
-            {/* Ready in 15 min */}
+            {/* Speed badge */}
             <div style={{ position: 'absolute', top: '42%', right: 22, zIndex: 10, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '11px 15px', display: 'flex', alignItems: 'center', gap: 9 }}>
               <div style={{ width: 34, height: 34, background: '#F2E4C8', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>⚡</div>
               <div>
-                <div style={{ fontSize: 12, fontWeight: 500, color: 'white' }}>Ready in 15 min</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Fast pickup available</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'white' }}>{hc.hero.speedBadgeTitle}</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{hc.hero.speedBadgeSubtitle}</div>
               </div>
             </div>
           </div>
@@ -368,7 +326,7 @@ export default function Home() {
         {/* ── TICKER ───────────────────────────────────────────────────── */}
         <div style={{ background: '#1E1810', padding: '14px 0', overflow: 'hidden' }}>
           <div className="hl-ticker-track">
-            {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+            {[...hc.ticker, ...hc.ticker].map((item, i) => (
               <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 14, padding: '0 28px', fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.38)', fontWeight: 400 }}>
                 <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#B8853A', display: 'inline-block', flexShrink: 0 }} />
                 {item}
@@ -378,107 +336,73 @@ export default function Home() {
         </div>
 
         {/* ── FEATURED DISHES ──────────────────────────────────────────── */}
-        {siteContent.settings?.showFeaturedDishes !== false && (
-          <div className="hl-sec">
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 52, flexWrap: 'wrap', gap: 16 }}>
-              <div>
-                <div className="hl-eyebrow">Our Specialties</div>
-                <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(32px,3.5vw,48px)', fontWeight: 400, color: '#0F0C08', lineHeight: 1.15, letterSpacing: '-0.02em', margin: 0 }}>
-                  Dishes crafted with<br />
-                  <em style={{ fontStyle: 'italic', color: '#B8853A' }}>love &amp; tradition</em>
-                </h2>
-              </div>
-              <button
-                onClick={() => navigate('/menu')}
-                className="hl-see-all"
-                style={{ fontSize: '12.5px', fontWeight: 600, color: '#B8853A', cursor: 'pointer', background: 'none', border: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'gap 0.2s', letterSpacing: '0.04em', fontFamily: "'Jost', sans-serif", textTransform: 'uppercase' }}
-              >
-                View full menu →
-              </button>
+        <div className="hl-sec">
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 52, flexWrap: 'wrap', gap: 16 }}>
+            <div>
+              <div className="hl-eyebrow">{hc.featuredSection.eyebrow}</div>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(32px,3.5vw,48px)', fontWeight: 400, color: '#0F0C08', lineHeight: 1.15, letterSpacing: '-0.02em', margin: 0 }}>
+                {hc.featuredSection.titleLine1}<br />
+                <em style={{ fontStyle: 'italic', color: '#B8853A' }}>{hc.featuredSection.titleLine2Italic}</em>
+              </h2>
             </div>
+            <button onClick={() => navigate('/menu')} className="hl-see-all" style={{ fontSize: '12.5px', fontWeight: 600, color: '#B8853A', cursor: 'pointer', background: 'none', border: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'gap 0.2s', letterSpacing: '0.04em', fontFamily: "'Jost', sans-serif", textTransform: 'uppercase' }}>
+              View full menu →
+            </button>
+          </div>
 
-            <div className="hl-dish-grid">
-              {dishes.map((dish, idx) => (
-                <div
-                  key={dish.id}
-                  className="hl-dc"
-                  data-first={idx === 0 ? 'true' : 'false'}
-                  onClick={() => navigate('/menu?order=true')}
-                  style={{ gridRow: idx === 0 ? 'span 2' : undefined }}
-                >
-                  <div style={{ overflow: 'hidden', position: 'relative' }}>
-                    <div
-                      className="hl-dish-img hl-dish-ph"
-                      style={{ width: '100%', height: idx === 0 ? 255 : 185, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 72, background: dish.gradient }}
-                    >
+          <div className="hl-dish-grid">
+            {dishes.map((dish, idx) => (
+              <div key={dish.id} className="hl-dc" data-first={idx === 0 ? 'true' : 'false'} onClick={() => navigate('/menu?order=true')} style={{ gridRow: idx === 0 ? 'span 2' : undefined }}>
+                <div style={{ overflow: 'hidden', position: 'relative' }}>
+                  {dish.image ? (
+                    <img src={dish.image} alt={dish.name} className="hl-dish-img hl-dish-ph" style={{ width: '100%', height: idx === 0 ? 255 : 185, objectFit: 'cover', display: 'block' }} loading="lazy" />
+                  ) : (
+                    <div className="hl-dish-img hl-dish-ph" style={{ width: '100%', height: idx === 0 ? 255 : 185, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 72, background: dish.gradient }}>
                       {dish.emoji}
                     </div>
-                    <span style={{ position: 'absolute', top: 10, left: 10, padding: '4px 10px', borderRadius: 20, fontSize: '9.5px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 5, background: badgeBg(dish.badgeType), color: 'rgba(255,255,255,0.9)' }}>
-                      <span style={{ width: 4, height: 4, borderRadius: '50%', background: badgeDot(dish.badgeType), display: 'inline-block', flexShrink: 0 }} />
-                      {dish.badge}
-                    </span>
-                  </div>
-                  <div style={{ padding: '15px 18px 18px' }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 19, fontWeight: 600, color: '#0F0C08', marginBottom: 5, letterSpacing: '-0.01em', lineHeight: 1.2 }}>{dish.name}</div>
-                    <div style={{ fontSize: '12.5px', color: '#9E8870', lineHeight: 1.55, marginBottom: 14, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{dish.description}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 700, color: '#1E1810' }}>${dish.price.toFixed(2)}</span>
-                      <button
-                        className="hl-add"
-                        onClick={(e) => { e.stopPropagation(); navigate('/menu?order=true'); }}
-                        aria-label={`Add ${dish.name} to order`}
-                        style={{ width: 36, height: 36, borderRadius: '50%', background: '#1E1810', border: 'none', color: 'white', fontSize: 19, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', lineHeight: 1, flexShrink: 0 }}
-                      >
-                        +
-                      </button>
-                    </div>
+                  )}
+                  <span style={{ position: 'absolute', top: 10, left: 10, padding: '4px 10px', borderRadius: 20, fontSize: '9.5px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 5, background: badgeBg(dish.badgeType), color: 'rgba(255,255,255,0.9)' }}>
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: badgeDot(dish.badgeType), display: 'inline-block', flexShrink: 0 }} />
+                    {dish.badge}
+                  </span>
+                </div>
+                <div style={{ padding: '15px 18px 18px' }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 19, fontWeight: 600, color: '#0F0C08', marginBottom: 5, letterSpacing: '-0.01em', lineHeight: 1.2 }}>{dish.name}</div>
+                  <div style={{ fontSize: '12.5px', color: '#9E8870', lineHeight: 1.55, marginBottom: 14, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{dish.description}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 700, color: '#1E1810' }}>${dish.price.toFixed(2)}</span>
+                    <button className="hl-add" onClick={(e) => { e.stopPropagation(); navigate('/menu?order=true'); }} aria-label={`Add ${dish.name} to order`} style={{ width: 36, height: 36, borderRadius: '50%', background: '#1E1810', border: 'none', color: 'white', fontSize: 19, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', lineHeight: 1, flexShrink: 0 }}>+</button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
-        {/* ── WHY GOLDEN LOTUS (dark) ───────────────────────────────────── */}
+        {/* ── WHY GOLDEN LOTUS ─────────────────────────────────────────── */}
         <div className="hl-dark-block" style={{ background: '#1E1810', padding: '88px 64px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle,rgba(184,133,58,0.09) 0%,transparent 70%)', pointerEvents: 'none' }} />
           <div className="hl-dark-grid" style={{ maxWidth: 1260, margin: '0 auto' }}>
             <div>
               <div style={{ fontSize: '10.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9963F', fontWeight: 600, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ display: 'block', width: 20, height: 1.5, background: '#C9963F', flexShrink: 0 }} />
-                Why Golden Lotus
+                {hc.whyUs.eyebrow}
               </div>
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(32px,3.5vw,48px)', fontWeight: 400, color: 'white', lineHeight: 1.14, letterSpacing: '-0.02em', marginBottom: 18 }}>
-                A dining experience<br />
-                like <em style={{ fontStyle: 'italic', color: '#C9963F' }}>no other</em>
+                {hc.whyUs.titleLine1}<br />
+                like <em style={{ fontStyle: 'italic', color: '#C9963F' }}>{hc.whyUs.titleLine2Italic}</em>
               </h2>
-              <p style={{ fontSize: 15, lineHeight: 1.78, color: 'rgba(255,255,255,0.42)', fontWeight: 300, marginBottom: 36, maxWidth: 440 }}>
-                From the first bite to the last, we pour our heritage into every dish — sourcing the finest spices, honoring generations-old recipes, and ensuring every visit is extraordinary.
-              </p>
-              <button
-                onClick={() => navigate('/menu?order=true')}
-                className="hl-btn-fill"
-                style={{ padding: '15px 32px', background: '#0F0C08', border: '1px solid rgba(184,133,58,0.3)', borderRadius: 10, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.25s', letterSpacing: '0.03em', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-              >
+              <p style={{ fontSize: 15, lineHeight: 1.78, color: 'rgba(255,255,255,0.42)', fontWeight: 300, marginBottom: 36, maxWidth: 440 }}>{hc.whyUs.description}</p>
+              <button onClick={() => navigate('/menu?order=true')} className="hl-btn-fill" style={{ padding: '15px 32px', background: '#0F0C08', border: '1px solid rgba(184,133,58,0.3)', borderRadius: 10, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.25s', letterSpacing: '0.03em', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 Order Now →
               </button>
             </div>
-
             <div className="hl-feats">
-              {[
-                { icon: '🌿', title: 'Fresh Daily', desc: 'Ingredients sourced fresh every morning' },
-                { icon: '👨‍🍳', title: 'Master Chefs', desc: 'Trained in traditional Indian culinary arts' },
-                { icon: '⚡', title: 'Fast Pickup', desc: 'Ready in 15-20 minutes, order anytime' },
-                { icon: '🎪', title: 'Catering', desc: 'Events, parties & corporate catering' },
-              ].map((f, i) => (
-                <div
-                  key={i}
-                  className="hl-feat"
-                  style={{ padding: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, transition: 'all 0.25s', cursor: 'default' }}
-                >
+              {hc.whyUs.features.map((f, i) => (
+                <div key={i} className="hl-feat" style={{ padding: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, transition: 'all 0.25s', cursor: 'default' }}>
                   <span style={{ fontSize: 22, marginBottom: 10, display: 'block' }}>{f.icon}</span>
                   <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'white', marginBottom: 4 }}>{f.title}</div>
-                  <div style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>{f.desc}</div>
+                  <div style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>{f.description}</div>
                 </div>
               ))}
             </div>
@@ -486,83 +410,62 @@ export default function Home() {
         </div>
 
         {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
-        {siteContent.settings?.showTestimonials !== false && (
-          <div className="hl-sec">
-            <div style={{ marginBottom: 52 }}>
-              <div className="hl-eyebrow">Guest Reviews</div>
-              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(32px,3.5vw,48px)', fontWeight: 400, color: '#0F0C08', lineHeight: 1.15, letterSpacing: '-0.02em', margin: 0 }}>
-                What our guests <em style={{ fontStyle: 'italic', color: '#B8853A' }}>say</em>
-              </h2>
-            </div>
-            <div className="hl-reviews">
-              {testimonials.map((t) => (
-                <div
-                  key={t.id}
-                  className="hl-tc"
-                  style={{ background: t.featured ? '#1E1810' : 'white', borderRadius: 18, padding: 28, border: t.featured ? 'none' : '1px solid #EDE3D2', transition: 'all 0.28s' }}
-                >
-                  <div style={{ display: 'flex', gap: 3, marginBottom: 18 }}>
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} style={{ width: 10, height: 10, background: t.featured ? 'white' : '#C9963F', flexShrink: 0, display: 'inline-block', clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)' }} />
-                    ))}
+        <div className="hl-sec">
+          <div style={{ marginBottom: 52 }}>
+            <div className="hl-eyebrow">{hc.testimonials.eyebrow}</div>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(32px,3.5vw,48px)', fontWeight: 400, color: '#0F0C08', lineHeight: 1.15, letterSpacing: '-0.02em', margin: 0 }}>
+              {hc.testimonials.title} <em style={{ fontStyle: 'italic', color: '#B8853A' }}>{hc.testimonials.titleItalic}</em>
+            </h2>
+          </div>
+          <div className="hl-reviews">
+            {hc.testimonials.items.map((t, i) => (
+              <div key={i} className="hl-tc" style={{ background: t.featured ? '#1E1810' : 'white', borderRadius: 18, padding: 28, border: t.featured ? 'none' : '1px solid #EDE3D2', transition: 'all 0.28s' }}>
+                <div style={{ display: 'flex', gap: 3, marginBottom: 18 }}>
+                  {[...Array(Math.min(5, Math.max(1, t.rating || 5)))].map((_, j) => (
+                    <span key={j} style={{ width: 10, height: 10, background: t.featured ? 'white' : '#C9963F', flexShrink: 0, display: 'inline-block', clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)' }} />
+                  ))}
+                </div>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontStyle: 'italic', fontWeight: 400, color: t.featured ? 'rgba(255,255,255,0.80)' : '#3D2A0F', lineHeight: 1.68, marginBottom: 22 }}>&ldquo;{t.quote}&rdquo;</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: t.featured ? 'rgba(255,255,255,0.10)' : '#F2E4C8', border: t.featured ? '2px solid rgba(255,255,255,0.20)' : '2px solid #B8853A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: t.featured ? 'white' : '#B8853A', flexShrink: 0 }}>
+                    {t.name.charAt(0)}
                   </div>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontStyle: 'italic', fontWeight: 400, color: t.featured ? 'rgba(255,255,255,0.80)' : '#3D2A0F', lineHeight: 1.68, marginBottom: 22 }}>
-                    &ldquo;{t.text}&rdquo;
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: t.featured ? 'rgba(255,255,255,0.10)' : '#F2E4C8', border: t.featured ? '2px solid rgba(255,255,255,0.20)' : '2px solid #B8853A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: t.featured ? 'white' : '#B8853A', flexShrink: 0 }}>
-                      {t.initial}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '13.5px', fontWeight: 600, color: t.featured ? 'white' : '#0F0C08' }}>{t.name}</div>
-                      <div style={{ fontSize: '11.5px', color: t.featured ? 'rgba(255,255,255,0.38)' : '#9E8870', marginTop: 2 }}>{t.role}</div>
-                    </div>
+                  <div>
+                    <div style={{ fontSize: '13.5px', fontWeight: 600, color: t.featured ? 'white' : '#0F0C08' }}>{t.name}</div>
+                    <div style={{ fontSize: '11.5px', color: t.featured ? 'rgba(255,255,255,0.38)' : '#9E8870', marginTop: 2 }}>{t.role}</div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* ── CTA ──────────────────────────────────────────────────────── */}
-        {siteContent.orderCTA?.enabled !== false && siteContent.settings?.showOrderCTA !== false && (
-          <div className="hl-cta-wrap" style={{ maxWidth: 1260, margin: '0 auto', padding: '0 64px 88px' }}>
-            <div className="hl-cta-block" style={{ background: '#F0E8D8', borderRadius: 24, padding: '72px 80px', border: '1px solid #DDD0BB', position: 'relative', overflow: 'hidden' }}>
-              <span className="hl-cta-emoji" style={{ position: 'absolute', right: 240, top: '50%', transform: 'translateY(-50%) rotate(-15deg)', fontSize: 200, opacity: 0.06, pointerEvents: 'none', userSelect: 'none' }}>🪷</span>
-              <div className="hl-cta-inner">
-                <div>
-                  <div style={{ fontSize: '10.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#B8853A', fontWeight: 600, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ display: 'block', width: 20, height: 1.5, background: '#B8853A', flexShrink: 0 }} />
-                    Ready to order?
-                  </div>
-                  <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(28px,3vw,44px)', fontWeight: 400, color: '#0F0C08', lineHeight: 1.18, letterSpacing: '-0.02em', marginBottom: 14 }}>
-                    Experience <em style={{ fontStyle: 'italic', color: '#B8853A' }}>authentic</em> flavors<br />
-                    from the comfort of home
-                  </h2>
-                  <p style={{ fontSize: 15, color: '#6B5540', lineHeight: 1.7, fontWeight: 300, maxWidth: 460, margin: 0 }}>
-                    Order online and pick up your favorite dishes in just 15–20 minutes. Fresh, hot, and made with love every single time.
-                  </p>
+        <div className="hl-cta-wrap" style={{ maxWidth: 1260, margin: '0 auto', padding: '0 64px 88px' }}>
+          <div className="hl-cta-block" style={{ background: '#F0E8D8', borderRadius: 24, padding: '72px 80px', border: '1px solid #DDD0BB', position: 'relative', overflow: 'hidden' }}>
+            <span className="hl-cta-emoji" style={{ position: 'absolute', right: 240, top: '50%', transform: 'translateY(-50%) rotate(-15deg)', fontSize: 200, opacity: 0.06, pointerEvents: 'none', userSelect: 'none' }}>🪷</span>
+            <div className="hl-cta-inner">
+              <div>
+                <div style={{ fontSize: '10.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#B8853A', fontWeight: 600, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ display: 'block', width: 20, height: 1.5, background: '#B8853A', flexShrink: 0 }} />
+                  {hc.cta.eyebrow}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 200 }}>
-                  <button
-                    onClick={() => navigate('/menu?order=true')}
-                    className="hl-cta-b1"
-                    style={{ padding: '15px 28px', background: '#1E1810', border: 'none', borderRadius: 10, color: 'white', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.22s', textAlign: 'center', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}
-                  >
-                    Order Online Now →
-                  </button>
-                  <button
-                    onClick={() => navigate('/menu')}
-                    className="hl-cta-b2"
-                    style={{ padding: '14px 28px', background: 'transparent', border: '1.5px solid #DDD0BB', borderRadius: 10, color: '#6B5540', fontSize: '13.5px', fontWeight: 500, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.22s', textAlign: 'center', whiteSpace: 'nowrap' }}
-                  >
-                    View Full Menu
-                  </button>
-                </div>
+                <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(28px,3vw,44px)', fontWeight: 400, color: '#0F0C08', lineHeight: 1.18, letterSpacing: '-0.02em', marginBottom: 14 }}>
+                  {hc.cta.titleLine1} <em style={{ fontStyle: 'italic', color: '#B8853A' }}>{hc.cta.titleItalic}</em> {hc.cta.titleLine2}
+                </h2>
+                <p style={{ fontSize: 15, color: '#6B5540', lineHeight: 1.7, fontWeight: 300, maxWidth: 460, margin: 0 }}>{hc.cta.description}</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 200 }}>
+                <button onClick={() => navigate('/menu?order=true')} className="hl-cta-b1" style={{ padding: '15px 28px', background: '#1E1810', border: 'none', borderRadius: 10, color: 'white', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.22s', textAlign: 'center', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+                  {hc.cta.button1Text}
+                </button>
+                <button onClick={() => navigate('/menu')} className="hl-cta-b2" style={{ padding: '14px 28px', background: 'transparent', border: '1.5px solid #DDD0BB', borderRadius: 10, color: '#6B5540', fontSize: '13.5px', fontWeight: 500, cursor: 'pointer', fontFamily: "'Jost', sans-serif", transition: 'all 0.22s', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                  {hc.cta.button2Text}
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
 
       </div>
     </>

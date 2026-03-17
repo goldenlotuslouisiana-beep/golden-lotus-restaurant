@@ -38,6 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'save-features', 'save-faqs', 'save-menu-categories',
         'save-site-content', 'save-events', 'save-event-packages',
         'save-catering-packages', 'save-catering-inquiries',
+        'save-homepage',
     ]);
 
     if (protectedActions.has(action)) {
@@ -84,6 +85,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'save-event-packages': return handleAdminSaveCollection(req, res, 'event_packages');
         case 'save-catering-packages': return handleAdminCrudItem(req, res, 'catering_packages');
         case 'save-catering-inquiries': return handleAdminCrudItem(req, res, 'catering_inquiries');
+        case 'get-homepage': return handleGetHomepage(req, res);
+        case 'save-homepage': return handleSaveHomepage(req, res);
         default:
             // Fallback for old route payloads like method based deletions or updates
             if (action === 'user-detail' && req.method === 'DELETE') return handleUserDetail(req, res);
@@ -507,6 +510,109 @@ async function handleSendEmail(req: VercelRequest, res: VercelResponse) {
         });
         return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: 'Failed' }); }
+}
+
+// ─── Homepage Content ─────────────────────────────────────────────────────
+
+const DEFAULT_HOMEPAGE_CONTENT = {
+    section: 'homepage',
+    hero: {
+        eyebrow: 'Alexandria, Louisiana · Est. 2010',
+        titleLine1: 'Taste the art of',
+        titleLine2Italic: 'authentic Indian',
+        titleLine3Bold: 'cuisine.',
+        subtitle: 'Generations-old recipes, the finest spices, and a passion for flavors that transport you straight to the heart of India — one dish at a time.',
+        button1Text: 'Order Online →',
+        button2Text: 'View Our Menu',
+        stats: [
+            { number: '14', suffix: '+', label: 'Years serving' },
+            { number: '80', suffix: '+', label: 'Menu items' },
+            { number: '4.9', suffix: '', label: 'Guest rating' },
+            { number: '3k', suffix: '+', label: 'Happy guests' },
+        ],
+        floatingCard: { label: "Chef's Signature", dishName: 'Butter Chicken', subtitle: 'Most ordered dish', rating: '5.0 · 248 reviews' },
+        estYear: '2010',
+        speedBadgeTitle: 'Ready in 15 min',
+        speedBadgeSubtitle: 'Fast pickup available',
+    },
+    ticker: ['Authentic Indian Cuisine', 'Fresh Ingredients Daily', 'Online Ordering Available', 'Catering Services', 'Family Recipes Since 2010', 'Alexandria Louisiana', 'Pickup in 15 Minutes'],
+    featuredSection: { eyebrow: 'Our Specialties', titleLine1: 'Dishes crafted with', titleLine2Italic: 'love & tradition' },
+    whyUs: {
+        eyebrow: 'Why Golden Lotus',
+        titleLine1: 'A dining experience',
+        titleLine2Italic: 'no other',
+        description: 'From the first bite to the last, we pour our heritage into every dish — sourcing the finest spices, honoring generations-old recipes, and ensuring every visit is extraordinary.',
+        features: [
+            { icon: '🌿', title: 'Fresh Daily', description: 'Ingredients sourced fresh every morning' },
+            { icon: '👨‍🍳', title: 'Master Chefs', description: 'Trained in traditional Indian culinary arts' },
+            { icon: '⚡', title: 'Fast Pickup', description: 'Ready in 15-20 minutes, order anytime' },
+            { icon: '🎪', title: 'Catering', description: 'Events, parties & corporate catering' },
+        ],
+    },
+    testimonials: {
+        eyebrow: 'Guest Reviews',
+        title: 'What our guests',
+        titleItalic: 'say',
+        items: [
+            { name: 'Sarah M.', role: 'Regular · Alexandria', quote: 'The butter chicken is absolutely divine. It tastes exactly like my grandmother used to make in Delhi. Truly authentic!', rating: 5, featured: false },
+            { name: 'James R.', role: 'Food blogger · 5 visits', quote: 'Best Indian food in Louisiana, hands down. The biryani is incredible and the online ordering makes everything so effortless.', rating: 5, featured: true },
+            { name: 'Amanda K.', role: 'Corporate client', quote: 'Hired Golden Lotus for our corporate event — 200 guests and every single person was blown away. Exceptional catering!', rating: 5, featured: false },
+        ],
+    },
+    cta: {
+        eyebrow: 'Ready to order?',
+        titleLine1: 'Experience',
+        titleItalic: 'authentic',
+        titleLine2: 'flavors from the comfort of home',
+        description: 'Order online and pick up your favorite dishes in just 15–20 minutes. Fresh, hot, and made with love every single time.',
+        button1Text: 'Order Online Now →',
+        button2Text: 'View Full Menu',
+    },
+    footer: {
+        restaurantName: 'Golden Lotus',
+        description: 'Experience the art of authentic Indian cuisine at Golden Lotus Grill. Located in Alexandria, Louisiana, serving the finest Indian food since 2010.',
+        address: '1473 Dorchester Dr, Alexandria, LA 71301',
+        phone: '(318) 445-5688',
+        email: 'hello@goldenlotusgrill.com',
+        copyright: '© 2026 Golden Lotus Indian Cuisine Inc.',
+    },
+};
+
+async function handleGetHomepage(_req: VercelRequest, res: VercelResponse) {
+    try {
+        const client = await clientPromise;
+        const doc = await client.db(DB).collection('homepage_content').findOne({ section: 'homepage' });
+        if (!doc) {
+            await client.db(DB).collection('homepage_content').insertOne({ ...DEFAULT_HOMEPAGE_CONTENT });
+            return res.status(200).json({ success: true, data: DEFAULT_HOMEPAGE_CONTENT });
+        }
+        const { _id, ...rest } = doc;
+        return res.status(200).json({ success: true, data: rest });
+    } catch {
+        return res.status(200).json({ success: true, data: DEFAULT_HOMEPAGE_CONTENT });
+    }
+}
+
+async function handleSaveHomepage(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const content = req.body;
+    if (!content || typeof content !== 'object') return res.status(400).json({ error: 'Body must be an object' });
+    try {
+        const { _id, id, ...rest } = content as any;
+        const client = await clientPromise;
+        await client.db(DB).collection('homepage_content').updateOne(
+            { section: 'homepage' },
+            { $set: { ...rest, section: 'homepage', updatedAt: new Date().toISOString() } },
+            { upsert: true }
+        );
+        const updated = await client.db(DB).collection('homepage_content').findOne({ section: 'homepage' });
+        if (!updated) return res.status(500).json({ error: 'Failed to save' });
+        const { _id: docId, ...updatedRest } = updated;
+        return res.status(200).json({ success: true, data: updatedRest });
+    } catch (e) {
+        console.error('Error saving homepage:', e);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
 }
 
 // In-memory storage for riders and zones (will use MongoDB in production)

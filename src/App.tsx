@@ -44,6 +44,7 @@ const AdminPromos = lazy(() => import('@/admin/Promos'));
 const AdminReviews = lazy(() => import('@/admin/Reviews'));
 const AdminEvents = lazy(() => import('@/admin/Events'));
 const AdminCatering = lazy(() => import('@/admin/Catering'));
+const AdminHomePage = lazy(() => import('@/admin/HomePage'));
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -130,6 +131,7 @@ function App() {
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="events" element={<AdminEvents />} />
               <Route path="catering" element={<AdminCatering />} />
+              <Route path="home" element={<AdminHomePage />} />
             </Route>
           </Routes>
         </Suspense>

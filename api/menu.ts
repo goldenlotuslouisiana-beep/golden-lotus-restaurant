@@ -40,6 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'faqs': return handlePublicGet(req, res, 'faqs');
         case 'menu-categories': return handlePublicGet(req, res, 'menu_categories');
         // Admin CRUD actions preserved for existing functionality
+        case 'featured': return handleGetFeatured(req, res);
         case 'add': return handleAddItem(req, res);
         case 'edit': return handleEditItem(req, res);
         case 'delete': return handleDeleteItem(req, res);
@@ -122,6 +123,24 @@ async function handleSearch(req: VercelRequest, res: VercelResponse) {
         }));
         return res.status(200).json(formattedItems);
     } catch (error) {
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function handleGetFeatured(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const client = await clientPromise;
+        const db = client.db(DB_NAME);
+        const items = await db.collection('menu')
+            .find({ featured: true, active: { $ne: false } })
+            .sort({ featuredOrder: 1 })
+            .limit(4)
+            .toArray();
+        return res.status(200).json({
+            items: items.map(item => ({ ...item, id: item._id.toString(), _id: undefined })),
+        });
+    } catch {
         return res.status(500).json({ error: 'Internal server error' });
     }
 }

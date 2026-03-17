@@ -22,10 +22,12 @@ import {
   MessageSquare,
   Calendar,
   ChefHat,
+  Globe,
 } from 'lucide-react';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Home Page', href: '/admin/home', icon: Globe },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
