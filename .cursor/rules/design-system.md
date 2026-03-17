@@ -17,40 +17,6 @@ Cuisine: Asian Fusion
 Target Customer: 25-45 year olds, middle to upper income
 Feeling to evoke: "I can't wait to eat here"
 
-## COLOR PALETTE (NEVER DEVIATE FROM THESE)
-PRIMARY:
-  Brand Orange:    #F97316  ← buttons, CTAs, accents
-  Orange Dark:     #EA6C0A  ← hover states
-  Orange Light:    #FED7AA  ← backgrounds, badges
-  Orange Pale:     #FFF7ED  ← section backgrounds
-
-NEUTRALS:
-  Gray 950:        #030712  ← primary headings
-  Gray 900:        #111827  ← body text
-  Gray 700:        #374151  ← secondary text
-  Gray 500:        #6B7280  ← placeholder, subtext
-  Gray 400:        #9CA3AF  ← disabled states
-  Gray 200:        #E5E7EB  ← borders, dividers
-  Gray 100:        #F3F4F6  ← card backgrounds
-  Gray 50:         #F9FAFB  ← page backgrounds
-  White:           #FFFFFF  ← cards, modals
-
-SEMANTIC:
-  Success:         #16A34A  ← delivered, confirmed
-  Success Light:   #DCFCE7  ← success backgrounds
-  Error:           #DC2626  ← errors, cancelled
-  Error Light:     #FEE2E2  ← error backgrounds
-  Warning:         #D97706  ← pending, processing
-  Warning Light:   #FEF3C7  ← warning backgrounds
-  Info:            #2563EB  ← info states
-  Info Light:      #DBEAFE  ← info backgrounds
-
-NEVER USE:
-  ❌ Pure black #000000
-  ❌ Random colors not in this palette
-  ❌ More than 3 colors in one component
-  ❌ Neon or overly bright colors
-
 ## TYPOGRAPHY
 Headings font: Playfair Display (elegant, premium)
 Body/UI font:  Inter (clean, readable, modern)

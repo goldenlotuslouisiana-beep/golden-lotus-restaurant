@@ -137,7 +137,7 @@ export default function Menu() {
               onClick={() => navigate('/')}
               className="flex items-center gap-2"
             >
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#F97316] to-[#EA6C0A] flex items-center justify-center shadow-md shadow-orange-200/60">
+              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#D9772A] to-[#B25E1F] flex items-center justify-center shadow-md" style={{ boxShadow: '0 18px 40px rgba(15,10,20,0.18)' }}>
                 <span className="text-white text-lg font-bold">GL</span>
               </div>
               <div className="hidden sm:flex flex-col leading-tight">
@@ -159,7 +159,7 @@ export default function Menu() {
                   placeholder="Search dishes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] focus:bg-white transition-all text-[16px]"
+                  className="w-full pl-12 pr-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-[#D9772A] focus:bg-white transition-all text-[16px]"
                 />
               </div>
             </div>
@@ -170,7 +170,8 @@ export default function Menu() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setIsCartOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F97316] text-white text-sm font-semibold shadow-md shadow-orange-200/70 hover:bg-[#EA6C0A] transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-semibold transition-all"
+                style={{ backgroundColor: '#D9772A', boxShadow: '0 18px 40px rgba(15,10,20,0.18)' }}
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Cart ({cartCount})</span>
@@ -198,7 +199,7 @@ export default function Menu() {
                   placeholder="Search dishes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] focus:bg-white transition-all text-[16px]"
+                  className="w-full pl-12 pr-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-[#D9772A] focus:bg-white transition-all text-[16px]"
                 />
               </div>
             </div>
@@ -239,7 +240,7 @@ export default function Menu() {
               className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
             >
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-[#111827]">
-                <Tag className="w-5 h-5 text-[#F97316]" />
+                <Tag className="w-5 h-5 text-[#D9772A]" />
                 Special Offers
               </h3>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -251,10 +252,10 @@ export default function Menu() {
                   <motion.div
                     key={coupon.id}
                     whileHover={{ scale: 1.02 }}
-                    className="bg-[#FFF7ED] border border-[#FED7AA] rounded-2xl p-4"
+                    className="bg-[#F5E0CF] border border-[#E0D5E4] rounded-2xl p-4"
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="px-3 py-1 bg-[#F97316] text-white text-xs font-bold rounded-full">
+                      <span className="px-3 py-1 bg-[#D9772A] text-white text-xs font-bold rounded-full">
                         {coupon.code}
                       </span>
                     </div>
@@ -270,7 +271,7 @@ export default function Menu() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <p className="text-xs font-semibold tracking-[0.1em] uppercase text-[#F97316]">Menu</p>
+                <p className="text-xs font-semibold tracking-[0.1em] uppercase text-[#D9772A]">Menu</p>
               <h2 className="text-2xl sm:text-3xl font-bold text-[#111827]">{activeCategory}</h2>
             </div>
             <span className="text-sm text-gray-500">{filteredItems.length} items</span>

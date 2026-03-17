@@ -18,7 +18,7 @@ const PROMOS: Record<string, { type: string; value: number; minOrder: number; la
 const isStripeConfigured = !!(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 function StepIndicator({ step }: { step: number }) {
-    const steps = ['Details', 'Payment', 'Review'];
+                const steps = ['Details', 'Payment', 'Review'];
     return (
         <div className="flex items-center justify-center mb-8">
             {steps.map((label, i) => {
@@ -31,16 +31,16 @@ function StepIndicator({ step }: { step: number }) {
                             <div
                                 className={[
                                     "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200",
-                                    completed ? "bg-[#16A34A] text-white" : active ? "bg-[#F97316] text-white" : "bg-[#E5E7EB] text-[#6B7280]"
+                                    completed ? "bg-[#2F9555] text-white" : active ? "bg-[#D9772A] text-white" : "bg-[#E0D5E4] text-[#8C8297]"
                                 ].join(" ")}
-                                style={active ? { boxShadow: '0 4px 14px rgba(249,115,22,0.4)' } : undefined}
+                                style={active ? { boxShadow: '0 18px 40px rgba(15,10,20,0.18)' } : undefined}
                             >
                                 {completed ? <Check className="w-5 h-5" /> : n}
                             </div>
-                            <span className={`text-xs mt-2 font-medium ${n <= step ? 'text-[#F97316]' : 'text-[#9CA3AF]'}`}>{label}</span>
+                            <span className={`text-xs mt-2 font-medium ${n <= step ? 'text-[#D9772A]' : 'text-[#9CA3AF]'}`}>{label}</span>
                         </div>
                         {i < 2 && (
-                            <div className={`w-12 sm:w-20 h-0.5 mx-3 transition-all ${completed ? 'bg-[#F97316]' : 'bg-[#E5E7EB]'}`} />
+                            <div className={`w-12 sm:w-20 h-0.5 mx-3 transition-all ${completed ? 'bg-[#D9772A]' : 'bg-[#E0D5E4]'}`} />
                         )}
                     </div>
                 );
@@ -68,12 +68,12 @@ function CardForm({ name, setName, error, setError }: { name: string; setName: (
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Cardholder Name</label>
                 <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name on card" className="w-full pl-11 pr-4 py-3 border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/15 focus:border-[#F97316] bg-white transition-all text-[16px]" />
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name on card" className="w-full pl-11 pr-4 py-3 border border-[#E0D5E4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-[#D9772A] bg-white transition-all text-[16px]" />
                 </div>
             </div>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Card Details</label>
-                <div className="border border-[#E5E7EB] rounded-xl p-4 bg-white focus-within:ring-2 focus-within:ring-[#F97316]/15 focus-within:border-[#F97316] transition-all">
+                <div className="border border-[#E0D5E4] rounded-xl p-4 bg-white focus-within:ring-2 focus-within:ring-[#D9772A]/45 focus-within:border-[#D9772A] transition-all">
                     <CardElement options={{ style: { base: { fontSize: '16px', color: '#1a1a1a', fontFamily: 'system-ui, sans-serif', '::placeholder': { color: '#9ca3af' } }, invalid: { color: '#ef4444' } } }} onChange={(e) => setError(e.error?.message || '')} />
                 </div>
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
@@ -216,10 +216,10 @@ function CheckoutInner() {
 
     if (cart.length === 0) return null;
 
-    const inputClsBase = "w-full pl-11 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/15 focus:border-[#F97316] bg-white transition-all text-[16px]";
-    const inputNoClsBase = "w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/15 focus:border-[#F97316] bg-white transition-all text-[16px]";
-    const inputErrorCls = "border-[#DC2626] focus:ring-[#DC2626]/15 focus:border-[#DC2626]";
-    const inputOkCls = "border-[#E5E7EB]";
+    const inputClsBase = "w-full pl-11 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 bg-white transition-all text-[16px]";
+    const inputNoClsBase = "w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 bg-white transition-all text-[16px]";
+    const inputErrorCls = "border-[#C53A3A] focus:ring-[#C53A3A]/25 focus:border-[#C53A3A]";
+    const inputOkCls = "border-[#E0D5E4] focus:ring-[#D9772A]/45 focus:border-[#D9772A]";
 
     return (
         <>
@@ -229,13 +229,13 @@ function CheckoutInner() {
                 url="https://www.goldenlotusgrill.com/checkout"
                 noIndex={true}
             />
-        <div className="min-h-screen bg-[#F9FAFB] pt-28 pb-16 px-4">
+        <div className="min-h-screen bg-[#FBF7F1] pt-28 pb-16 px-4">
             <div className="max-w-[1024px] mx-auto">
-                <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/menu')} className="flex items-center gap-2 text-[#374151] hover:text-[#F97316] mb-6 transition-colors">
+                <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/menu')} className="flex items-center gap-2 text-[#4B4655] hover:text-[#D9772A] mb-6 transition-colors">
                     <ArrowLeft className="w-5 h-5" />{step > 1 ? 'Back' : 'Back to Menu'}
                 </button>
                 <div className="mb-6">
-                    <p className="text-xs font-semibold tracking-[0.1em] uppercase text-[#F97316]">Checkout</p>
+                    <p className="text-xs font-semibold tracking-[0.1em] uppercase text-[#D9772A]">Checkout</p>
                     <h1 className="text-3xl sm:text-4xl font-bold text-[#111827]">Review & place your order</h1>
                     <p className="text-[#6B7280] mt-1">Pickup only • Alexandria, LA</p>
                 </div>
@@ -269,7 +269,7 @@ function CheckoutInner() {
                                 {isSummaryOpenMobile ? <ChevronUp className="w-5 h-5 text-[#6B7280]" /> : <ChevronDown className="w-5 h-5 text-[#6B7280]" />}
                             </button>
                             {isSummaryOpenMobile && (
-                                <div className="mt-4 pt-4 border-t border-[#F3F4F6] space-y-3">
+                                <div className="mt-4 pt-4 border-t border-[#E0D5E4] space-y-3">
                                     {cart.map((item) => (
                                         <div key={item.id} className="flex items-center gap-3">
                                             {item.image ? (

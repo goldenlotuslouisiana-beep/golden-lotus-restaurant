@@ -254,36 +254,6 @@ Always use this pattern:
 
 ---
 
-## DESIGN RULES
-
-### Golden Lotus Design System
-Primary color: #F97316 (orange)
-Background: #FFFFFF (white)
-Text: #111827 (gray-900)
-Subtext: #6B7280 (gray-500)
-Border: #E5E7EB (gray-200)
-Error: #DC2626 (red-500)
-Success: #16A34A (green-500)
-Warning: #F59E0B (amber-500)
-
-### Component Design Standards
-- Buttons: rounded-xl (12px), min height 44px (touch friendly)
-- Inputs: rounded-lg, border, focus:ring-orange-500
-- Cards: rounded-2xl, shadow-sm, border border-gray-100
-- Modals: rounded-2xl, shadow-xl, backdrop blur
-- Always 8px grid spacing (multiples of 2/4/8)
-- Mobile first: design for 375px then scale up
-
-### Accessibility Rules
-- ALWAYS add aria-label to icon buttons
-- ALWAYS add alt text to images
-- ALWAYS use semantic HTML (button not div)
-- ALWAYS ensure 4.5:1 color contrast ratio
-- ALWAYS support keyboard navigation
-- ALWAYS add focus visible styles
-
----
-
 ## SCALABILITY RULES
 
 ### Code Organization

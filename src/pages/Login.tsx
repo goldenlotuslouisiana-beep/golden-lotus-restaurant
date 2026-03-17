@@ -138,12 +138,12 @@ export default function Login() {
         url="https://www.goldenlotusgrill.com/login"
         noIndex={true}
       />
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-[#FBF7F1] flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
         {/* Branding */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#F97316] to-[#ea6c10] rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-orange-200">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#D9772A] to-[#B25E1F] rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg" style={{ boxShadow: '0 18px 40px rgba(15,10,20,0.18)' }}>
               <span className="text-white font-bold text-2xl">GL</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 font-['Playfair_Display']">Golden Lotus</h1>
@@ -183,10 +183,10 @@ export default function Login() {
                       validateField('email', email);
                     }}
                     placeholder="your@email.com"
-                    className={`w-full pl-11 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 bg-gray-50 focus:bg-white transition-all text-[16px] ${
+                    className={`w-full pl-11 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 bg-white transition-all text-[16px] ${
                       touched.email && fieldErrors.email
-                        ? 'border-[#DC2626] focus:ring-[#DC2626]/15 focus:border-[#DC2626]'
-                        : 'border-gray-200 focus:ring-[#F97316]/15 focus:border-[#F97316]'
+                        ? 'border-[#C53A3A] focus:ring-[#C53A3A]/25 focus:border-[#C53A3A]'
+                        : 'border-[#E0D5E4] focus:ring-[#D9772A]/45 focus:border-[#D9772A]'
                     }`}
                   />
                 </div>
@@ -211,10 +211,10 @@ export default function Login() {
                       validateField('password', password);
                     }}
                     placeholder="••••••••"
-                    className={`w-full pl-11 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 bg-gray-50 focus:bg-white transition-all text-[16px] ${
+                    className={`w-full pl-11 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 bg-white transition-all text-[16px] ${
                       touched.password && fieldErrors.password
-                        ? 'border-[#DC2626] focus:ring-[#DC2626]/15 focus:border-[#DC2626]'
-                        : 'border-gray-200 focus:ring-[#F97316]/15 focus:border-[#F97316]'
+                        ? 'border-[#C53A3A] focus:ring-[#C53A3A]/25 focus:border-[#C53A3A]'
+                        : 'border-[#E0D5E4] focus:ring-[#D9772A]/45 focus:border-[#D9772A]'
                     }`}
                   />
                   <button
@@ -233,12 +233,12 @@ export default function Login() {
 
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]" />
+                  <input type="checkbox" className="w-4 h-4 rounded border-[#E0D5E4] text-[#D9772A] focus:ring-[#D9772A]" />
                   <span className="text-gray-600">Remember me</span>
                 </label>
                 <button
                   type="button"
-                  className="text-[#F97316] hover:text-[#ea6c10] font-medium transition-colors"
+                  className="text-[#D9772A] hover:text-[#B25E1F] font-medium transition-colors"
                   onClick={() => {
                     setMode('forgot');
                     setError('');
@@ -252,7 +252,8 @@ export default function Login() {
 
               <button
                 type="submit" disabled={isLoading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
+                className="w-full py-3.5 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
+                style={{ backgroundColor: '#D9772A', boxShadow: '0 18px 40px rgba(15,10,20,0.18)' }}
               >
                 {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Signing in...</> : <>Sign In <ArrowRight className="w-5 h-5" /></>}
               </button>
@@ -277,7 +278,7 @@ export default function Login() {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+                    className="w-full pl-11 pr-4 py-3 border border-[#E0D5E4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-transparent bg-white transition-all"
                   />
                 </div>
               </div>
@@ -285,7 +286,8 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={forgotLoading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
+                className="w-full py-3.5 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
+                style={{ backgroundColor: '#D9772A', boxShadow: '0 18px 40px rgba(15,10,20,0.18)' }}
               >
                 {forgotLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending...</> : <>Send reset link <ArrowRight className="w-5 h-5" /></>}
               </button>
@@ -316,7 +318,7 @@ export default function Login() {
               <div className="relative">
                 {googleLoading && (
                   <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-xl">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#F97316]" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[#D9772A]" />
                   </div>
                 )}
                 <GoogleLogin
@@ -336,13 +338,13 @@ export default function Login() {
           {mode === 'login' && (
             <p className="text-center mt-6 text-gray-500 text-sm">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-[#F97316] hover:text-[#ea6c10] font-semibold transition-colors">Create one</Link>
+              <Link to="/signup" className="text-[#D9772A] hover:text-[#B25E1F] font-semibold transition-colors">Create one</Link>
             </p>
           )}
         </div>
 
         <div className="text-center mt-6">
-          <Link to="/admin/login" className="text-xs text-gray-400 hover:text-[#F97316] transition-colors">Admin Login</Link>
+          <Link to="/admin/login" className="text-xs text-gray-400 hover:text-[#D9772A] transition-colors">Admin Login</Link>
         </div>
       </div>
     </div>

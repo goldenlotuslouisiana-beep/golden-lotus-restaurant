@@ -107,12 +107,12 @@ export default function Signup() {
                 url="https://www.goldenlotusgrill.com/signup"
                 noIndex={true}
             />
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex items-center justify-center py-12 px-4">
+        <div className="min-h-screen bg-[#FBF7F1] flex items-center justify-center py-12 px-4">
             <div className="max-w-md w-full">
                 {/* Branding */}
                 <div className="text-center mb-8">
                     <Link to="/" className="inline-block">
-                        <div className="w-16 h-16 bg-gradient-to-br from-[#F97316] to-[#ea6c10] rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-orange-200">
+                        <div className="w-16 h-16 bg-gradient-to-br from-[#D9772A] to-[#B25E1F] rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg" style={{ boxShadow: '0 18px 40px rgba(15,10,20,0.18)' }}>
                             <span className="text-white font-bold text-2xl">GL</span>
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900 font-['Playfair_Display']">Golden Lotus</h1>
@@ -134,7 +134,7 @@ export default function Signup() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
                             <div className="relative">
                                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input name="name" value={form.name} onChange={handleChange} placeholder="John Doe" className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all" />
+                                <input name="name" value={form.name} onChange={handleChange} placeholder="John Doe" className="w-full pl-11 pr-4 py-3 border border-[#E0D5E4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-transparent bg-white transition-all" />
                             </div>
                         </div>
 
@@ -142,7 +142,7 @@ export default function Signup() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
                             <div className="relative">
                                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="your@email.com" className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all" />
+                                <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="your@email.com" className="w-full pl-11 pr-4 py-3 border border-[#E0D5E4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-transparent bg-white transition-all" />
                             </div>
                         </div>
 
@@ -150,7 +150,7 @@ export default function Signup() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
                             <div className="relative">
                                 <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input name="phone" value={form.phone} onChange={handleChange} placeholder="(555) 123-4567" className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all" />
+                                <input name="phone" value={form.phone} onChange={handleChange} placeholder="(555) 123-4567" className="w-full pl-11 pr-4 py-3 border border-[#E0D5E4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-transparent bg-white transition-all" />
                             </div>
                         </div>
 
@@ -158,7 +158,7 @@ export default function Signup() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Password *</label>
                             <div className="relative">
                                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input name="password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={handleChange} placeholder="Min 8 characters" className="w-full pl-11 pr-12 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all" />
+                                <input name="password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={handleChange} placeholder="Min 8 characters" className="w-full pl-11 pr-12 py-3 border border-[#E0D5E4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-transparent bg-white transition-all" />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
@@ -170,7 +170,7 @@ export default function Signup() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password *</label>
                             <div className="relative">
                                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input name="confirmPassword" type={showPassword ? 'text' : 'password'} value={form.confirmPassword} onChange={handleChange} placeholder="Re-enter password" className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all" />
+                                <input name="confirmPassword" type={showPassword ? 'text' : 'password'} value={form.confirmPassword} onChange={handleChange} placeholder="Re-enter password" className="w-full pl-11 pr-4 py-3 border border-[#E0D5E4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-transparent bg-white transition-all" />
                             </div>
                             {form.confirmPassword && form.password !== form.confirmPassword && (
                                 <p className="text-red-500 text-xs mt-1">Passwords do not match</p>
@@ -178,15 +178,17 @@ export default function Signup() {
                         </div>
 
                         <label className="flex items-start gap-3 cursor-pointer">
-                            <input type="checkbox" checked={agreedTerms} onChange={() => setAgreedTerms(!agreedTerms)} className="w-4 h-4 mt-0.5 rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]" />
+                            <input type="checkbox" checked={agreedTerms} onChange={() => setAgreedTerms(!agreedTerms)} className="w-4 h-4 mt-0.5 rounded border-[#E0D5E4] text-[#D9772A] focus:ring-[#D9772A]" />
                             <span className="text-sm text-gray-600">
-                                I agree to the <Link to="/terms" className="text-[#F97316] hover:underline">Terms of Service</Link> and <Link to="/privacy" className="text-[#F97316] hover:underline">Privacy Policy</Link>
+                                I agree to the <Link to="/terms" className="text-[#D9772A] hover:underline">Terms of Service</Link> and <Link to="/privacy" className="text-[#D9772A] hover:underline">Privacy Policy</Link>
                             </span>
                         </label>
 
                         <button
-                            type="submit" disabled={isLoading}
-                            className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-3.5 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            style={{ backgroundColor: '#D9772A', boxShadow: '0 18px 40px rgba(15,10,20,0.18)' }}
                         >
                             {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Creating account...</> : <>Create Account <ArrowRight className="w-5 h-5" /></>}
                         </button>
@@ -202,7 +204,7 @@ export default function Signup() {
                     <div className="relative">
                         {googleLoading && (
                             <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-xl">
-                                <Loader2 className="w-6 h-6 animate-spin text-[#F97316]" />
+                                <Loader2 className="w-6 h-6 animate-spin text-[#D9772A]" />
                             </div>
                         )}
                         <GoogleLogin
@@ -219,7 +221,7 @@ export default function Signup() {
 
                     <p className="text-center mt-6 text-gray-500 text-sm">
                         Already have an account?{' '}
-                        <Link to="/login" className="text-[#F97316] hover:text-[#ea6c10] font-semibold transition-colors">Sign in</Link>
+                        <Link to="/login" className="text-[#D9772A] hover:text-[#B25E1F] font-semibold transition-colors">Sign in</Link>
                     </p>
                 </div>
             </div>
