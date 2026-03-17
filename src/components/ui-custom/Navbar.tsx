@@ -104,12 +104,12 @@ export default function Navbar() {
               </motion.div>
               <div className="hidden sm:block">
                 <span className={`text-xl font-bold font-serif transition-colors duration-300 ${
-                  isScrolled ? 'text-lotus-dark' : 'text-white'
+                  isScrolled ? 'text-lotus-dark' : 'text-[#0F0C08]'
                 } group-hover:text-lotus-gold`}>
                   Golden Lotus
                 </span>
                 <span className={`block text-[10px] tracking-[0.2em] uppercase transition-colors duration-300 ${
-                  isScrolled ? 'text-lotus-gold' : 'text-white/80'
+                  isScrolled ? 'text-lotus-gold' : 'text-[#B8853A]'
                 }`}>
                   Indian Restaurant
                 </span>
@@ -136,7 +136,7 @@ export default function Navbar() {
                   className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${
                     isScrolled 
                       ? 'text-lotus-dark hover:text-lotus-gold hover:bg-lotus-gold/5' 
-                      : 'text-white/90 hover:text-white hover:bg-white/10'
+                      : 'text-[#6B5540] hover:text-[#0F0C08] hover:bg-lotus-gold/5'
                   }`}
                 >
                   More
@@ -196,7 +196,7 @@ export default function Navbar() {
                         {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                       </div>
                     )}
-                    <ChevronDown className={`w-4 h-4 transition-colors duration-300 ${isScrolled ? 'text-gray-600' : 'text-white'}`} />
+                    <ChevronDown className={`w-4 h-4 transition-colors duration-300 ${isScrolled ? 'text-gray-600' : 'text-[#6B5540]'}`} />
                   </button>
 
                   <AnimatePresence>
@@ -238,7 +238,7 @@ export default function Navbar() {
                   className={`hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${
                     isScrolled 
                       ? 'text-lotus-dark hover:text-lotus-gold hover:bg-lotus-gold/5' 
-                      : 'text-white hover:bg-white/10'
+                      : 'text-[#6B5540] hover:text-[#0F0C08] hover:bg-lotus-gold/5'
                   }`}
                 >
                   <User className="w-4 h-4" />
@@ -264,7 +264,7 @@ export default function Navbar() {
                 className={`lg:hidden p-2 rounded-full transition-all duration-300 ${
                   isScrolled 
                     ? 'text-lotus-dark hover:bg-gray-100' 
-                    : 'text-white hover:bg-white/10'
+                    : 'text-[#0F0C08] hover:bg-black/5'
                 }`}
                 aria-label="Toggle menu"
               >
@@ -435,14 +435,14 @@ function NavLink({
   return (
     <Link
       to={to}
-      className={`relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 group ${
+      className={`relative px-4 py-2 text-sm rounded-full transition-all duration-300 group ${
         isActive
           ? isScrolled 
-            ? 'text-lotus-gold bg-lotus-gold/5' 
-            : 'text-white bg-white/10'
+            ? 'text-lotus-gold font-medium bg-lotus-gold/5' 
+            : 'text-[#0F0C08] font-medium bg-black/5'
           : isScrolled 
-            ? 'text-gray-700 hover:text-lotus-gold hover:bg-lotus-gold/5' 
-            : 'text-white/90 hover:text-white hover:bg-white/10'
+            ? 'text-gray-700 font-medium hover:text-lotus-gold hover:bg-lotus-gold/5' 
+            : 'text-[#6B5540] font-medium hover:text-[#0F0C08] hover:bg-black/5'
       }`}
     >
       {children}
