@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { ArrowLeft, ArrowRight, Phone, Mail, User, CreditCard, DollarSign, ShoppingBag, Lock, Check, Loader2, Tag, Clock} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Phone, Mail, User, CreditCard, DollarSign, ShoppingBag, Lock, Check, Loader2, Tag, Clock, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { stripePromise } from '@/lib/stripe';
 import { useAuth } from '@/context/AuthContext';
 import SEO from '@/components/SEO';
@@ -18,20 +18,33 @@ const PROMOS: Record<string, { type: string; value: number; minOrder: number; la
 const isStripeConfigured = !!(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 function StepIndicator({ step }: { step: number }) {
-    const steps = ['Delivery', 'Payment', 'Review'];
+    const steps = ['Details', 'Payment', 'Review'];
     return (
         <div className="flex items-center justify-center mb-8">
-            {steps.map((label, i) => (
-                <div key={label} className="flex items-center">
-                    <div className="flex flex-col items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${i + 1 < step ? 'bg-green-500 text-white' : i + 1 === step ? 'bg-[#F97316] text-white shadow-lg shadow-orange-200' : 'bg-gray-200 text-gray-500'}`}>
-                            {i + 1 < step ? <Check className="w-5 h-5" /> : i + 1}
+            {steps.map((label, i) => {
+                const n = i + 1;
+                const completed = n < step;
+                const active = n === step;
+                return (
+                    <div key={label} className="flex items-center">
+                        <div className="flex flex-col items-center">
+                            <div
+                                className={[
+                                    "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200",
+                                    completed ? "bg-[#16A34A] text-white" : active ? "bg-[#F97316] text-white" : "bg-[#E5E7EB] text-[#6B7280]"
+                                ].join(" ")}
+                                style={active ? { boxShadow: '0 4px 14px rgba(249,115,22,0.4)' } : undefined}
+                            >
+                                {completed ? <Check className="w-5 h-5" /> : n}
+                            </div>
+                            <span className={`text-xs mt-2 font-medium ${n <= step ? 'text-[#F97316]' : 'text-[#9CA3AF]'}`}>{label}</span>
                         </div>
-                        <span className={`text-xs mt-1 font-medium ${i + 1 <= step ? 'text-[#F97316]' : 'text-gray-400'}`}>{label}</span>
+                        {i < 2 && (
+                            <div className={`w-12 sm:w-20 h-0.5 mx-3 transition-all ${completed ? 'bg-[#F97316]' : 'bg-[#E5E7EB]'}`} />
+                        )}
                     </div>
-                    {i < 2 && <div className={`w-12 sm:w-20 h-0.5 mx-2 transition-all ${i + 1 < step ? 'bg-green-500' : 'bg-gray-200'}`} />}
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 }
@@ -55,12 +68,12 @@ function CardForm({ name, setName, error, setError }: { name: string; setName: (
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Cardholder Name</label>
                 <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name on card" className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all" />
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name on card" className="w-full pl-11 pr-4 py-3 border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/15 focus:border-[#F97316] bg-white transition-all text-[16px]" />
                 </div>
             </div>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Card Details</label>
-                <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 focus-within:ring-2 focus-within:ring-[#F97316] focus-within:bg-white transition-all">
+                <div className="border border-[#E5E7EB] rounded-xl p-4 bg-white focus-within:ring-2 focus-within:ring-[#F97316]/15 focus-within:border-[#F97316] transition-all">
                     <CardElement options={{ style: { base: { fontSize: '16px', color: '#1a1a1a', fontFamily: 'system-ui, sans-serif', '::placeholder': { color: '#9ca3af' } }, invalid: { color: '#ef4444' } } }} onChange={(e) => setError(e.error?.message || '')} />
                 </div>
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
@@ -90,6 +103,8 @@ function CheckoutInner() {
     const [promoError, setPromoError] = useState('');
     const [scheduleType, setScheduleType] = useState<'asap' | 'schedule'>('asap');
     const [scheduleTime, setScheduleTime] = useState('');
+    const [isSummaryOpenMobile, setIsSummaryOpenMobile] = useState(false);
+    const [touched, setTouched] = useState<Record<string, boolean>>({});
 
     const [cust, setCust] = useState({
         name: user?.name || '', email: user?.email || '', phone: user?.phone || '',
@@ -115,7 +130,27 @@ function CheckoutInner() {
         setAppliedPromo({ code, ...promo });
     };
 
-    const isStep1Valid = cust.name && cust.email && cust.phone;
+    const fieldErrors = useMemo(() => {
+        const errors: Record<string, string> = {};
+        const name = cust.name.trim();
+        const email = cust.email.trim();
+        const phone = cust.phone.trim();
+
+        if (!name) errors.name = 'Name is required';
+        else if (name.length < 2) errors.name = 'Name must be at least 2 characters';
+
+        if (!email) errors.email = 'Email is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Email is invalid';
+
+        if (!phone) errors.phone = 'Phone is required';
+        else if (!/^[\d\s\-\(\)\+]{10,}$/.test(phone)) errors.phone = 'Phone is invalid';
+
+        if (scheduleType === 'schedule' && !scheduleTime) errors.scheduleTime = 'Please choose a pickup time';
+
+        return errors;
+    }, [cust.email, cust.name, cust.phone, scheduleTime, scheduleType]);
+
+    const isStep1Valid = Object.keys(fieldErrors).length === 0;
 
     const placeOrder = async () => {
         setIsProcessing(true);
@@ -181,8 +216,10 @@ function CheckoutInner() {
 
     if (cart.length === 0) return null;
 
-    const inputCls = "w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all";
-    const inputNoCls = "w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all";
+    const inputClsBase = "w-full pl-11 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/15 focus:border-[#F97316] bg-white transition-all text-[16px]";
+    const inputNoClsBase = "w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/15 focus:border-[#F97316] bg-white transition-all text-[16px]";
+    const inputErrorCls = "border-[#DC2626] focus:ring-[#DC2626]/15 focus:border-[#DC2626]";
+    const inputOkCls = "border-[#E5E7EB]";
 
     return (
         <>
@@ -192,62 +229,167 @@ function CheckoutInner() {
                 url="https://www.goldenlotusgrill.com/checkout"
                 noIndex={true}
             />
-        <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
-            <div className="max-w-5xl mx-auto">
-                <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/menu')} className="flex items-center gap-2 text-gray-600 hover:text-[#F97316] mb-6 transition-colors">
+        <div className="min-h-screen bg-[#F9FAFB] pt-28 pb-16 px-4">
+            <div className="max-w-[1024px] mx-auto">
+                <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/menu')} className="flex items-center gap-2 text-[#374151] hover:text-[#F97316] mb-6 transition-colors">
                     <ArrowLeft className="w-5 h-5" />{step > 1 ? 'Back' : 'Back to Menu'}
                 </button>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
+                <div className="mb-6">
+                    <p className="text-xs font-semibold tracking-[0.1em] uppercase text-[#F97316]">Checkout</p>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-[#111827]">Review & place your order</h1>
+                    <p className="text-[#6B7280] mt-1">Pickup only • Alexandria, LA</p>
+                </div>
                 
                 {/* Stripe Configuration Warning */}
                 {!isStripeConfigured && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                        <p className="text-sm text-yellow-800">
-                            <strong>⚠️ Stripe Not Configured:</strong> To enable card payments, add your Stripe test publishable key to the environment variables as <code className="bg-yellow-100 px-1 rounded">VITE_STRIPE_PUBLISHABLE_KEY</code>.
-                            Cash on Delivery is still available.
+                    <div className="bg-[#FEF3C7] border border-[#F59E0B]/30 rounded-2xl p-4 mb-6">
+                        <p className="text-sm text-[#92400E]">
+                            <strong>Stripe not configured:</strong> Card payments are disabled. Cash on delivery is still available.
                         </p>
                     </div>
                 )}
                 
                 <StepIndicator step={step} />
 
-                <div className="grid lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-6">
+                <div className="grid lg:grid-cols-5 gap-8">
+                    {/* MAIN */}
+                    <div className="lg:col-span-3 space-y-6">
+                        {/* Mobile Summary Toggle */}
+                        <div className="lg:hidden bg-white rounded-2xl border border-[#F3F4F6] shadow-sm p-4">
+                            <button
+                                type="button"
+                                className="w-full flex items-center justify-between"
+                                onClick={() => setIsSummaryOpenMobile(v => !v)}
+                                aria-label="Toggle order summary"
+                            >
+                                <div className="text-left">
+                                    <p className="text-sm font-semibold text-[#111827]">Order summary</p>
+                                    <p className="text-sm text-[#6B7280]">{cart.length} items • <span className="font-semibold text-[#F97316]">${total.toFixed(2)}</span></p>
+                                </div>
+                                {isSummaryOpenMobile ? <ChevronUp className="w-5 h-5 text-[#6B7280]" /> : <ChevronDown className="w-5 h-5 text-[#6B7280]" />}
+                            </button>
+                            {isSummaryOpenMobile && (
+                                <div className="mt-4 pt-4 border-t border-[#F3F4F6] space-y-3">
+                                    {cart.map((item) => (
+                                        <div key={item.id} className="flex items-center gap-3">
+                                            {item.image ? (
+                                                <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover" loading="lazy" width={48} height={48} />
+                                            ) : (
+                                                <div className="w-12 h-12 rounded-xl bg-[#FFF7ED] flex items-center justify-center">
+                                                    <ShoppingBag className="w-5 h-5 text-[#F97316]" />
+                                                </div>
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-[#111827] line-clamp-1">{item.name}</p>
+                                                <p className="text-xs text-[#6B7280]">x{item.quantity}</p>
+                                            </div>
+                                            <p className="text-sm font-semibold text-[#111827]">${(item.price * item.quantity).toFixed(2)}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                         {/* STEP 1 */}
                         <div className={step === 1 ? 'block' : 'hidden'}>
-                            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-gray-100">
-                                <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
-                                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                                        📍 Pickup Location
+                            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-[#F3F4F6]">
+                                <div className="bg-[#FFF7ED] rounded-2xl p-4 border border-[#FED7AA]">
+                                    <h3 className="font-semibold text-[#111827] flex items-center gap-2">
+                                        <MapPin className="w-5 h-5 text-[#F97316]" />
+                                        Pickup Location
                                     </h3>
-                                    <p className="text-gray-600 mt-1">Golden Lotus Restaurant</p>
-                                    <p className="text-gray-600">1473 Dorchester Dr, Alexandria, LA 71301</p>
-                                    <p className="text-gray-600">(213) 555-1688</p>
+                                    <p className="text-[#374151] mt-1">Golden Lotus Restaurant</p>
+                                    <p className="text-[#374151]">1473 Dorchester Dr, Alexandria, LA 71301</p>
+                                    <p className="text-[#374151]">(213) 555-1688</p>
                                     <a 
                                       href="https://maps.google.com?q=1473+Dorchester+Dr+Alexandria+LA+71301"
                                       target="_blank"
-                                      className="text-orange-500 text-sm mt-2 inline-block font-medium"
+                                      className="text-[#F97316] text-sm mt-2 inline-block font-semibold"
                                     >
                                       📌 Get Directions →
                                     </a>
                                 </div>
                                 <div className="grid sm:grid-cols-2 gap-4">
-                                    <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label><div className="relative"><User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input name="name" value={cust.name} onChange={handleChange} placeholder="John Doe" className={inputCls} /></div></div>
-                                    <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label><div className="relative"><Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input name="email" type="email" value={cust.email} onChange={handleChange} placeholder="john@email.com" className={inputCls} /></div></div>
-                                    <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label><div className="relative"><Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input name="phone" value={cust.phone} onChange={handleChange} placeholder="(555) 123-4567" className={inputCls} /></div></div>
+                                    <div className="sm:col-span-2">
+                                        <label className="block text-sm font-medium text-[#374151] mb-1.5">Full Name *</label>
+                                        <div className="relative">
+                                            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF]" />
+                                            <input
+                                                name="name"
+                                                value={cust.name}
+                                                onChange={(e) => { handleChange(e); if (touched.name) setTouched(t => ({ ...t, name: true })); }}
+                                                onBlur={() => setTouched(t => ({ ...t, name: true }))}
+                                                placeholder="John Doe"
+                                                className={`${inputClsBase} ${touched.name && fieldErrors.name ? inputErrorCls : inputOkCls}`}
+                                            />
+                                        </div>
+                                        {touched.name && fieldErrors.name && <p className="text-xs text-[#DC2626] mt-1">{fieldErrors.name}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-[#374151] mb-1.5">Email *</label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF]" />
+                                            <input
+                                                name="email"
+                                                type="email"
+                                                value={cust.email}
+                                                onChange={(e) => { handleChange(e); if (touched.email) setTouched(t => ({ ...t, email: true })); }}
+                                                onBlur={() => setTouched(t => ({ ...t, email: true }))}
+                                                placeholder="john@email.com"
+                                                className={`${inputClsBase} ${touched.email && fieldErrors.email ? inputErrorCls : inputOkCls}`}
+                                            />
+                                        </div>
+                                        {touched.email && fieldErrors.email && <p className="text-xs text-[#DC2626] mt-1">{fieldErrors.email}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-[#374151] mb-1.5">Phone *</label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF]" />
+                                            <input
+                                                name="phone"
+                                                value={cust.phone}
+                                                onChange={(e) => { handleChange(e); if (touched.phone) setTouched(t => ({ ...t, phone: true })); }}
+                                                onBlur={() => setTouched(t => ({ ...t, phone: true }))}
+                                                placeholder="(555) 123-4567"
+                                                className={`${inputClsBase} ${touched.phone && fieldErrors.phone ? inputErrorCls : inputOkCls}`}
+                                            />
+                                        </div>
+                                        {touched.phone && fieldErrors.phone && <p className="text-xs text-[#DC2626] mt-1">{fieldErrors.phone}</p>}
+                                    </div>
                                 </div>
 
                                 {/* Schedule */}
                                 <div className="pt-2 border-t space-y-3">
-                                    <label className="block text-sm font-medium text-gray-700">When do you want it?</label>
+                                    <label className="block text-sm font-medium text-[#374151]">When do you want it?</label>
                                     <div className="flex gap-3">
-                                        <button type="button" onClick={() => setScheduleType('asap')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'asap' ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500'}`}><Clock className="w-4 h-4" /> ASAP — Ready in 15-20 min</button>
-                                        <button type="button" onClick={() => setScheduleType('schedule')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'schedule' ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500'}`}><Clock className="w-4 h-4" /> Schedule</button>
+                                        <button type="button" onClick={() => { setScheduleType('asap'); setTouched(t => ({ ...t, scheduleTime: false })); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'asap' ? 'border-[#F97316] bg-[#FFF7ED] text-[#F97316]' : 'border-[#E5E7EB] text-[#6B7280]'}`}><Clock className="w-4 h-4" /> ASAP — Ready in 15–20 min</button>
+                                        <button type="button" onClick={() => setScheduleType('schedule')} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'schedule' ? 'border-[#F97316] bg-[#FFF7ED] text-[#F97316]' : 'border-[#E5E7EB] text-[#6B7280]'}`}><Clock className="w-4 h-4" /> Schedule</button>
                                     </div>
-                                    {scheduleType === 'schedule' && <input type="datetime-local" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className={inputNoCls} />}
+                                    {scheduleType === 'schedule' && (
+                                        <div>
+                                            <input
+                                                type="datetime-local"
+                                                value={scheduleTime}
+                                                onChange={(e) => { setScheduleTime(e.target.value); if (touched.scheduleTime) setTouched(t => ({ ...t, scheduleTime: true })); }}
+                                                onBlur={() => setTouched(t => ({ ...t, scheduleTime: true }))}
+                                                className={`${inputNoClsBase} ${touched.scheduleTime && fieldErrors.scheduleTime ? inputErrorCls : inputOkCls}`}
+                                            />
+                                            {touched.scheduleTime && fieldErrors.scheduleTime && <p className="text-xs text-[#DC2626] mt-1">{fieldErrors.scheduleTime}</p>}
+                                        </div>
+                                    )}
                                 </div>
 
-                                <button type="button" onClick={() => setStep(2)} disabled={!isStep1Valid} className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setTouched(t => ({ ...t, name: true, email: true, phone: true, scheduleTime: scheduleType === 'schedule' }));
+                                        if (!isStep1Valid) return;
+                                        setStep(2);
+                                    }}
+                                    disabled={isProcessing}
+                                    className="w-full py-3.5 bg-[#F97316] hover:bg-[#EA6C0A] text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
+                                >
                                     Continue to Payment <ArrowRight className="w-5 h-5" />
                                 </button>
                             </div>
@@ -255,20 +397,20 @@ function CheckoutInner() {
 
                         {/* STEP 2 */}
                         <div className={step === 2 ? 'block' : 'hidden'}>
-                            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-gray-100">
-                                <h2 className="text-xl font-bold text-gray-900">Payment Method</h2>
+                            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-[#F3F4F6]">
+                                <h2 className="text-xl font-bold text-[#111827]">Payment Method</h2>
                                 {[
                                     { key: 'cash' as const, icon: <DollarSign className="w-5 h-5 text-green-600" />, label: '💵 Cash on Delivery', sub: 'Pay with cash when your order arrives' },
                                     { key: 'card' as const, icon: <CreditCard className="w-5 h-5 text-blue-600" />, label: '💳 Credit / Debit Card', sub: '' },
                                     { key: 'paypal' as const, icon: <span className="text-lg">🅿️</span>, label: 'PayPal', sub: "You'll be redirected to PayPal to complete payment" },
                                 ].map((pm) => (
                                     <div key={pm.key}>
-                                        <button type="button" onClick={() => setPaymentMethod(pm.key)} className={`w-full text-left p-4 rounded-xl border-2 transition-all ${paymentMethod === pm.key ? 'border-[#F97316] bg-[#F97316]/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                                        <button type="button" onClick={() => setPaymentMethod(pm.key)} className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${paymentMethod === pm.key ? 'border-[#F97316] bg-[#FFF7ED]' : 'border-[#E5E7EB] hover:border-[#9CA3AF]'}`}>
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === pm.key ? 'border-[#F97316]' : 'border-gray-300'}`}>
                                                     {paymentMethod === pm.key && <div className="w-2.5 h-2.5 rounded-full bg-[#F97316]" />}
                                                 </div>
-                                                {pm.icon}<span className="font-medium text-gray-900">{pm.label}</span>
+                                                {pm.icon}<span className="font-medium text-[#111827]">{pm.label}</span>
                                             </div>
                                             {paymentMethod === pm.key && pm.sub && <p className="text-sm text-gray-500 mt-2 ml-8">{pm.sub}</p>}
                                         </button>
@@ -286,19 +428,24 @@ function CheckoutInner() {
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
                                             <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                            <input value={promoCode} onChange={(e) => setPromoCode(e.target.value)} placeholder="Enter code" className={inputCls} disabled={!!appliedPromo} />
+                                            <input value={promoCode} onChange={(e) => setPromoCode(e.target.value)} placeholder="Enter code" className={`${inputClsBase} ${inputOkCls}`} disabled={!!appliedPromo} />
                                         </div>
                                         {appliedPromo ? (
                                             <button type="button" onClick={() => { setAppliedPromo(null); setPromoCode(''); }} className="px-4 py-3 border border-red-200 text-red-500 rounded-xl hover:bg-red-50 transition-all font-medium text-sm">Remove</button>
                                         ) : (
-                                            <button type="button" onClick={applyPromo} className="px-6 py-3 bg-[#F97316] text-white rounded-xl hover:bg-[#ea6c10] transition-all font-medium text-sm">Apply</button>
+                                            <button type="button" onClick={applyPromo} className="px-6 py-3 bg-[#F97316] text-white rounded-xl hover:bg-[#EA6C0A] transition-all font-semibold text-sm" style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.25)' }}>Apply</button>
                                         )}
                                     </div>
                                     {promoError && <p className="text-red-500 text-sm mt-1">{promoError}</p>}
                                     {appliedPromo && <p className="text-green-600 text-sm mt-1 flex items-center gap-1"><Check className="w-4 h-4" /> {appliedPromo.label}</p>}
                                 </div>
 
-                                <button type="button" onClick={() => setStep(3)} className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all flex items-center justify-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setStep(3)}
+                                    className="w-full py-3.5 bg-[#F97316] hover:bg-[#EA6C0A] text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                                    style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
+                                >
                                     Review Order <ArrowRight className="w-5 h-5" />
                                 </button>
                             </div>
@@ -306,33 +453,33 @@ function CheckoutInner() {
 
                         {/* STEP 3 */}
                         <div className={step === 3 ? 'block' : 'hidden'}>
-                            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-gray-100">
-                                <h2 className="text-xl font-bold text-gray-900">Review Your Order</h2>
-                                <div className="bg-gray-50 rounded-xl p-4 space-y-1">
-                                    <p className="font-medium text-gray-900">{cust.name}</p>
-                                    <p className="text-sm text-gray-600">{cust.email} · {cust.phone}</p>
-                                    <p className="text-sm text-[#F97316] font-medium mt-1">🏪 Pickup · {scheduleType === 'asap' ? 'ASAP' : scheduleTime}</p>
+                            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-[#F3F4F6]">
+                                <h2 className="text-xl font-bold text-[#111827]">Review Your Order</h2>
+                                <div className="bg-[#F9FAFB] rounded-2xl p-4 border border-[#F3F4F6] space-y-1">
+                                    <p className="font-medium text-[#111827]">{cust.name}</p>
+                                    <p className="text-sm text-[#374151]">{cust.email} · {cust.phone}</p>
+                                    <p className="text-sm text-[#F97316] font-semibold mt-1">Pickup • {scheduleType === 'asap' ? 'ASAP' : scheduleTime}</p>
                                 </div>
                                 <div className="space-y-3">
                                     {cart.map((item) => (
                                         <div key={item.id} className="flex items-center gap-3">
-                                            {item.image && <img src={item.image} alt={item.name} className="w-14 h-14 rounded-xl object-cover" />}
+                                            {item.image && <img src={item.image} alt={item.name} className="w-14 h-14 rounded-xl object-cover" loading="lazy" width={56} height={56} />}
                                             <div className="flex-1"><p className="font-medium text-gray-900">{item.name}</p><p className="text-sm text-gray-500">x{item.quantity}</p></div>
                                             <p className="font-medium text-gray-900">${(item.price * item.quantity).toFixed(2)}</p>
                                         </div>
                                     ))}
                                 </div>
-                                <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
+                                <div className="bg-[#F9FAFB] rounded-2xl p-4 space-y-2 text-sm border border-[#F3F4F6]">
                                     <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
                                     <div className="flex justify-between"><span className="text-gray-500">Tax (8.875%)</span><span>${tax.toFixed(2)}</span></div>
                                     {discountAmount > 0 && <div className="flex justify-between text-[#F97316] font-medium"><span>Discount ({appliedPromo?.code})</span><span>-${discountAmount.toFixed(2)}</span></div>}
                                     <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Total</span><span className="text-[#F97316]">${total.toFixed(2)}</span></div>
                                 </div>
-                                <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-600">
+                                <div className="bg-[#F9FAFB] rounded-2xl p-3 text-sm text-[#374151] border border-[#F3F4F6]">
                                     Payment: {paymentMethod === 'cash' ? '💵 Cash on Delivery' : paymentMethod === 'card' ? '💳 Credit Card' : '🅿️ PayPal'}
                                 </div>
                                 {generalError && <div className="bg-red-50 border border-red-200 rounded-xl p-3"><p className="text-red-600 text-sm">{generalError}</p></div>}
-                                <button type="button" onClick={placeOrder} disabled={isProcessing} className="w-full py-4 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-bold rounded-xl hover:shadow-xl hover:shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg">
+                                <button type="button" onClick={placeOrder} disabled={isProcessing} className="w-full py-4 bg-[#F97316] hover:bg-[#EA6C0A] text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg" style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}>
                                     {isProcessing ? <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</> : <><ShoppingBag className="w-5 h-5" /> Place Order — ${total.toFixed(2)}</>}
                                 </button>
                             </div>
@@ -340,17 +487,22 @@ function CheckoutInner() {
                     </div>
 
                     {/* SIDEBAR */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-28 border border-gray-100">
-                            <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
+                    <div className="hidden lg:block lg:col-span-2">
+                        <div className="bg-[#F9FAFB] rounded-2xl border border-[#E5E7EB] p-6 sticky top-28">
+                            <h3 className="text-lg font-bold text-[#111827] mb-4">Order Summary</h3>
                             <div className="space-y-3 mb-4">
-                                {cart.map((item) => (<div key={item.id} className="flex justify-between text-sm"><span className="text-gray-600">{item.name} x{item.quantity}</span><span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span></div>))}
+                                {cart.map((item) => (
+                                    <div key={item.id} className="flex justify-between text-sm">
+                                        <span className="text-[#374151]">{item.name} x{item.quantity}</span>
+                                        <span className="font-medium text-[#111827]">${(item.price * item.quantity).toFixed(2)}</span>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="border-t pt-3 space-y-2">
-                                <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-                                <div className="flex justify-between text-sm"><span className="text-gray-500">Tax</span><span>${tax.toFixed(2)}</span></div>
-                                {discountAmount > 0 && <div className="flex justify-between text-sm text-[#F97316]"><span>Discount</span><span>-${discountAmount.toFixed(2)}</span></div>}
-                                <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Total</span><span className="text-[#F97316]">${total.toFixed(2)}</span></div>
+                            <div className="border-t border-[#E5E7EB] pt-3 space-y-2">
+                                <div className="flex justify-between text-sm"><span className="text-[#6B7280]">Subtotal</span><span className="text-[#111827]">${subtotal.toFixed(2)}</span></div>
+                                <div className="flex justify-between text-sm"><span className="text-[#6B7280]">Tax</span><span className="text-[#111827]">${tax.toFixed(2)}</span></div>
+                                {discountAmount > 0 && <div className="flex justify-between text-sm text-[#F97316] font-medium"><span>Discount</span><span>-${discountAmount.toFixed(2)}</span></div>}
+                                <div className="flex justify-between font-bold text-lg pt-2 border-t border-[#E5E7EB]"><span>Total</span><span className="text-[#F97316]">${total.toFixed(2)}</span></div>
                             </div>
                         </div>
                     </div>

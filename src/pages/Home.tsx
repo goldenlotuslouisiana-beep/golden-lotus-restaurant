@@ -113,15 +113,19 @@ export default function Home() {
       <div className="overflow-hidden">
         {/* Hero Section */}
         {siteContent.settings?.showHero !== false && (
-          <section ref={heroRef} className="relative h-[600px] sm:h-[700px] lg:h-[800px] flex items-center justify-center overflow-hidden">
+          <section ref={heroRef} className="relative min-h-[100vh] flex items-center justify-center overflow-hidden">
             <motion.div
               style={{ scale: heroScale }}
               className="absolute inset-0"
             >
-              <div
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${siteContent.hero.backgroundImage})` }}
-              />
+              <div className="absolute inset-0">
+                <img
+                  src={siteContent.hero.backgroundImage}
+                  alt={siteContent.hero.title || 'Golden Lotus hero'}
+                  className="w-full h-full object-cover"
+                  loading="eager"
+                />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
             </motion.div>
 

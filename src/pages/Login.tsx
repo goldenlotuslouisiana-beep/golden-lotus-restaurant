@@ -21,6 +21,8 @@ export default function Login() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
 
   const emailRegex = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/, []);
 
@@ -35,10 +37,32 @@ export default function Login() {
 
   if (isLoggedIn) return null;
 
+  const validateField = (name: 'email' | 'password', value: string) => {
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (name === 'email') {
+        const trimmed = value.trim();
+        if (!trimmed) next.email = 'Email is required';
+        else if (!emailRegex.test(trimmed)) next.email = 'Enter a valid email address';
+        else delete next.email;
+      }
+      if (name === 'password') {
+        if (!value) next.password = 'Password is required';
+        else if (value.length < 8) next.password = 'Password must be at least 8 characters';
+        else delete next.password;
+      }
+      return next;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!email || !password) { setError('Please fill in all fields'); return; }
+    setTouched({ email: true, password: true });
+    validateField('email', email);
+    validateField('password', password);
+    const hasErrors = !!fieldErrors.email || !!fieldErrors.password || !email.trim() || !password;
+    if (hasErrors) return;
 
     setIsLoading(true);
     const result = await login(email, password);
@@ -150,11 +174,25 @@ export default function Login() {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (touched.email) validateField('email', e.target.value);
+                    }}
+                    onBlur={() => {
+                      setTouched((prev) => ({ ...prev, email: true }));
+                      validateField('email', email);
+                    }}
                     placeholder="your@email.com"
-                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+                    className={`w-full pl-11 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 bg-gray-50 focus:bg-white transition-all text-[16px] ${
+                      touched.email && fieldErrors.email
+                        ? 'border-[#DC2626] focus:ring-[#DC2626]/15 focus:border-[#DC2626]'
+                        : 'border-gray-200 focus:ring-[#F97316]/15 focus:border-[#F97316]'
+                    }`}
                   />
                 </div>
+                {touched.email && fieldErrors.email && (
+                  <p className="mt-1 text-xs text-[#DC2626]">{fieldErrors.email}</p>
+                )}
               </div>
 
               <div>
@@ -164,9 +202,20 @@ export default function Login() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (touched.password) validateField('password', e.target.value);
+                    }}
+                    onBlur={() => {
+                      setTouched((prev) => ({ ...prev, password: true }));
+                      validateField('password', password);
+                    }}
                     placeholder="••••••••"
-                    className="w-full pl-11 pr-12 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+                    className={`w-full pl-11 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 bg-gray-50 focus:bg-white transition-all text-[16px] ${
+                      touched.password && fieldErrors.password
+                        ? 'border-[#DC2626] focus:ring-[#DC2626]/15 focus:border-[#DC2626]'
+                        : 'border-gray-200 focus:ring-[#F97316]/15 focus:border-[#F97316]'
+                    }`}
                   />
                   <button
                     type="button"
@@ -177,6 +226,9 @@ export default function Login() {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+                {touched.password && fieldErrors.password && (
+                  <p className="mt-1 text-xs text-[#DC2626]">{fieldErrors.password}</p>
+                )}
               </div>
 
               <div className="flex items-center justify-between text-sm">
