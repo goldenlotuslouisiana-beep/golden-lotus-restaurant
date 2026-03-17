@@ -17,9 +17,51 @@ Cuisine: Asian Fusion
 Target Customer: 25-45 year olds, middle to upper income
 Feeling to evoke: "I can't wait to eat here"
 
+## COLOR PALETTE (NEVER DEVIATE FROM THESE)
+PRIMARY (Gold):
+  Gold:          #B8853A  ← main brand color, buttons, CTAs, accents
+  Gold Bright:   #C9963F  ← hover states
+  Gold Pale:     #F2E4C8  ← light backgrounds, badges
+  Gold Soft:     rgba(184,133,58,0.10) ← subtle tints, active tab bg
+
+NEUTRALS:
+  Ink:           #0F0C08  ← primary headings (darkest)
+  Ink2:          #1E1810  ← dark section backgrounds
+  Brown:         #3D2A0F  ← rich body text, sub-headings
+  Body:          #6B5540  ← body text, descriptions
+  Muted:         #9E8870  ← placeholder text, disabled states
+  Border:        #DDD0BB  ← default borders, dividers
+  Border Light:  #EDE3D2  ← subtle borders, card edges
+
+BACKGROUNDS:
+  Cream:         #F9F4EC  ← page background
+  Cream Deep:    #F0E8D8  ← alternate section backgrounds
+  White:         #FFFFFF  ← cards, modals, inputs
+
+SEMANTIC:
+  Success:       #2F9555  ← delivered, confirmed
+  Success Light: #DDF5E6  ← success backgrounds
+  Error:         #C53A3A  ← errors, cancelled
+  Error Light:   #F9DFDF  ← error backgrounds
+  Warning:       #D89B23  ← pending, processing
+  Warning Light: #FFF3D5  ← warning backgrounds
+
+SHADOWS:
+  Gold glow CTA: 0 4px 14px rgba(184,133,58,0.40)
+  Card hover:    0 20px 40px rgba(15,12,8,0.12)
+  sm:            0 1px 2px rgba(15,12,8,0.05)
+  md:            0 4px 6px rgba(15,12,8,0.07)
+  lg:            0 10px 15px rgba(15,12,8,0.10)
+
+NEVER USE:
+  ❌ Pure black #000000
+  ❌ Colors outside this palette
+  ❌ Previous orange/saffron/plum palette (#D9772A, #F97316, etc.)
+  ❌ More than 3 colors in one component
+
 ## TYPOGRAPHY
-Headings font: Playfair Display (elegant, premium)
-Body/UI font:  Inter (clean, readable, modern)
+Headings font: Cormorant Garamond (elegant, editorial, premium)
+Body/UI font:  Jost (clean, geometric, modern)
 
 Font sizes:
   12px = labels, badges
@@ -73,22 +115,22 @@ Letter spacing:
   9999px = pills, avatars
 
 ## SHADOWS
-  sm:  0 1px 2px rgba(0,0,0,0.05)
-  md:  0 4px 6px rgba(0,0,0,0.07)
-  lg:  0 10px 15px rgba(0,0,0,0.1)
-  xl:  0 20px 25px rgba(0,0,0,0.1)
-  2xl: 0 25px 50px rgba(0,0,0,0.15)
-  Orange glow CTA: 0 4px 14px rgba(249,115,22,0.4)
-  Card hover: 0 20px 40px rgba(0,0,0,0.12)
+  sm:  0 1px 2px rgba(15,12,8,0.05)
+  md:  0 4px 6px rgba(15,12,8,0.07)
+  lg:  0 10px 15px rgba(15,12,8,0.10)
+  xl:  0 20px 25px rgba(15,12,8,0.12)
+  2xl: 0 25px 50px rgba(15,12,8,0.18)
+  Gold glow CTA: 0 4px 14px rgba(184,133,58,0.40)
+  Card hover: 0 20px 40px rgba(15,12,8,0.12)
 
 ## BUTTON RULES
 PRIMARY:
-  Background: #F97316
+  Background: #B8853A
   Text: white, semibold
   Padding: 12px 24px
   Border radius: 12px
-  Shadow: 0 4px 14px rgba(249,115,22,0.4)
-  Hover: #EA6C0A + more shadow
+  Shadow: 0 4px 14px rgba(184,133,58,0.40)
+  Hover: #C9963F + lift shadow
   Active: scale 0.98
   Disabled: opacity 50%
   Min height: 48px touch target
@@ -96,18 +138,18 @@ PRIMARY:
 
 SECONDARY:
   Background: transparent
-  Border: 2px solid #F97316
-  Text: #F97316 semibold
-  Hover: background #FFF7ED
+  Border: 2px solid #B8853A
+  Text: #B8853A semibold
+  Hover: background rgba(184,133,58,0.10)
 
 GHOST:
   Background: transparent
-  Text: #374151
-  Hover: background #F3F4F6
+  Text: #6B5540
+  Hover: background #EDE3D2
 
 DANGER:
-  Background: #DC2626
-  Hover: #B91C1C
+  Background: #C53A3A
+  Hover: #A82E2E
 
 ICON BUTTON:
   Size: minimum 40x40px
@@ -115,32 +157,32 @@ ICON BUTTON:
 
 ## INPUT FIELD RULES
 Default:
-  Border: 1px solid #E5E7EB
+  Border: 1px solid #DDD0BB
   Background: white
   Border radius: 10px
   Padding: 12px 16px
   Font size: 16px minimum
-  Color: #111827
-  Placeholder: #9CA3AF
+  Color: #0F0C08
+  Placeholder: #9E8870
 
 Focus:
-  Border: 2px solid #F97316
-  Ring: 0 0 0 3px rgba(249,115,22,0.15)
+  Border: 2px solid #B8853A
+  Ring: 0 0 0 3px rgba(184,133,58,0.20)
   Outline: none
 
 Error:
-  Border: 2px solid #DC2626
-  Ring: 0 0 0 3px rgba(220,38,38,0.15)
+  Border: 2px solid #C53A3A
+  Ring: 0 0 0 3px rgba(197,58,58,0.15)
 
 Success:
-  Border: 2px solid #16A34A
+  Border: 2px solid #2F9555
 
 Label:
-  14px, weight 500, color #374151
+  14px, weight 500, color #6B5540
   Margin bottom 6px
 
 Error message:
-  12px, color #DC2626
+  12px, color #C53A3A
   Margin top 4px
   Show warning icon
 
@@ -148,19 +190,19 @@ Error message:
 MENU ITEM CARD:
   Background: white
   Border radius: 16px
-  Shadow: 0 4px 6px rgba(0,0,0,0.07)
-  Border: 1px solid #F3F4F6
+  Shadow: 0 4px 6px rgba(15,12,8,0.07)
+  Border: 1px solid #EDE3D2
   Image height: 200px, object-cover
   Image hover: scale 1.05, transition 400ms
-  Title: Playfair Display, 18px, weight 600
-  Description: 14px, #6B7280, 2 line clamp
-  Price: Inter, 20px, bold, #F97316
-  Add button: 40x40px round orange
+  Title: Cormorant Garamond, 18px, weight 600
+  Description: 14px, #6B5540, 2 line clamp
+  Price: Jost, 20px, bold, #B8853A
+  Add button: 40x40px round gold
   Card hover: translateY -4px, more shadow, 300ms
 
 PROFILE/ORDER CARD:
   Border radius: 16px
-  Border: 1px solid #E5E7EB
+  Border: 1px solid #DDD0BB
   Padding: 20px
 
 ADMIN STAT CARD:
@@ -169,15 +211,15 @@ ADMIN STAT CARD:
   Left border: 4px solid accent color
 
 ## NAVBAR RULES
-  Background: rgba(255,255,255,0.95)
+  Background: rgba(249,244,236,0.95)
   Backdrop blur: 8px
-  Border bottom: 1px solid #F3F4F6
+  Border bottom: 1px solid #EDE3D2
   Height: 64px desktop, 56px mobile
   Position: sticky top 0
   Z-index: 50
-  Logo: Playfair Display, 22px bold, #111827
-  Links: Inter 15px weight 500, #374151
-  Link hover: #F97316, transition 150ms
+  Logo: Cormorant Garamond, 22px bold, #0F0C08
+  Links: Jost 15px weight 500, #6B5540
+  Link hover: #B8853A, transition 150ms
   Mobile: slide in from right, dark overlay
 
 ## MODAL RULES
@@ -195,14 +237,14 @@ ADMIN STAT CARD:
   Border radius: 12px
   Auto dismiss: 4 seconds
   Hover: pause timer
-  Success: white bg, left border 4px #16A34A, green checkmark
-  Error: left border 4px #DC2626, red X icon
-  Warning: left border 4px #D97706, amber warning icon
-  Info: left border 4px #2563EB, blue info icon
+  Success: white bg, left border 4px #2F9555, green checkmark
+  Error: left border 4px #C53A3A, red X icon
+  Warning: left border 4px #D89B23, amber warning icon
+  Info: left border 4px #B8853A, gold info icon
 
 ## LOADING STATE RULES
-  Skeleton: #F3F4F6 with shimmer animation
-  Spinner: 20px inline, 40px full page, #F97316, 0.8s
+  Skeleton: #EDE3D2 with shimmer animation
+  Spinner: 20px inline, 40px full page, #B8853A, 0.8s
   Button loading: spinner + "Loading..." text, keep same size
   Full page: center, logo + spinner, pulse animation
 
@@ -210,32 +252,33 @@ ADMIN STAT CARD:
 HOMEPAGE HERO:
   Height: 100vh
   Dark overlay gradient on food image
-  rgba(0,0,0,0.3) to rgba(0,0,0,0.6)
-  H1: Playfair Display 60-72px white bold
-  Subtitle: Inter 20px white/80
-  CTA: orange button with arrow
+  rgba(15,12,8,0.35) to rgba(15,12,8,0.65)
+  H1: Cormorant Garamond 60-72px white bold
+  Subtitle: Jost 20px white/80
+  CTA: gold button with arrow + glow shadow
   Scroll indicator: animated bounce at bottom
 
 EVERY SECTION:
   Padding: 80px top bottom
   Max width: 1280px centered
-  Eyebrow: uppercase orange small
-  Heading: Playfair Display 3xl-4xl gray-900
-  Subheading: Inter lg gray-500
+  Eyebrow: uppercase gold small (#B8853A)
+  Heading: Cormorant Garamond 3xl-4xl #0F0C08
+  Subheading: Jost lg #6B5540
 
 MENU PAGE:
-  Category tabs: sticky, pill shaped, orange active
+  Category tabs: sticky, pill shaped, gold active (#B8853A bg, white text)
+  Inactive tab: #EDE3D2 bg, #6B5540 text
   Grid: 4 cols desktop, 3 tablet, 2 mobile
   Gap: 24px
 
 CHECKOUT PAGE:
   Max width: 1024px
   Left 60% form, Right 40% sticky summary
-  Progress: connected line, orange filled = complete
+  Progress: connected line, gold filled = complete (#B8853A)
 
 PROFILE PAGE:
   Sidebar 240px left, content flex-1 right
-  Active tab: orange bg/10, orange text, orange left border
+  Active tab: rgba(184,133,58,0.10) bg, #B8853A text, #B8853A left border
 
 ## ANIMATION RULES
   All durations: 150ms to 400ms only
@@ -263,7 +306,7 @@ PROFILE PAGE:
 
 ## IMAGE RULES
   Always object-fit cover
-  Fallback: #FFF7ED background with 🍽️ icon
+  Fallback: #F2E4C8 background with 🍽️ icon
   WebP format preferred
   Always lazy load below fold
   Always eager load hero images
@@ -288,7 +331,7 @@ PROFILE PAGE:
 ## ACCESSIBILITY RULES
   Normal text contrast: minimum 4.5:1
   Large text contrast: minimum 3:1
-  Focus indicator: 2px solid #F97316, offset 2px
+  Focus indicator: 2px solid #B8853A, offset 2px
   Never outline none without replacement
   Always alt text on images
   Always aria-label on icon buttons

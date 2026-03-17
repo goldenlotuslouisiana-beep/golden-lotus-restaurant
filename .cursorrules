@@ -356,6 +356,54 @@ Before finishing any task check:
 
 ---
 
+## DESIGN RULES
+
+### Golden Lotus Design System
+PRIMARY (Gold):
+  Gold:          #B8853A  ← buttons, CTAs, accents, prices
+  Gold Bright:   #C9963F  ← hover states
+  Gold Pale:     #F2E4C8  ← backgrounds, badges
+  Gold Soft:     rgba(184,133,58,0.10) ← active tab tint, subtle highlight
+
+NEUTRALS:
+  Ink:           #0F0C08  ← primary headings
+  Ink2:          #1E1810  ← dark backgrounds
+  Brown:         #3D2A0F  ← rich sub-headings
+  Body:          #6B5540  ← body text
+  Muted:         #9E8870  ← placeholder, disabled
+  Border:        #DDD0BB  ← default borders
+  Border Light:  #EDE3D2  ← subtle borders
+
+BACKGROUNDS:
+  Cream:         #F9F4EC  ← page background
+  Cream Deep:    #F0E8D8  ← alternate sections
+
+SEMANTIC:
+  Success:       #2F9555
+  Error:         #C53A3A
+  Warning:       #D89B23
+
+### Typography
+  Headings: Cormorant Garamond (serif, elegant)
+  Body/UI:  Jost (sans-serif, modern)
+
+### Component Design Standards
+  Buttons: rounded-xl (12px), min height 48px
+  Inputs: rounded-lg, border #DDD0BB, focus ring #B8853A/20
+  Cards: rounded-2xl, shadow-md, border #EDE3D2
+  Background: #F9F4EC (never pure white page bg)
+  Mobile first: design for 375px then scale up
+
+### Accessibility Rules
+  ALWAYS add aria-label to icon buttons
+  ALWAYS add alt text to images
+  ALWAYS use semantic HTML (button not div)
+  ALWAYS ensure 4.5:1 color contrast ratio
+  ALWAYS support keyboard navigation
+  Focus ring: 2px solid #B8853A, offset 2px
+
+---
+
 ## FORBIDDEN PATTERNS
 
 NEVER do these:
