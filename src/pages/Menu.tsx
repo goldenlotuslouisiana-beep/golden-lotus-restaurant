@@ -129,48 +129,85 @@ export default function Menu() {
       />
       
       <div className="min-h-screen bg-[#F9FAFB]">
-        {/* Header */}
-        <div className="bg-white border-b sticky top-0 z-30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-              {/* Page Title - Mobile */}
-              <div className="lg:hidden">
-                <h1 className="text-xl font-bold text-[#111827]">Our Menu</h1>
+        {/* Navbar */}
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#F3F4F6]">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2"
+            >
+              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#F97316] to-[#EA6C0A] flex items-center justify-center shadow-md shadow-orange-200/60">
+                <span className="text-white text-lg font-bold">GL</span>
               </div>
-              
-              {/* Search */}
-              <div className="relative flex-1 max-w-md">
+              <div className="hidden sm:flex flex-col leading-tight">
+                <span className="font-['Playfair_Display'] text-base font-semibold text-[#111827]">
+                  Golden Lotus
+                </span>
+                <span className="text-[11px] uppercase tracking-[0.18em] text-[#6B7280]">
+                  Alexandria, LA
+                </span>
+              </div>
+            </button>
+
+            {/* Center search on desktop */}
+            <div className="flex-1 hidden md:block max-w-md mx-auto">
+              <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search dishes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-[#F3F4F6] border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/15 focus:border-[#F97316] focus:bg-white transition-all text-[16px]"
+                  className="w-full pl-12 pr-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] focus:bg-white transition-all text-[16px]"
                 />
               </div>
+            </div>
 
-              {/* Cart Button */}
+            <div className="flex items-center gap-3">
+              {/* Compact cart pill */}
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => setIsCartOpen(true)}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-[#F97316] hover:bg-[#EA6C0A] text-white rounded-xl font-semibold transition-all"
-                style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F97316] text-white text-sm font-semibold shadow-md shadow-orange-200/70 hover:bg-[#EA6C0A] transition-all"
               >
-                <ShoppingBag className="w-5 h-5" />
+                <ShoppingBag className="w-4 h-4" />
                 <span>Cart ({cartCount})</span>
-                {cartTotal > 0 && (
-                  <span className="ml-1 text-white/80">${cartTotal.toFixed(2)}</span>
+                {cartCount > 0 && (
+                  <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-white/15 text-[11px] font-medium">
+                    ${cartTotal.toFixed(2)}
+                  </span>
                 )}
               </motion.button>
+
+              {/* Simple circular avatar placeholder */}
+              <div className="hidden sm:flex w-9 h-9 rounded-full border border-[#E5E7EB] bg-white items-center justify-center text-[13px] font-semibold text-[#111827]">
+                GL
+              </div>
             </div>
           </div>
-        </div>
+
+          {/* Mobile search under navbar */}
+          <div className="md:hidden border-t border-[#F3F4F6] bg-white/95">
+            <div className="max-w-6xl mx-auto px-4 py-2.5">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search dishes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] focus:bg-white transition-all text-[16px]"
+                />
+              </div>
+            </div>
+          </div>
+        </header>
 
         {/* Category Tabs */}
-        <div className="bg-white border-b sticky top-[73px] z-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white border-b sticky top-[96px] md:top-16 z-30">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3 -mx-4 px-4 sm:mx-0 sm:px-0">
               <CategoryPill
                 active={activeCategory === 'Popular'}
@@ -206,7 +243,11 @@ export default function Menu() {
                 Special Offers
               </h3>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {coupons.map((coupon) => (
+                {coupons
+                  .filter((coupon) =>
+                    ['DIMSUM10', 'BOBAMONDAY'].includes(coupon.code.toUpperCase())
+                  )
+                  .map((coupon) => (
                   <motion.div
                     key={coupon.id}
                     whileHover={{ scale: 1.02 }}
@@ -226,7 +267,7 @@ export default function Menu() {
         </AnimatePresence>
 
         {/* Menu Items */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <p className="text-xs font-semibold tracking-[0.1em] uppercase text-[#F97316]">Menu</p>

@@ -168,7 +168,7 @@ export default function Profile() {
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Sidebar */}
             <div className="lg:col-span-1">
-              <Card className="border-0 shadow-md sticky top-24">
+              <Card className="border border-gray-200 shadow-sm lg:sticky lg:top-24">
                 <CardContent className="p-2">
                   <nav className="space-y-1">
                     {TABS.map((t) => {
@@ -178,20 +178,30 @@ export default function Profile() {
                         <button
                           key={t.key}
                           onClick={() => setTab(t.key)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
-                            isActive 
-                              ? 'bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white shadow-md' 
-                              : 'text-gray-600 hover:bg-orange-50 hover:text-[#F97316]'
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-[12px] text-left text-sm transition-all duration-200 border-l-4 ${
+                            isActive
+                              ? 'bg-[#FFF7ED] text-[#F97316] border-[#F97316] shadow-sm'
+                              : 'bg-white text-gray-700 border-transparent hover:bg-gray-50 hover:text-[#F97316]'
                           }`}
                         >
-                          <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400'}`} />
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{t.label}</p>
-                            <p className={`text-xs ${isActive ? 'text-white/80' : 'text-gray-400'}`}>
+                          <Icon
+                            className={`w-5 h-5 flex-shrink-0 ${
+                              isActive ? 'text-[#F97316]' : 'text-gray-400'
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{t.label}</p>
+                            <p
+                              className={`text-xs ${
+                                isActive ? 'text-[#F97316]' : 'text-gray-400'
+                              }`}
+                            >
                               {t.description}
                             </p>
                           </div>
-                          {isActive && <ChevronDown className="w-4 h-4 rotate-[-90deg]" />}
+                          {isActive && (
+                            <ChevronDown className="w-4 h-4 text-[#F97316] rotate-[-90deg]" />
+                          )}
                         </button>
                       );
                     })}

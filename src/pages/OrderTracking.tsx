@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle, ChefHat, Package, Clock, ChevronDown, ChevronUp, HelpCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, ChefHat, Package, Clock, ChevronDown, ChevronUp, HelpCircle, XCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import SEO from '@/components/SEO';
 
 const STAGES = [
@@ -90,8 +91,51 @@ export default function OrderTracking() {
 
     const getActiveStages = () => STAGES;
 
-    if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-[#F97316]" /></div>;
-    if (!order) return <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-24"><p className="text-gray-500">Order not found</p></div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
+                <div className="max-w-lg mx-auto space-y-6">
+                    <div className="text-center space-y-3">
+                        <Skeleton className="h-7 w-40 mx-auto rounded-xl" />
+                        <Skeleton className="h-8 w-52 mx-auto rounded-full" />
+                        <Skeleton className="h-4 w-32 mx-auto rounded-full" />
+                    </div>
+                    <Skeleton className="h-32 w-full rounded-2xl" />
+                    <Skeleton className="h-64 w-full rounded-2xl" />
+                    <Skeleton className="h-40 w-full rounded-2xl" />
+                </div>
+            </div>
+        );
+    }
+
+    if (!order) {
+        return (
+            <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
+                <div className="max-w-lg mx-auto text-center bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                    <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                        <XCircle className="w-7 h-7 text-red-500" />
+                    </div>
+                    <h1 className="text-xl font-semibold text-gray-900 mb-1">Order not found</h1>
+                    <p className="text-gray-500 mb-4">
+                        We couldn&apos;t find this order. Please check your link or order number and try again.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA6C0A] transition-colors"
+                    >
+                        Try again
+                    </button>
+                    <Link
+                        to="/"
+                        className="mt-3 block text-sm text-[#F97316] hover:text-[#EA6C0A] font-medium"
+                    >
+                        Back to home
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     const stageIdx = getStageIndex();
 

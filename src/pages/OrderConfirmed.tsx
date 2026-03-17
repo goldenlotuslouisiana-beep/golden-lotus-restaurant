@@ -1,7 +1,8 @@
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { CheckCircle, Phone, Mail, ArrowRight, Loader2, Package } from 'lucide-react';
+import { CheckCircle, Phone, Mail, ArrowRight, Package } from 'lucide-react';
 import SEO from '@/components/SEO';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface OrderData {
     id: string; orderNumber: string;
@@ -30,7 +31,25 @@ export default function OrderConfirmed() {
     const pm = order?.paymentMethod || st?.paymentMethod || 'cash';
     const last4 = order?.cardLast4 || st?.cardLast4 || '';
 
-    if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-[#F97316]" /></div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-b from-green-50 to-gray-50 pt-28 pb-16 px-4">
+                <div className="max-w-lg mx-auto space-y-6">
+                    <div className="flex justify-center">
+                        <Skeleton className="w-24 h-24 rounded-full" />
+                    </div>
+                    <div className="space-y-3 text-center">
+                        <Skeleton className="h-8 w-64 mx-auto rounded-xl" />
+                        <Skeleton className="h-4 w-40 mx-auto rounded-xl" />
+                        <Skeleton className="h-7 w-44 mx-auto rounded-full" />
+                    </div>
+                    <Skeleton className="h-32 w-full rounded-2xl" />
+                    <Skeleton className="h-28 w-full rounded-2xl" />
+                    <Skeleton className="h-40 w-full rounded-2xl" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
