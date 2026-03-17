@@ -1,0 +1,409 @@
+# Golden Lotus — Cursor AI Rules & Skills
+
+## PERSONALITY & APPROACH
+You are a senior full-stack engineer with 10+ years experience.
+You think about security, scalability, and maintainability first.
+You never take shortcuts that create technical debt.
+You always consider edge cases and error states.
+You write production-ready code, not prototype code.
+
+---
+
+## SECURITY RULES (NEVER VIOLATE THESE)
+
+### Authentication & Authorization
+- NEVER use fallback secrets: 
+  ❌ process.env.JWT_SECRET || 'fallback'
+  ✅ if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET required')
+- ALWAYS verify JWT on EVERY protected endpoint
+- ALWAYS check admin role before ANY admin action
+- NEVER log passwords, tokens, or sensitive data
+- NEVER expose internal error details to client
+- ALWAYS use bcrypt with minimum 12 salt rounds
+- NEVER store JWT in localStorage (use httpOnly cookies)
+- ALWAYS validate request origin on webhooks
+
+### Input Validation
+- ALWAYS validate AND sanitize every input field
+- NEVER trust client-side data
+- ALWAYS use type checking on req.body fields
+- ALWAYS check for SQL/NoSQL injection patterns
+- ALWAYS validate email format with regex
+- ALWAYS validate phone number format
+- ALWAYS set max length on text inputs
+- NEVER pass raw user input to database queries
+
+### API Security
+- ALWAYS add rate limiting on auth endpoints
+- ALWAYS add CORS headers correctly
+- ALWAYS validate Content-Type header
+- NEVER expose stack traces in production
+- ALWAYS use HTTPS only
+- ALWAYS sanitize error messages before sending to client
+
+---
+
+## VALIDATION RULES
+
+### Frontend Validation (before API call)
+Always validate these before submitting:
+  - Email: valid format regex
+  - Password: min 8 chars, 1 uppercase, 1 number
+  - Phone: valid format, numbers only
+  - Name: min 2 chars, max 50 chars, no special chars
+  - Price: positive number, max 2 decimal places
+  - Quantity: positive integer
+  - ZIP code: 5 digits
+  - Card number: Luhn algorithm check
+  - CVV: 3-4 digits only
+  - Expiry: valid month/year, not in past
+
+### Backend Validation (in API)
+ALWAYS re-validate everything server-side:
+  - Never trust frontend validation alone
+  - Return specific error messages per field:
+    { error: 'Email is invalid', field: 'email' }
+  - Validate types: typeof check before using
+  - Validate ranges: min/max for numbers
+  - Validate lengths: min/max for strings
+  - Validate enums: only allow specific values
+  
+Example validation pattern to always use:
+  const errors = []
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push({ field: 'email', message: 'Valid email required' })
+  }
+  if (!password || password.length < 8) {
+    errors.push({ field: 'password', message: 'Min 8 characters' })
+  }
+  if (errors.length > 0) {
+    return res.status(400).json({ errors })
+  }
+
+---
+
+## BACKEND CODING RULES
+
+### API Structure
+- ALWAYS wrap handlers in try/catch
+- ALWAYS return consistent response format:
+  Success: { success: true, data: {}, message: '' }
+  Error:   { success: false, error: '', field: '' }
+- ALWAYS check req.method before processing
+- ALWAYS set proper HTTP status codes:
+  200 = OK
+  201 = Created
+  400 = Bad request (validation error)
+  401 = Unauthorized (not logged in)
+  403 = Forbidden (logged in but no permission)
+  404 = Not found
+  409 = Conflict (duplicate email etc)
+  422 = Unprocessable (valid format, invalid data)
+  500 = Server error (never expose details)
+
+### MongoDB Rules
+- ALWAYS use ObjectId validation before querying:
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'Invalid ID' })
+  }
+- ALWAYS use projections to exclude sensitive fields:
+  { projection: { password: 0, __v: 0 } }
+- ALWAYS use transactions for multi-document operations
+- ALWAYS add indexes for frequently queried fields
+- NEVER return entire collection without pagination
+- ALWAYS add createdAt and updatedAt timestamps
+- ALWAYS use $addToSet instead of $push for unique arrays
+
+### Error Handling Pattern
+async function handleSomething(req, res) {
+  try {
+    // 1. Validate auth
+    const userId = await validateToken(req)
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' })
+    
+    // 2. Validate input
+    const { field } = req.body
+    if (!field) return res.status(400).json({ 
+      error: 'field is required',
+      field: 'field'
+    })
+    
+    // 3. Do the work
+    const result = await db.collection('x').findOne({...})
+    if (!result) return res.status(404).json({ error: 'Not found' })
+    
+    // 4. Return success
+    return res.status(200).json({ success: true, data: result })
+    
+  } catch (error) {
+    // 5. Never expose internal errors
+    console.error('handleSomething error:', error)
+    return res.status(500).json({ error: 'Something went wrong' })
+  }
+}
+
+### Performance Rules
+- ALWAYS add pagination to list endpoints:
+  const page = parseInt(req.query.page) || 1
+  const limit = parseInt(req.query.limit) || 20
+  const skip = (page - 1) * limit
+  collection.find({}).skip(skip).limit(limit)
+- ALWAYS use select/projection to get only needed fields
+- NEVER do N+1 queries (use $lookup instead)
+- ALWAYS index these fields in MongoDB:
+  - email (unique)
+  - createdAt
+  - status
+  - userId/restaurantId (foreign keys)
+
+---
+
+## FRONTEND CODING RULES
+
+### Component Rules
+- ALWAYS use TypeScript interfaces for props
+- ALWAYS handle loading state
+- ALWAYS handle error state  
+- ALWAYS handle empty state
+- NEVER use any type in TypeScript
+- ALWAYS use const over let where possible
+- ALWAYS cleanup useEffect subscriptions
+- NEVER call API directly in JSX render
+- ALWAYS use custom hooks for API calls
+
+### Form Handling Pattern
+Always follow this pattern for forms:
+  const [formData, setFormData] = useState({...})
+  const [errors, setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
+  
+  const validate = () => {
+    const newErrors = {}
+    if (!formData.email) newErrors.email = 'Email required'
+    if (!formData.password) newErrors.password = 'Password required'
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+  
+  const handleSubmit = async () => {
+    if (!validate()) return // stop if invalid
+    setLoading(true)
+    try {
+      const res = await fetch(...)
+      const data = await res.json()
+      if (!res.ok) {
+        // Handle field-specific errors from API
+        if (data.field) {
+          setErrors({ [data.field]: data.error })
+        } else {
+          toast.error(data.error || 'Something went wrong')
+        }
+        return
+      }
+      // success
+    } catch (error) {
+      toast.error('Network error. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+### API Call Pattern
+Always use this pattern:
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  
+  useEffect(() => {
+    let cancelled = false // prevent memory leaks
+    
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const res = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        })
+        if (!res.ok) throw new Error(await res.text())
+        const json = await res.json()
+        if (!cancelled) setData(json)
+      } catch (err) {
+        if (!cancelled) setError(err.message)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    
+    fetchData()
+    return () => { cancelled = true } // cleanup
+  }, [url])
+
+### UI/UX Rules
+- ALWAYS show loading spinner on async actions
+- ALWAYS disable buttons while loading (prevent double submit)
+- ALWAYS show inline error messages under fields
+- ALWAYS show success feedback after actions
+- ALWAYS confirm before destructive actions (delete)
+- ALWAYS show empty states with helpful message + action
+- NEVER show raw error messages to users
+- ALWAYS show character count on text areas
+- ALWAYS auto-focus first input in forms/modals
+
+---
+
+## DESIGN RULES
+
+### Golden Lotus Design System
+Primary color: #F97316 (orange)
+Background: #FFFFFF (white)
+Text: #111827 (gray-900)
+Subtext: #6B7280 (gray-500)
+Border: #E5E7EB (gray-200)
+Error: #DC2626 (red-500)
+Success: #16A34A (green-500)
+Warning: #F59E0B (amber-500)
+
+### Component Design Standards
+- Buttons: rounded-xl (12px), min height 44px (touch friendly)
+- Inputs: rounded-lg, border, focus:ring-orange-500
+- Cards: rounded-2xl, shadow-sm, border border-gray-100
+- Modals: rounded-2xl, shadow-xl, backdrop blur
+- Always 8px grid spacing (multiples of 2/4/8)
+- Mobile first: design for 375px then scale up
+
+### Accessibility Rules
+- ALWAYS add aria-label to icon buttons
+- ALWAYS add alt text to images
+- ALWAYS use semantic HTML (button not div)
+- ALWAYS ensure 4.5:1 color contrast ratio
+- ALWAYS support keyboard navigation
+- ALWAYS add focus visible styles
+
+---
+
+## SCALABILITY RULES
+
+### Code Organization
+- ONE component = ONE responsibility
+- NEVER put business logic in UI components
+- ALWAYS extract reusable logic to custom hooks
+- ALWAYS extract API calls to service files
+- ALWAYS use constants for magic numbers/strings
+- NEVER hardcode URLs, use environment variables
+
+### Multi-Restaurant Ready
+- ALWAYS include restaurantId in queries (future SaaS)
+- ALWAYS use dynamic config (no hardcoded restaurant name)
+- ALWAYS store config in database not code
+- Design every feature to work for N restaurants
+
+### Performance Patterns
+- ALWAYS lazy load routes:
+  const Menu = lazy(() => import('./pages/Menu'))
+- ALWAYS memoize expensive components:
+  export default memo(HeavyComponent)
+- ALWAYS debounce search inputs (500ms)
+- ALWAYS use optimistic updates for better UX
+- ALWAYS implement virtual scrolling for long lists
+- ALWAYS cache API responses where appropriate
+
+---
+
+## CODE QUALITY RULES
+
+### Before Writing Any Code
+1. Understand the full requirement
+2. Think about edge cases
+3. Think about error states
+4. Think about security implications
+5. Think about performance impact
+6. Then write the code
+
+### Code Review Checklist
+Before finishing any task check:
+  ✅ All inputs validated (frontend + backend)
+  ✅ Auth checked on protected endpoints
+  ✅ Error handling in try/catch
+  ✅ Loading states handled
+  ✅ Empty states handled
+  ✅ No console.logs with sensitive data
+  ✅ No hardcoded secrets
+  ✅ TypeScript types defined
+  ✅ Mobile responsive
+  ✅ Accessibility basics met
+
+### Naming Conventions
+- Components: PascalCase (MenuItemCard)
+- Functions: camelCase (handleSubmit)
+- Constants: SCREAMING_SNAKE (MAX_RETRIES)
+- Files: kebab-case (menu-item-card.tsx)
+- DB collections: camelCase plural (menuItems)
+- API actions: kebab-case (add-favorite)
+- CSS classes: Tailwind only (no custom CSS)
+
+### TypeScript Rules
+- NEVER use any type
+- ALWAYS define interface for:
+  - Component props
+  - API request bodies
+  - API response shapes
+  - Database documents
+- ALWAYS use enums for fixed values:
+  enum OrderStatus {
+    PENDING = 'pending',
+    CONFIRMED = 'confirmed',
+    PREPARING = 'preparing',
+    READY = 'ready',
+    COMPLETED = 'completed',
+    CANCELLED = 'cancelled'
+  }
+
+---
+
+## TESTING RULES
+
+### Before Marking Anything Complete
+- Test happy path (everything works)
+- Test error path (what if API fails)
+- Test empty state (no data)
+- Test loading state (slow network)
+- Test on mobile (375px width)
+- Test with real data (not just mock)
+
+### Common Edge Cases Always Test
+- Empty strings submitted in forms
+- Very long strings (500+ chars)
+- Special characters in inputs
+- Double clicking submit button
+- Network failure mid-request
+- Token expiry during session
+- Invalid/expired promo codes
+- Out of stock items in cart
+- Zero quantity orders
+
+---
+
+## FORBIDDEN PATTERNS
+
+NEVER do these:
+  ❌ console.log(password) or any sensitive data
+  ❌ process.env.SECRET || 'hardcoded_fallback'
+  ❌ any type in TypeScript
+  ❌ Inline styles (use Tailwind)
+  ❌ Direct DOM manipulation
+  ❌ Nested ternaries more than 2 levels
+  ❌ Functions longer than 50 lines
+  ❌ Files longer than 300 lines (split them)
+  ❌ Copy-paste code (extract to function)
+  ❌ TODO comments in production code
+  ❌ Commented out code blocks
+  ❌ Magic numbers without constants
+  ❌ Hardcoded restaurant name/address/phone
+  ❌ API calls without error handling
+  ❌ useEffect without dependency array
+  ❌ setState in render (infinite loop)
+  ❌ Mutating state directly
+  ❌ Missing key prop in lists

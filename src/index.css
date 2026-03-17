@@ -7,42 +7,39 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 24 85% 55%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 24 94% 56%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 30 30% 96%;
-    --secondary-foreground: 0 0% 10%;
-    --muted: 30 20% 95%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 24 85% 55%;
+    --secondary: 210 40% 98%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 24 94% 56%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 30 15% 90%;
-    --input: 30 15% 90%;
-    --ring: 24 85% 55%;
-    --radius: 0.5rem;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 24 94% 56%;
+    --radius: 0.75rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 24 85% 55%;
+    --sidebar-primary: 24 94% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 30% 96%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 30 15% 90%;
-    --sidebar-ring: 24 85% 55%;
+    --sidebar-accent: 210 40% 98%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 24 94% 56%;
     
     /* Golden Lotus Custom Colors */
-    --lotus-gold: 24 85% 55%;
-    --lotus-gold-dark: 20 80% 48%;
-    --lotus-gold-light: 25 90% 65%;
-    --lotus-cream: 35 50% 97%;
-    --golden_lotus-brown: 25 30% 25%;
-    --golden_lotus-gray: 0 0% 45%;
-    --lotus-dark: 0 0% 15%;
+    --lotus-orange: 24 94% 56%;
+    --lotus-orange-dark: 24 92% 48%;
+    --lotus-orange-light: 32 98% 83%;
+    --lotus-orange-pale: 33 100% 96%;
   }
 }
 
@@ -87,11 +84,12 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-[#e67e22] text-white font-medium rounded-lg transition-all duration-300 hover:bg-[#d35400] hover:shadow-lg text-sm sm:text-base;
+    @apply inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-[#F97316] text-white font-semibold rounded-xl transition-all duration-200 hover:bg-[#EA6C0A] text-sm sm:text-base;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
   }
   
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-[#e67e22] border-2 border-[#e67e22] font-medium rounded-lg transition-all duration-300 hover:bg-[#e67e22] hover:text-white text-sm sm:text-base;
+    @apply inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-transparent text-[#F97316] border-2 border-[#F97316] font-semibold rounded-xl transition-all duration-200 hover:bg-[#FFF7ED] text-sm sm:text-base;
   }
   
   .btn-outline {
@@ -261,12 +259,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e67e22;
+  background: #F97316;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #d35400;
+  background: #EA6C0A;
 }
 
 /* Mobile scrollbar - thinner */

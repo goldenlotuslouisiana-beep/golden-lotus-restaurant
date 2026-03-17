@@ -1,12 +1,22 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Plus, Minus, X, Tag, Flame, Leaf, Sparkles, ChevronRight, Trash2 } from 'lucide-react';
 import type { MenuItem, MenuCategory, Coupon } from '@/types';
 import SEO, { breadcrumbSchema } from '@/components/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CartItem extends MenuItem {
   quantity: number;
+}
+
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(t);
+  }, [value, delayMs]);
+  return debounced;
 }
 
 export default function Menu() {
@@ -16,13 +26,18 @@ export default function Menu() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [activeCategory, setActiveCategory] = useState('Popular');
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebouncedValue(searchQuery, 500);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showAddedToast, setShowAddedToast] = useState<string | null>(null);
+  const cartScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoadError(false);
+      setIsLoading(true);
       try {
         const [menuRes, catRes, couponRes] = await Promise.all([
           fetch('/api/menu?action=items'),
@@ -43,6 +58,7 @@ export default function Menu() {
         }
       } catch (err) {
         console.error('Error loading menu data:', err);
+        setLoadError(true);
       } finally {
         setIsLoading(false);
       }
@@ -55,11 +71,13 @@ export default function Menu() {
       const matchesCategory = activeCategory === 'Popular'
         ? item.popular
         : item.category === activeCategory;
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const q = debouncedSearch.trim().toLowerCase();
+      const matchesSearch = !q ||
+        item.name.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
     });
-  }, [menuItems, activeCategory, searchQuery]);
+  }, [menuItems, activeCategory, debouncedSearch]);
 
   const addToCart = (item: MenuItem) => {
     setCart((prev) => {
@@ -73,6 +91,8 @@ export default function Menu() {
     });
     setShowAddedToast(item.id);
     setTimeout(() => setShowAddedToast(null), 1500);
+    // On mobile, auto-open cart after first add
+    if (cart.length === 0) setIsCartOpen(true);
   };
 
   const removeFromCart = (itemId: string) => {
@@ -108,14 +128,14 @@ export default function Menu() {
         ])}
       />
       
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#F9FAFB]">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col lg:flex-row lg:items-center gap-4">
               {/* Page Title - Mobile */}
               <div className="lg:hidden">
-                <h1 className="text-xl font-bold text-lotus-dark font-serif">Our Menu</h1>
+                <h1 className="text-xl font-bold text-[#111827]">Our Menu</h1>
               </div>
               
               {/* Search */}
@@ -126,7 +146,7 @@ export default function Menu() {
                   placeholder="Search dishes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-lotus-gold/50 transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-[#F3F4F6] border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/15 focus:border-[#F97316] focus:bg-white transition-all text-[16px]"
                 />
               </div>
 
@@ -135,7 +155,8 @@ export default function Menu() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsCartOpen(true)}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-lotus-gold to-orange-500 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-[#F97316] hover:bg-[#EA6C0A] text-white rounded-xl font-semibold transition-all"
+                style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
               >
                 <ShoppingBag className="w-5 h-5" />
                 <span>Cart ({cartCount})</span>
@@ -180,8 +201,8 @@ export default function Menu() {
               exit={{ opacity: 0, height: 0 }}
               className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
             >
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-lotus-dark">
-                <Tag className="w-5 h-5 text-lotus-gold" />
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-[#111827]">
+                <Tag className="w-5 h-5 text-[#F97316]" />
                 Special Offers
               </h3>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -189,10 +210,10 @@ export default function Menu() {
                   <motion.div
                     key={coupon.id}
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4"
+                    className="bg-[#FFF7ED] border border-[#FED7AA] rounded-2xl p-4"
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="px-3 py-1 bg-gradient-to-r from-lotus-gold to-orange-500 text-white text-xs font-bold rounded-full">
+                      <span className="px-3 py-1 bg-[#F97316] text-white text-xs font-bold rounded-full">
                         {coupon.code}
                       </span>
                     </div>
@@ -207,17 +228,33 @@ export default function Menu() {
         {/* Menu Items */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-lotus-dark font-serif">{activeCategory}</h2>
+            <div>
+              <p className="text-xs font-semibold tracking-[0.1em] uppercase text-[#F97316]">Menu</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#111827]">{activeCategory}</h2>
+            </div>
             <span className="text-sm text-gray-500">{filteredItems.length} items</span>
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lotus-gold"></div>
+            <MenuGridSkeleton />
+          ) : loadError ? (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-[#F3F4F6] mx-auto flex items-center justify-center mb-4">
+                <X className="w-6 h-6 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#111827]">Something went wrong. Please try again.</h3>
+              <p className="text-sm text-gray-500 mt-1">We couldn’t load the menu right now.</p>
+              <button
+                className="mt-6 px-6 py-3 rounded-xl bg-[#F97316] hover:bg-[#EA6C0A] text-white font-semibold transition-all"
+                style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </button>
             </div>
           ) : (
             <>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 <AnimatePresence mode="popLayout">
                   {filteredItems.map((item) => (
                     <motion.div
@@ -247,8 +284,14 @@ export default function Menu() {
                   <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Search className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="text-gray-500 text-lg">No items found</p>
-                  <p className="text-gray-400 text-sm mt-1">Try adjusting your search or category</p>
+                  <p className="text-gray-900 text-lg font-semibold">No items found</p>
+                  <p className="text-gray-500 text-sm mt-1">Try a different search or category.</p>
+                  <button
+                    onClick={() => { setSearchQuery(''); setActiveCategory('Popular'); }}
+                    className="mt-6 px-6 py-3 rounded-xl border-2 border-[#F97316] text-[#F97316] font-semibold hover:bg-[#FFF7ED] transition-colors"
+                  >
+                    Browse Popular
+                  </button>
                 </motion.div>
               )}
             </>
@@ -267,17 +310,17 @@ export default function Menu() {
                 onClick={() => setIsCartOpen(false)}
               />
               <motion.div
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 30, opacity: 0 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl"
+                className="absolute bottom-0 left-0 right-0 sm:right-0 sm:top-0 sm:bottom-0 sm:left-auto w-full sm:max-w-md bg-white shadow-2xl rounded-t-3xl sm:rounded-none overflow-hidden"
               >
                 <div className="flex flex-col h-full">
                   {/* Cart Header */}
                   <div className="flex items-center justify-between p-5 border-b">
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-lotus-dark">
-                      <ShoppingBag className="w-6 h-6 text-lotus-gold" />
+                    <h2 className="text-xl font-bold flex items-center gap-2 text-[#111827]">
+                      <ShoppingBag className="w-6 h-6 text-[#F97316]" />
                       Your Cart
                       <span className="text-sm font-normal text-gray-500">({cartCount} items)</span>
                     </h2>
@@ -294,6 +337,7 @@ export default function Menu() {
                       <button
                         onClick={() => setIsCartOpen(false)}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        aria-label="Close cart"
                       >
                         <X className="w-6 h-6" />
                       </button>
@@ -301,7 +345,7 @@ export default function Menu() {
                   </div>
 
                   {/* Cart Items */}
-                  <div className="flex-1 overflow-y-auto p-5">
+                  <div ref={cartScrollRef} className="flex-1 overflow-y-auto p-5">
                     {cart.length === 0 ? (
                       <div className="text-center py-16">
                         <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -311,7 +355,7 @@ export default function Menu() {
                         <p className="text-gray-400 text-sm mb-6">Add some delicious items from our menu</p>
                         <button
                           onClick={() => setIsCartOpen(false)}
-                          className="text-lotus-gold font-medium hover:underline"
+                          className="text-[#F97316] font-semibold hover:underline"
                         >
                           Continue Shopping
                         </button>
@@ -325,33 +369,39 @@ export default function Menu() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="flex gap-4 bg-gray-50 rounded-xl p-4"
+                            className="flex gap-4 bg-[#F9FAFB] rounded-2xl p-4 border border-[#F3F4F6]"
                           >
                             <img
                               src={item.image}
                               alt={item.name}
-                              className="w-20 h-20 object-cover rounded-lg"
+                              className="w-20 h-20 object-cover rounded-xl"
+                              loading="lazy"
+                              width={80}
+                              height={80}
                             />
                             <div className="flex-1">
-                              <h4 className="font-semibold text-lotus-dark line-clamp-1">{item.name}</h4>
-                              <p className="text-lotus-gold font-bold">${(item.price * item.quantity).toFixed(2)}</p>
+                              <h4 className="font-semibold text-[#111827] line-clamp-1">{item.name}</h4>
+                              <p className="text-[#F97316] font-bold">${(item.price * item.quantity).toFixed(2)}</p>
                               <div className="flex items-center gap-2 mt-2">
                                 <button
                                   onClick={() => updateQuantity(item.id, -1)}
-                                  className="w-8 h-8 bg-white border rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                  className="w-9 h-9 bg-white border border-[#E5E7EB] rounded-xl flex items-center justify-center hover:bg-[#F3F4F6] transition-colors"
+                                  aria-label={`Decrease ${item.name}`}
                                 >
                                   <Minus className="w-4 h-4" />
                                 </button>
                                 <span className="w-8 text-center font-medium">{item.quantity}</span>
                                 <button
                                   onClick={() => updateQuantity(item.id, 1)}
-                                  className="w-8 h-8 bg-white border rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                  className="w-9 h-9 bg-white border border-[#E5E7EB] rounded-xl flex items-center justify-center hover:bg-[#F3F4F6] transition-colors"
+                                  aria-label={`Increase ${item.name}`}
                                 >
                                   <Plus className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => removeFromCart(item.id)}
                                   className="ml-auto text-gray-400 hover:text-red-500 p-1"
+                                  aria-label={`Remove ${item.name}`}
                                 >
                                   <X className="w-5 h-5" />
                                 </button>
@@ -368,7 +418,7 @@ export default function Menu() {
                     <div className="border-t p-5 space-y-4 bg-white">
                       <div className="flex justify-between text-lg font-bold">
                         <span className="text-gray-600">Subtotal</span>
-                        <span className="text-lotus-dark">${cartTotal.toFixed(2)}</span>
+                        <span className="text-[#111827]">${cartTotal.toFixed(2)}</span>
                       </div>
                       <p className="text-sm text-gray-500">Taxes and fees calculated at checkout</p>
                       <motion.button
@@ -383,7 +433,8 @@ export default function Menu() {
                             },
                           });
                         }}
-                        className="w-full py-4 bg-gradient-to-r from-lotus-gold to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all"
+                        className="w-full py-4 bg-[#F97316] hover:bg-[#EA6C0A] text-white font-bold rounded-xl transition-all"
+                        style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
                       >
                         Proceed to Checkout
                         <ChevronRight className="w-5 h-5 inline ml-2" />
@@ -417,9 +468,10 @@ function CategoryPill({
       onClick={onClick}
       className={`flex items-center gap-2 flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
         active
-          ? 'bg-gradient-to-r from-lotus-gold to-orange-500 text-white shadow-lg shadow-orange-500/25'
-          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          ? 'bg-[#F97316] text-white'
+          : 'bg-[#F3F4F6] text-[#374151] hover:bg-[#E5E7EB]'
       }`}
+      style={active ? { boxShadow: '0 4px 14px rgba(249,115,22,0.4)' } : undefined}
     >
       {icon}
       {children}
@@ -438,19 +490,22 @@ function MenuCard({
   showToast: boolean;
 }) {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100">
-      <div className="aspect-square relative overflow-hidden">
+    <div className="relative bg-white rounded-2xl overflow-hidden border border-[#F3F4F6] shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-all duration-300 group">
+      <div className="relative overflow-hidden" style={{ height: 200 }}>
         <img
           src={item.image}
           alt={item.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400"
+          loading="lazy"
+          width={400}
+          height={200}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           {item.popular && (
-            <span className="px-3 py-1 bg-gradient-to-r from-lotus-gold to-orange-500 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
+            <span className="px-3 py-1 bg-[#F97316] text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
               <Flame className="w-3 h-3" /> Popular
             </span>
           )}
@@ -458,40 +513,28 @@ function MenuCard({
         
         <div className="absolute top-3 right-3 flex flex-col gap-2">
           {item.isVegetarian && (
-            <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
+            <span className="px-3 py-1 bg-[#16A34A] text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
               <Leaf className="w-3 h-3" /> Veg
             </span>
           )}
         </div>
-
-        {/* Quick Add Button - Shows on Hover */}
-        <motion.button
-          initial={{ opacity: 0, y: 20 }}
-          whileHover={{ scale: 1.05 }}
-          className="absolute bottom-4 left-4 right-4 py-3 bg-white text-lotus-dark font-semibold rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-lotus-gold hover:text-white flex items-center justify-center gap-2"
-          onClick={(e) => {
-            e.preventDefault();
-            onAdd();
-          }}
-        >
-          <Plus className="w-5 h-5" /> Add to Cart
-        </motion.button>
       </div>
 
       <div className="p-5">
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="font-bold text-lotus-dark line-clamp-1 text-lg">{item.name}</h3>
+          <h3 className="line-clamp-1 text-[18px] font-semibold text-[#111827]">{item.name}</h3>
         </div>
-        <p className="text-sm text-gray-500 mb-4 line-clamp-2 leading-relaxed">{item.description}</p>
+        <p className="text-[14px] text-[#6B7280] mb-4 line-clamp-2 leading-relaxed">{item.description}</p>
         <div className="flex items-center justify-between">
-          <span className="text-xl font-bold text-lotus-gold">
+          <span className="text-[20px] font-bold text-[#F97316]">
             ${item.price.toFixed(2)}
           </span>
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onAdd}
-            className="w-10 h-10 bg-gray-100 text-lotus-dark rounded-full flex items-center justify-center hover:bg-lotus-gold hover:text-white transition-colors"
+            className="w-10 h-10 bg-[#F97316] text-white rounded-full flex items-center justify-center hover:bg-[#EA6C0A] transition-colors"
+            aria-label={`Add ${item.name}`}
           >
             <Plus className="w-5 h-5" />
           </motion.button>
@@ -505,12 +548,33 @@ function MenuCard({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute bottom-4 left-4 right-4 py-3 bg-green-500 text-white text-center rounded-xl font-medium shadow-lg z-10"
+            className="absolute bottom-4 left-4 right-4 py-3 bg-[#16A34A] text-white text-center rounded-xl font-medium shadow-lg z-10"
           >
             Added to cart! ✓
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function MenuGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {Array.from({ length: 8 }).map((_, idx) => (
+        <div key={idx} className="bg-white rounded-2xl border border-[#F3F4F6] overflow-hidden">
+          <Skeleton className="w-full" style={{ height: 200 }} />
+          <div className="p-5 space-y-3">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <div className="flex items-center justify-between pt-2">
+              <Skeleton className="h-6 w-20" />
+              <Skeleton className="h-10 w-10 rounded-full" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -4,7 +4,10 @@ import { ObjectId } from 'mongodb';
 import jwt from 'jsonwebtoken';
 
 const DB_NAME = 'goldenlotus';
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const action = req.query.action as string || req.body?.action;
@@ -27,9 +30,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     try {
-        console.log('=== CREATE ORDER START ===')
-        console.log('Body received:', JSON.stringify(req.body, null, 2))
-        
         const {
             items,
             customerName,
@@ -47,13 +47,6 @@ async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
             cardLast4
         } = req.body
         
-        // Log each field
-        console.log('items:', items)
-        console.log('customerName:', customerName)
-        console.log('customerEmail:', customerEmail)
-        console.log('paymentMethod:', paymentMethod)
-        console.log('total:', total)
-        
         // Validate required fields
         if (!items || !items.length) {
             return res.status(400).json({ error: 'No items in order' })
@@ -69,15 +62,11 @@ async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
         }
         
         const client = await clientPromise
-        console.log('MongoDB connected ✓')
-        
         const db = client.db(DB_NAME)
         
         // Get next order number
         const lastOrder = await db.collection('orders')
             .findOne({}, { sort: { createdAt: -1 } })
-        
-        console.log('Last order:', lastOrder?.orderNumber)
         
         // Generate order number
         let orderNum = 1
@@ -89,7 +78,6 @@ async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
         }
         
         const orderNumber = `GL-${String(orderNum).padStart(5, '0')}`
-        console.log('New order number:', orderNumber)
         
         // Get userId from token if logged in
         let userId = null
@@ -99,9 +87,8 @@ async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
                 const token = authHeader.replace('Bearer ', '')
                 const decoded = jwt.verify(token, JWT_SECRET) as any
                 userId = decoded.userId || decoded.id || decoded._id
-                console.log('UserId from token:', userId)
             } catch {
-                console.log('No valid token - guest order')
+                // guest order
             }
         }
         
@@ -139,10 +126,7 @@ async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
             updatedAt: new Date().toISOString()
         }
         
-        console.log('Order object built ✓')
-        
         const result = await db.collection('orders').insertOne(newOrder)
-        console.log('Order inserted:', result.insertedId)
         
         // Award loyalty points if user logged in
         if (userId) {
@@ -163,13 +147,10 @@ async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
                         }
                     } as any
                 )
-                console.log('Loyalty points awarded:', points)
             } catch (loyaltyError) {
                 console.error('Loyalty points error (non-critical):', loyaltyError)
             }
         }
-        
-        console.log('=== CREATE ORDER SUCCESS ===')
         
         return res.status(201).json({
             success: true,
@@ -180,16 +161,11 @@ async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
             message: 'Order created successfully'
         })
         
-    } catch (error: any) {
-        console.error('=== CREATE ORDER FAILED ===')
-        console.error('Error name:', error.name)
-        console.error('Error message:', error.message)
-        console.error('Error stack:', error.stack)
-        
-        return res.status(500).json({ 
+    } catch (error: unknown) {
+        console.error('Create order error:', error);
+        return res.status(500).json({
             error: 'Failed to create order',
-            details: error.message,
-        })
+        });
     }
 }
 
@@ -248,9 +224,9 @@ async function handleGetHistory(req: VercelRequest, res: VercelResponse) {
 
         return res.status(200).json({ orders: serialized, count: serialized.length });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Order history error:', error);
-        return res.status(500).json({ error: 'Failed to fetch orders', details: error.message });
+        return res.status(500).json({ error: 'Failed to fetch orders' });
     }
 }
 

@@ -5,7 +5,10 @@ import { ObjectId } from 'mongodb';
 import nodemailer from 'nodemailer';
 
 const DB = 'goldenlotus';
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function getAdminId(req: VercelRequest): string | null {
     const auth = req.headers.authorization;
@@ -23,6 +26,28 @@ function getAdminId(req: VercelRequest): string | null {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const action = req.query.action as string || req.body?.action;
     if (!action) return res.status(400).json({ error: 'Missing action parameter' });
+
+    // Admin auth gate for protected actions
+    const protectedActions = new Set([
+        'dashboard-stats', 'orders', 'users', 'user-detail',
+        'block-user', 'reviews', 'review-status', 'promos',
+        'add-promo', 'edit-promo', 'delete-promo',
+        'loyalty-settings', 'loyalty-adjust', 'loyalty-leaderboard',
+        'riders', 'zones', 'order-status', 'send-email',
+        'save-locations', 'save-testimonials', 'save-gallery',
+        'save-features', 'save-faqs', 'save-menu-categories',
+        'save-site-content', 'save-events', 'save-event-packages',
+        'save-catering-packages', 'save-catering-inquiries',
+    ]);
+
+    if (protectedActions.has(action)) {
+        const adminId = getAdminId(req);
+        if (!adminId) {
+            return res.status(401).json({
+                error: 'Unauthorized. Admin access required.'
+            });
+        }
+    }
 
     // Global db catch here but handled per isolated function as user requested
     switch (action) {

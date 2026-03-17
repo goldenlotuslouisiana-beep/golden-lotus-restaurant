@@ -2,10 +2,15 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 import clientPromise from '../src/lib/db.js';
 
 const DB_NAME = 'goldenlotus';
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '';
 
 const oauthClient = new OAuth2Client(GOOGLE_CLIENT_ID);
@@ -22,12 +27,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // DEBUG - log everything coming in
-  console.log('METHOD:', req.method);
-  console.log('QUERY:', req.query);
-  console.log('BODY:', req.body);
-  console.log('HEADERS:', req.headers['content-type']);
-
   // Parse body if it's a string
   let body = req.body;
   if (typeof body === 'string') {
@@ -42,16 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const action = req.query.action as string || body?.action || body?.type;
 
-  console.log('Received action:', action);
-  console.log('Received body:', body);
-
   if (!action) {
-    return res.status(400).json({ 
-      error: 'No action provided',
-      receivedQuery: req.query,
-      receivedBody: req.body,
-      tip: 'Send action in body or query string'
-    });
+    return res.status(400).json({ error: 'No action provided' });
   }
 
   // Set the parsed body onto req so handles can read it
@@ -122,9 +113,11 @@ async function handleAdminLogin(req: VercelRequest, res: VercelResponse) {
 
     const user = await users.findOne({ email });
 
-    // Fallback for default admin
-    const adminEmail = process.env.VITE_ADMIN_EMAIL || 'admin@goldenlotus.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    if (!process.env.VITE_ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+      return res.status(500).json({ error: 'Admin credentials not configured' });
+    }
+    const adminEmail = process.env.VITE_ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
     const isDefaultAdmin = email === adminEmail && password === adminPassword;
 
     if (!user && !isDefaultAdmin) return res.status(401).json({ error: 'Invalid credentials' });
@@ -286,11 +279,101 @@ async function handleGoogle(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleForgotPassword(req: VercelRequest, res: VercelResponse) {
-  // Placeholder for forgotten password logic
-  return res.status(501).json({ error: 'Not implemented yet' });
+  try {
+    const { email } = req.body as { email?: string };
+    const normalizedEmail = (email || '').trim().toLowerCase();
+
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ error: 'Valid email required', field: 'email' });
+    }
+
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+    const users = db.collection('users');
+
+    const user = await users.findOne({ email: normalizedEmail });
+
+    // Always return success to avoid leaking which emails exist
+    if (!user) {
+      return res.status(200).json({ success: true, message: 'Check your email' });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const resetTokenExpiry = Date.now() + 60 * 60 * 1000; // 1 hour
+
+    await users.updateOne(
+      { _id: user._id },
+      { $set: { resetToken: hashedToken, resetTokenExpiry } }
+    );
+
+    const gmailUser = process.env.GMAIL_USER;
+    const gmailPass = process.env.GMAIL_APP_PASSWORD;
+    if (!gmailUser || !gmailPass) {
+      // Still return success; password reset email can't be sent without SMTP configured
+      return res.status(200).json({ success: true, message: 'Check your email' });
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: gmailUser, pass: gmailPass },
+    });
+
+    const resetLink = `/reset-password?token=${resetToken}`;
+
+    await transporter.sendMail({
+      from: `"Golden Lotus" <${gmailUser}>`,
+      to: normalizedEmail,
+      subject: 'Reset your Golden Lotus password',
+      text: `You requested a password reset.\n\nReset your password here:\n${resetLink}\n\nThis link expires in 1 hour.\nIf you didn't request this, you can ignore this email.`,
+    });
+
+    return res.status(200).json({ success: true, message: 'Check your email' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    // Always return success for security
+    return res.status(200).json({ success: true, message: 'Check your email' });
+  }
 }
 
 async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
-  // Placeholder for reset password logic
-  return res.status(501).json({ error: 'Not implemented yet' });
+  try {
+    const { token, newPassword } = req.body as { token?: string; newPassword?: string };
+
+    if (!token || typeof token !== 'string' || token.trim().length < 10) {
+      return res.status(400).json({ error: 'Reset token is required', field: 'token' });
+    }
+
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters', field: 'newPassword' });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+    const users = db.collection('users');
+
+    const user = await users.findOne({ resetToken: hashedToken });
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+
+    const expiry = typeof (user as any).resetTokenExpiry === 'number' ? (user as any).resetTokenExpiry : 0;
+    if (!expiry || Date.now() > expiry) {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    await users.updateOne(
+      { _id: user._id },
+      { $set: { password: hashedPassword }, $unset: { resetToken: '', resetTokenExpiry: '' } }
+    );
+
+    return res.status(200).json({ success: true, message: 'Password updated' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 }

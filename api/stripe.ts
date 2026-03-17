@@ -8,15 +8,13 @@ import clientPromise from '../src/lib/db.js';
 // - Success: 4242 4242 4242 4242
 // - Decline: 4000 0000 0000 0002
 // - Any future expiry date, any 3-digit CVC, any ZIP
-const stripeKey = process.env.STRIPE_SECRET_KEY;
-
-if (!stripeKey) {
-    console.warn('STRIPE_SECRET_KEY not set. Stripe payments will not work.');
+function getStripe() {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) return null;
+    return new Stripe(stripeKey, {
+        apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
+    });
 }
-
-const stripe = new Stripe(stripeKey || 'sk_test_placeholder', {
-    apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
-});
 
 const DB_NAME = 'goldenlotus';
 
@@ -53,21 +51,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    const stripe = getStripe();
+    if (!stripe) {
+        return res.status(500).json({
+            error: 'Payment system not configured'
+        });
+    }
+
     const action = req.query.action as string || (await parseJsonBody(req)).action;
 
     switch (action) {
         case 'create-payment-intent':
-            return handleCreatePaymentIntent(req, res);
+            return handleCreatePaymentIntent(req, res, stripe);
         case 'webhook':
-            return handleWebhook(req, res);
+            return handleWebhook(req, res, stripe);
         case 'refund':
-            return handleRefund(req, res);
+            return handleRefund(req, res, stripe);
         default:
             return res.status(400).json({ error: 'Invalid action' });
     }
 }
 
-async function handleCreatePaymentIntent(req: VercelRequest, res: VercelResponse) {
+async function handleCreatePaymentIntent(req: VercelRequest, res: VercelResponse, stripe: Stripe) {
     try {
         const body = await parseJsonBody(req);
         const { items, deliveryFee = 0, discount = 0 } = body;
@@ -123,7 +128,7 @@ async function handleCreatePaymentIntent(req: VercelRequest, res: VercelResponse
     }
 }
 
-async function handleWebhook(req: VercelRequest, res: VercelResponse) {
+async function handleWebhook(req: VercelRequest, res: VercelResponse, stripe: Stripe) {
     const sig = req.headers['stripe-signature'] as string;
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -162,7 +167,6 @@ async function handleWebhook(req: VercelRequest, res: VercelResponse) {
                         },
                     }
                 );
-                console.log(`Payment succeeded for PI: ${paymentIntent.id}`);
                 break;
             }
 
@@ -178,7 +182,6 @@ async function handleWebhook(req: VercelRequest, res: VercelResponse) {
                         },
                     }
                 );
-                console.log(`Payment failed for PI: ${paymentIntent.id}`);
                 break;
             }
 
@@ -193,12 +196,11 @@ async function handleWebhook(req: VercelRequest, res: VercelResponse) {
                         },
                     }
                 );
-                console.log(`Charge refunded: ${charge.id}`);
                 break;
             }
 
             default:
-                console.log(`Unhandled event type: ${event.type}`);
+                break;
         }
 
         return res.status(200).json({ received: true });
@@ -208,7 +210,7 @@ async function handleWebhook(req: VercelRequest, res: VercelResponse) {
     }
 }
 
-async function handleRefund(req: VercelRequest, res: VercelResponse) {
+async function handleRefund(req: VercelRequest, res: VercelResponse, stripe: Stripe) {
     try {
         const body = await parseJsonBody(req);
         const { paymentIntentId, amount } = body;

@@ -4,7 +4,10 @@ import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 
 const DB_NAME = 'goldenlotus';
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function getUserId(req: VercelRequest): string | null {
     const auth = req.headers.authorization;
@@ -38,10 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const action = (req.query.action as string) || body?.action;
 
     if (!action) {
-        return res.status(400).json({ 
-            error: 'action required',
-            received: { query: req.query, body }
-        });
+        return res.status(400).json({ error: 'action required' });
     }
 
     switch (action) {
