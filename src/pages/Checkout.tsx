@@ -214,7 +214,7 @@ function CheckoutInner() {
                 <div className="grid lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-6">
                         {/* STEP 1 */}
-                        {step === 1 && (
+                        <div className={step === 1 ? 'block' : 'hidden'}>
                             <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-gray-100">
                                 <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
                                     <h3 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -241,20 +241,20 @@ function CheckoutInner() {
                                 <div className="pt-2 border-t space-y-3">
                                     <label className="block text-sm font-medium text-gray-700">When do you want it?</label>
                                     <div className="flex gap-3">
-                                        <button onClick={() => setScheduleType('asap')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'asap' ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500'}`}><Clock className="w-4 h-4" /> ASAP — Ready in 15-20 min</button>
-                                        <button onClick={() => setScheduleType('schedule')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'schedule' ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500'}`}><Clock className="w-4 h-4" /> Schedule</button>
+                                        <button type="button" onClick={() => setScheduleType('asap')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'asap' ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500'}`}><Clock className="w-4 h-4" /> ASAP — Ready in 15-20 min</button>
+                                        <button type="button" onClick={() => setScheduleType('schedule')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 flex items-center justify-center gap-2 transition-all ${scheduleType === 'schedule' ? 'border-[#F97316] bg-[#F97316]/5 text-[#F97316]' : 'border-gray-200 text-gray-500'}`}><Clock className="w-4 h-4" /> Schedule</button>
                                     </div>
                                     {scheduleType === 'schedule' && <input type="datetime-local" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className={inputNoCls} />}
                                 </div>
 
-                                <button onClick={() => setStep(2)} disabled={!isStep1Valid} className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                <button type="button" onClick={() => setStep(2)} disabled={!isStep1Valid} className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                                     Continue to Payment <ArrowRight className="w-5 h-5" />
                                 </button>
                             </div>
-                        )}
+                        </div>
 
                         {/* STEP 2 */}
-                        {step === 2 && (
+                        <div className={step === 2 ? 'block' : 'hidden'}>
                             <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-gray-100">
                                 <h2 className="text-xl font-bold text-gray-900">Payment Method</h2>
                                 {[
@@ -263,7 +263,7 @@ function CheckoutInner() {
                                     { key: 'paypal' as const, icon: <span className="text-lg">🅿️</span>, label: 'PayPal', sub: "You'll be redirected to PayPal to complete payment" },
                                 ].map((pm) => (
                                     <div key={pm.key}>
-                                        <button onClick={() => setPaymentMethod(pm.key)} className={`w-full text-left p-4 rounded-xl border-2 transition-all ${paymentMethod === pm.key ? 'border-[#F97316] bg-[#F97316]/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                                        <button type="button" onClick={() => setPaymentMethod(pm.key)} className={`w-full text-left p-4 rounded-xl border-2 transition-all ${paymentMethod === pm.key ? 'border-[#F97316] bg-[#F97316]/5' : 'border-gray-200 hover:border-gray-300'}`}>
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === pm.key ? 'border-[#F97316]' : 'border-gray-300'}`}>
                                                     {paymentMethod === pm.key && <div className="w-2.5 h-2.5 rounded-full bg-[#F97316]" />}
@@ -272,8 +272,10 @@ function CheckoutInner() {
                                             </div>
                                             {paymentMethod === pm.key && pm.sub && <p className="text-sm text-gray-500 mt-2 ml-8">{pm.sub}</p>}
                                         </button>
-                                        {pm.key === 'card' && paymentMethod === 'card' && (
-                                            <div className="ml-4 mr-2"><CardForm name={cardName} setName={setCardName} error={cardError} setError={setCardError} /></div>
+                                        {pm.key === 'card' && (
+                                            <div className={`ml-4 mr-2 ${paymentMethod === 'card' ? 'block' : 'hidden'}`}>
+                                                <CardForm name={cardName} setName={setCardName} error={cardError} setError={setCardError} />
+                                            </div>
                                         )}
                                     </div>
                                 ))}
@@ -287,23 +289,23 @@ function CheckoutInner() {
                                             <input value={promoCode} onChange={(e) => setPromoCode(e.target.value)} placeholder="Enter code" className={inputCls} disabled={!!appliedPromo} />
                                         </div>
                                         {appliedPromo ? (
-                                            <button onClick={() => { setAppliedPromo(null); setPromoCode(''); }} className="px-4 py-3 border border-red-200 text-red-500 rounded-xl hover:bg-red-50 transition-all font-medium text-sm">Remove</button>
+                                            <button type="button" onClick={() => { setAppliedPromo(null); setPromoCode(''); }} className="px-4 py-3 border border-red-200 text-red-500 rounded-xl hover:bg-red-50 transition-all font-medium text-sm">Remove</button>
                                         ) : (
-                                            <button onClick={applyPromo} className="px-6 py-3 bg-[#F97316] text-white rounded-xl hover:bg-[#ea6c10] transition-all font-medium text-sm">Apply</button>
+                                            <button type="button" onClick={applyPromo} className="px-6 py-3 bg-[#F97316] text-white rounded-xl hover:bg-[#ea6c10] transition-all font-medium text-sm">Apply</button>
                                         )}
                                     </div>
                                     {promoError && <p className="text-red-500 text-sm mt-1">{promoError}</p>}
                                     {appliedPromo && <p className="text-green-600 text-sm mt-1 flex items-center gap-1"><Check className="w-4 h-4" /> {appliedPromo.label}</p>}
                                 </div>
 
-                                <button onClick={() => setStep(3)} className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all flex items-center justify-center gap-2">
+                                <button type="button" onClick={() => setStep(3)} className="w-full py-3.5 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-200 transition-all flex items-center justify-center gap-2">
                                     Review Order <ArrowRight className="w-5 h-5" />
                                 </button>
                             </div>
-                        )}
+                        </div>
 
                         {/* STEP 3 */}
-                        {step === 3 && (
+                        <div className={step === 3 ? 'block' : 'hidden'}>
                             <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-gray-100">
                                 <h2 className="text-xl font-bold text-gray-900">Review Your Order</h2>
                                 <div className="bg-gray-50 rounded-xl p-4 space-y-1">
@@ -330,11 +332,11 @@ function CheckoutInner() {
                                     Payment: {paymentMethod === 'cash' ? '💵 Cash on Delivery' : paymentMethod === 'card' ? '💳 Credit Card' : '🅿️ PayPal'}
                                 </div>
                                 {generalError && <div className="bg-red-50 border border-red-200 rounded-xl p-3"><p className="text-red-600 text-sm">{generalError}</p></div>}
-                                <button onClick={placeOrder} disabled={isProcessing} className="w-full py-4 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-bold rounded-xl hover:shadow-xl hover:shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg">
+                                <button type="button" onClick={placeOrder} disabled={isProcessing} className="w-full py-4 bg-gradient-to-r from-[#F97316] to-[#ea6c10] text-white font-bold rounded-xl hover:shadow-xl hover:shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg">
                                     {isProcessing ? <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</> : <><ShoppingBag className="w-5 h-5" /> Place Order — ${total.toFixed(2)}</>}
                                 </button>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* SIDEBAR */}
