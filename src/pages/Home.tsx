@@ -72,7 +72,6 @@ const DEFAULT: HomepageContent = {
       { number: '14', suffix: '+', label: 'Years serving' },
       { number: '80', suffix: '+', label: 'Menu items' },
       { number: '4.9', suffix: '', label: 'Guest rating' },
-      { number: '3k', suffix: '+', label: 'Happy guests' },
     ],
     floatingCard: { label: "Chef's Signature", dishName: 'Butter Chicken', subtitle: 'Most ordered dish', rating: '5.0 · 248 reviews' },
     estYear: '2010',
@@ -180,8 +179,9 @@ const HOME_CSS = `
   .hl-cta-b1:hover { background: #B8853A !important; box-shadow: 0 8px 24px rgba(184,133,58,0.35) !important; transform: translateY(-2px); }
   .hl-cta-b2:hover { border-color: #B8853A !important; color: #B8853A !important; }
   .hl-see-all:hover { gap: 10px !important; }
-  .hl-food-ring { animation: hl-float 4s ease-in-out infinite; }
-  @keyframes hl-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  @keyframes float1 { 0%,100% { transform: translate(-50%,-50%) translateY(0px); } 50% { transform: translate(-50%,-50%) translateY(-14px); } }
+  @keyframes float2 { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+  @keyframes float3 { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } }
   .hl-ticker-track { display: flex; animation: hl-ticker 26s linear infinite; white-space: nowrap; }
   @keyframes hl-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @media (max-width: 1024px) {
@@ -287,37 +287,43 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right dark panel */}
-          <div className="hl-hero-r" style={{ position: 'relative', background: '#1E1810', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 60% 35%,rgba(184,133,58,0.20) 0%,transparent 60%),radial-gradient(ellipse at 20% 75%,rgba(184,133,58,0.08) 0%,transparent 50%),linear-gradient(160deg,#0F0C08 0%,#2A1C0A 100%)' }} />
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div className="hl-food-ring" style={{ width: 320, height: 320, borderRadius: '50%', border: '1px solid rgba(184,133,58,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 140, filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.6))' }}>🍛</span>
-              </div>
+          {/* Right cream panel */}
+          <div className="hl-hero-r" style={{ position: 'relative', background: '#F9F4EC', overflow: 'hidden' }}>
+            {/* Decorative gold circles */}
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 340, height: 340, borderRadius: '50%', border: '1px solid rgba(184,133,58,0.15)', pointerEvents: 'none', zIndex: 1 }} />
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 420, height: 420, borderRadius: '50%', border: '1px dashed rgba(184,133,58,0.08)', pointerEvents: 'none', zIndex: 1 }} />
+            {/* Main center image */}
+            <img
+              src="https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500"
+              alt="Butter Chicken"
+              style={{ position: 'absolute', top: '50%', left: '50%', width: 280, height: 280, borderRadius: '50%', objectFit: 'cover', border: '4px solid white', boxShadow: '0 20px 60px rgba(15,12,8,0.18)', zIndex: 2, animation: 'float1 4s ease-in-out infinite' }}
+              loading="eager"
+            />
+            {/* Top right image */}
+            <img
+              src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500"
+              alt="Lamb Biryani"
+              style={{ position: 'absolute', top: '12%', right: '8%', width: 155, height: 155, borderRadius: '50%', objectFit: 'cover', border: '3px solid white', boxShadow: '0 12px 40px rgba(15,12,8,0.14)', zIndex: 2, animation: 'float2 5s ease-in-out 1s infinite' }}
+              loading="eager"
+            />
+            {/* Bottom left image */}
+            <img
+              src="https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500"
+              alt="Chicken Karahi"
+              style={{ position: 'absolute', bottom: '12%', left: '8%', width: 185, height: 185, borderRadius: '50%', objectFit: 'cover', border: '3px solid white', boxShadow: '0 16px 48px rgba(15,12,8,0.14)', zIndex: 2, animation: 'float3 6s ease-in-out 2s infinite' }}
+              loading="eager"
+            />
+            {/* Est. badge — light */}
+            <div style={{ position: 'absolute', top: 36, right: 28, zIndex: 10, background: 'white', border: '1px solid #DDD0BB', borderRadius: '50%', width: 80, height: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 28px rgba(15,12,8,0.08)' }}>
+              <span style={{ fontSize: '7.5px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9E8870', fontWeight: 500 }}>Est.</span>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 700, color: '#0F0C08', lineHeight: 1 }}>{hc.hero.estYear}</span>
             </div>
-            {/* Chef's signature card */}
-            <div style={{ position: 'absolute', bottom: 44, left: -20, zIndex: 10, background: 'white', borderRadius: 14, padding: '14px 18px', boxShadow: '0 16px 48px rgba(0,0,0,0.18)', minWidth: 190 }}>
-              <div style={{ fontSize: '9.5px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9E8870', marginBottom: 4, fontWeight: 500 }}>{hc.hero.floatingCard.label}</div>
-              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: 600, color: '#0F0C08' }}>{hc.hero.floatingCard.dishName}</div>
-              <div style={{ fontSize: 11, color: '#9E8870', marginTop: 1 }}>{hc.hero.floatingCard.subtitle}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 8 }}>
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} style={{ width: 10, height: 10, background: '#C9963F', flexShrink: 0, display: 'inline-block', clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)' }} />
-                ))}
-                <span style={{ fontSize: 11, color: '#9E8870', fontWeight: 500, marginLeft: 2 }}>{hc.hero.floatingCard.rating}</span>
-              </div>
-            </div>
-            {/* Est. badge */}
-            <div style={{ position: 'absolute', top: 36, right: 28, zIndex: 10, background: '#B8853A', borderRadius: '50%', width: 80, height: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 28px rgba(184,133,58,0.5)' }}>
-              <span style={{ fontSize: '7.5px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>Est.</span>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 700, color: 'white', lineHeight: 1 }}>{hc.hero.estYear}</span>
-            </div>
-            {/* Speed badge */}
-            <div style={{ position: 'absolute', top: '42%', right: 22, zIndex: 10, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '11px 15px', display: 'flex', alignItems: 'center', gap: 9 }}>
+            {/* Speed badge — light */}
+            <div style={{ position: 'absolute', top: '42%', right: 22, zIndex: 10, background: 'white', border: '1px solid #DDD0BB', borderRadius: 12, padding: '11px 15px', display: 'flex', alignItems: 'center', gap: 9, boxShadow: '0 8px 28px rgba(15,12,8,0.08)' }}>
               <div style={{ width: 34, height: 34, background: '#F2E4C8', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>⚡</div>
               <div>
-                <div style={{ fontSize: 12, fontWeight: 500, color: 'white' }}>{hc.hero.speedBadgeTitle}</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{hc.hero.speedBadgeSubtitle}</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#0F0C08' }}>{hc.hero.speedBadgeTitle}</div>
+                <div style={{ fontSize: 10, color: '#9E8870', marginTop: 2 }}>{hc.hero.speedBadgeSubtitle}</div>
               </div>
             </div>
           </div>
