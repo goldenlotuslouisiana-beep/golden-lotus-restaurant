@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { adminFetch } from '@/lib/adminFetch';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -62,9 +63,8 @@ export default function AdminOrderDetail() {
     setOrder({ ...order, status: newStatus });
     
     try {
-        const res = await fetch(`/api/admin?action=order-status&id=${(order as any)._id || order.id}`, {
+        const res = await adminFetch(`/api/admin?action=order-status&id=${(order as any)._id || order.id}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: newStatus })
         });
         if (res.ok) {

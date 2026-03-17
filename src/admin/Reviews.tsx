@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Star, ThumbsUp, ThumbsDown, Trash2, Loader2, MessageSquare } from 'lucide-react';
+import { adminFetch } from '@/lib/adminFetch';
 
 interface Review { id: string; userName: string; userEmail: string; menuItemName: string; menuItemImage: string; rating: number; text: string; status: string; createdAt: string }
 
@@ -22,7 +23,7 @@ export default function AdminReviews() {
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin?action=reviews&filter=${filter}`);
+      const res = await adminFetch(`/api/admin?action=reviews&filter=${filter}`);
       const data = await res.json();
       setReviews(data.reviews || []); setStats(data.stats || { total: 0, pending: 0, avgRating: 0 });
     } catch {} finally { setLoading(false); }
@@ -30,12 +31,12 @@ export default function AdminReviews() {
   useEffect(() => { fetchReviews(); }, [filter]);
 
   const updateReviewStatus = async (id: string, status: string) => {
-    await fetch(`/api/admin?action=reviews&id=${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    await adminFetch(`/api/admin?action=reviews&id=${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
     fetchReviews();
   };
 
   const deleteReview = async (id: string) => {
-    await fetch(`/api/admin?action=reviews&id=${id}`, { method: 'DELETE' });
+    await adminFetch(`/api/admin?action=reviews&id=${id}`, { method: 'DELETE' });
     fetchReviews();
   };
 

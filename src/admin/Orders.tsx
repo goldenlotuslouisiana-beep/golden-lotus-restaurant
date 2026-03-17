@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { adminFetch } from '@/lib/adminFetch';
 import { Search, Eye, Package, CheckCircle, XCircle, ChevronDown, Trash2 } from 'lucide-react';
 import type { Order, OrderStatus } from '@/types';
 
@@ -34,7 +35,7 @@ export default function AdminOrders() {
 
   const loadStats = async () => {
     try {
-      const res = await fetch('/api/admin?action=dashboard-stats');
+      const res = await adminFetch('/api/admin?action=dashboard-stats');
       if (res.ok) {
         const data = await res.json();
         setStats({
@@ -52,7 +53,7 @@ export default function AdminOrders() {
   const loadOrders = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin?action=orders');
+      const res = await adminFetch('/api/admin?action=orders');
       if (res.ok) {
         let data = await res.json();
         if (!Array.isArray(data)) data = [];
@@ -73,7 +74,7 @@ export default function AdminOrders() {
   const deleteOrder = async (id: string) => {
     if (!confirm('Are you sure you want to delete this order?')) return;
     try {
-      const res = await fetch(`/api/admin?action=orders&id=${id}`, { method: 'DELETE' });
+      const res = await adminFetch(`/api/admin?action=orders&id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         toast.success('Order deleted');
         loadOrders();
@@ -87,7 +88,7 @@ export default function AdminOrders() {
   const clearTestData = async () => {
     if (!confirm('Are you sure you want to delete all test/seed data?')) return;
     try {
-      const res = await fetch('/api/admin?action=clear-test', { method: 'DELETE' });
+      const res = await adminFetch('/api/admin?action=clear-test', { method: 'DELETE' });
       if (res.ok) {
         toast.success('Test data cleared');
         loadOrders();
@@ -106,9 +107,8 @@ export default function AdminOrders() {
         const targetOrder = orders.find(o => o.id === orderId);
         const objectId = (targetOrder as any)?._id?.toString() || orderId;
 
-        const res = await fetch(`/api/admin?action=order-status`, {
+        const res = await adminFetch(`/api/admin?action=order-status`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: objectId, status: newStatus })
         });
         

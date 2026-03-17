@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, Gift, Users, Search, Loader2, Save } from 'lucide-react';
+import { adminFetch } from '@/lib/adminFetch';
 
 interface LeaderUser { id: string; name: string; email: string; loyaltyPoints: number }
 
@@ -17,23 +18,23 @@ export default function AdminLoyalty() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/admin?action=loyalty-settings').then(r => r.json()),
-      fetch('/api/admin?action=loyalty-leaderboard').then(r => r.json()),
+      adminFetch('/api/admin?action=loyalty-settings').then(r => r.json()),
+      adminFetch('/api/admin?action=loyalty-leaderboard').then(r => r.json()),
     ]).then(([s, lb]) => { setSettings(s); setLeaderboard(lb); }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const saveSettings = async () => {
     setSaving(true);
-    await fetch('/api/admin?action=loyalty-settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
+    await adminFetch('/api/admin?action=loyalty-settings', { method: 'PATCH', body: JSON.stringify(settings) });
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
   };
 
   const applyAdjustment = async () => {
     if (!adjustUser || adjustPoints === 0) return;
     setAdjusting(true);
-    await fetch('/api/admin?action=loyalty-adjust', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: adjustUser.id, points: adjustPoints, reason: adjustReason }) });
+    await adminFetch('/api/admin?action=loyalty-adjust', { method: 'POST', body: JSON.stringify({ userId: adjustUser.id, points: adjustPoints, reason: adjustReason }) });
     setAdjusting(false); setAdjustUser(null); setAdjustPoints(0); setAdjustReason('');
-    const lb = await fetch('/api/admin?action=loyalty-leaderboard').then(r => r.json());
+    const lb = await adminFetch('/api/admin?action=loyalty-leaderboard').then(r => r.json());
     setLeaderboard(lb);
   };
 

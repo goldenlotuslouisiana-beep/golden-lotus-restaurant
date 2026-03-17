@@ -48,7 +48,7 @@ export default function AdminPromos() {
   const fetchPromos = async () => {
     setPromoLoading(true);
     try { 
-      const r = await fetch('/api/admin?action=promos'); 
+      const r = await fetch('/api/admin?action=promos', { headers: authHeaders() }); 
       const raw = await r.json();
       setPromos(Array.isArray(raw) ? raw : []); 
     } catch {} finally { setPromoLoading(false); }
@@ -77,20 +77,20 @@ export default function AdminPromos() {
 
   const savePromo = async () => {
     if (editingPromo) {
-      await fetch(`/api/admin?action=promos&id=${editingPromo}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(promoForm) });
+      await fetch(`/api/admin?action=promos&id=${editingPromo}`, { method: 'PATCH', headers: authHeaders(), body: JSON.stringify(promoForm) });
     } else {
-      await fetch('/api/admin?action=promos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(promoForm) });
+      await fetch('/api/admin?action=promos', { method: 'POST', headers: authHeaders(), body: JSON.stringify(promoForm) });
     }
     setShowPromoForm(false); setEditingPromo(null); setPromoForm({ code: '', discountType: 'percentage', value: 0, minOrder: 0, maxUses: 0, expires: '' }); fetchPromos();
   };
 
   const togglePromo = async (p: Promo) => {
     const newStatus = p.status === 'disabled' ? 'active' : 'disabled';
-    await fetch(`/api/admin?action=promos&id=${p.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
+    await fetch(`/api/admin?action=promos&id=${p.id}`, { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ status: newStatus }) });
     fetchPromos();
   };
 
-  const deletePromo = async (id: string) => { await fetch(`/api/admin?action=promos&id=${id}`, { method: 'DELETE' }); fetchPromos(); };
+  const deletePromo = async (id: string) => { await fetch(`/api/admin?action=promos&id=${id}`, { method: 'DELETE', headers: authHeaders() }); fetchPromos(); };
 
   // Display Coupon functions
   const saveCoupon = async () => {

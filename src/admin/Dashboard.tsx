@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { adminFetch } from '@/lib/adminFetch';
 import { Link } from 'react-router-dom';
 import {
   UtensilsCrossed,
@@ -52,7 +53,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await fetch('/api/admin?action=dashboard-stats');
+        const res = await adminFetch('/api/admin?action=dashboard-stats');
         if (res.ok) {
           const data = await res.json();
           setStats({

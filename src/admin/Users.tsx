@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { adminFetch } from '@/lib/adminFetch';
 import { Search, Users as UsersIcon, UserPlus, Shield, ShieldOff, Eye, X, ChevronLeft, ChevronRight, ShoppingBag, MapPin, Clock, Loader2, Trash2 } from 'lucide-react';
 
 interface UserRow {
@@ -29,7 +30,7 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin?action=users&page=${page}&search=${encodeURIComponent(search)}&status=${filter}`);
+      const res = await adminFetch(`/api/admin?action=users&page=${page}&search=${encodeURIComponent(search)}&status=${filter}`);
       const data = await res.json();
       setUsers(data.users || []); setTotalPages(data.totalPages || 1);
     } catch {} finally { setLoading(false); }
@@ -37,7 +38,7 @@ export default function AdminUsers() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/admin?action=dashboard-stats');
+      const res = await adminFetch('/api/admin?action=dashboard-stats');
       const d = await res.json();
       setStats({ total: d.totalUsers || 0, newToday: d.newUsersToday || 0, activeWeek: d.activeUsersWeek || 0, blocked: d.blockedUsers || 0 });
     } catch {}
@@ -49,20 +50,20 @@ export default function AdminUsers() {
   const openDetail = async (userId: string) => {
     setDetailLoading(true); setDetail(null); setDetailTab('orders');
     try {
-      const res = await fetch(`/api/admin?action=user-detail&id=${userId}`);
+      const res = await adminFetch(`/api/admin?action=user-detail&id=${userId}`);
       const data = await res.json();
       setDetail(data);
     } catch {} finally { setDetailLoading(false); }
   };
 
   const updateUserStatus = async (userId: string, status: string) => {
-    await fetch(`/api/admin?action=user-detail&id=${userId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    await adminFetch(`/api/admin?action=user-detail&id=${userId}`, { method: 'PATCH', body: JSON.stringify({ status }) });
     fetchUsers(); fetchStats();
     if (detail?.user.id === userId) setDetail(d => d ? { ...d, user: { ...d.user, status } } : null);
   };
 
   const deleteUser = async (userId: string) => {
-    await fetch(`/api/admin?action=user-detail&id=${userId}`, { method: 'DELETE' });
+    await adminFetch(`/api/admin?action=user-detail&id=${userId}`, { method: 'DELETE' });
     setDetail(null); setConfirmDelete(false); fetchUsers(); fetchStats();
   };
 

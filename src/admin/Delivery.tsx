@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, X, Loader2, MapPin, Clock } from 'lucide-react';
+import { adminFetch } from '@/lib/adminFetch';
 
 interface Rider { id: string; name: string; phone: string; photo: string; status: string; totalDeliveries: number; todayDeliveries: number }
 interface Zone { id: string; name: string; fee: number; minOrderFree: number; estimatedTime: string }
@@ -18,7 +19,7 @@ export default function AdminDelivery() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [r, z] = await Promise.all([fetch('/api/admin?action=riders').then(r => r.json()), fetch('/api/admin?action=zones').then(r => r.json())]);
+      const [r, z] = await Promise.all([adminFetch('/api/admin?action=riders').then(r => r.json()), adminFetch('/api/admin?action=zones').then(r => r.json())]);
       setRiders(r); setZones(z);
     } catch {} finally { setLoading(false); }
   };
@@ -26,31 +27,31 @@ export default function AdminDelivery() {
 
   const saveRider = async () => {
     if (editingRider) {
-      await fetch(`/api/admin?action=riders&id=${editingRider}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(riderForm) });
+      await adminFetch(`/api/admin?action=riders&id=${editingRider}`, { method: 'PATCH', body: JSON.stringify(riderForm) });
     } else {
-      await fetch('/api/admin?action=riders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(riderForm) });
+      await adminFetch('/api/admin?action=riders', { method: 'POST', body: JSON.stringify(riderForm) });
     }
     setShowRiderForm(false); setEditingRider(null); setRiderForm({ name: '', phone: '', photo: '' }); fetchAll();
   };
 
-  const deleteRider = async (id: string) => { await fetch(`/api/admin?action=riders&id=${id}`, { method: 'DELETE' }); fetchAll(); };
+  const deleteRider = async (id: string) => { await adminFetch(`/api/admin?action=riders&id=${id}`, { method: 'DELETE' }); fetchAll(); };
 
   const toggleRiderStatus = async (rider: Rider) => {
     const next = rider.status === 'available' ? 'off_duty' : 'available';
-    await fetch(`/api/admin?action=riders&id=${rider.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: next }) });
+    await adminFetch(`/api/admin?action=riders&id=${rider.id}`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
     fetchAll();
   };
 
   const saveZone = async () => {
     if (editingZone) {
-      await fetch(`/api/admin?action=zones&id=${editingZone}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(zoneForm) });
+      await adminFetch(`/api/admin?action=zones&id=${editingZone}`, { method: 'PATCH', body: JSON.stringify(zoneForm) });
     } else {
-      await fetch('/api/admin?action=zones', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(zoneForm) });
+      await adminFetch('/api/admin?action=zones', { method: 'POST', body: JSON.stringify(zoneForm) });
     }
     setShowZoneForm(false); setEditingZone(null); setZoneForm({ name: '', fee: 0, minOrderFree: 0, estimatedTime: '' }); fetchAll();
   };
 
-  const deleteZone = async (id: string) => { await fetch(`/api/admin?action=zones&id=${id}`, { method: 'DELETE' }); fetchAll(); };
+  const deleteZone = async (id: string) => { await adminFetch(`/api/admin?action=zones&id=${id}`, { method: 'DELETE' }); fetchAll(); };
 
   const riderStatusColors: Record<string, string> = { available: 'bg-green-100 text-green-700', on_delivery: 'bg-orange-100 text-orange-700', off_duty: 'bg-gray-100 text-gray-600' };
   const riderStatusLabels: Record<string, string> = { available: 'Available', on_delivery: 'On Delivery', off_duty: 'Off Duty' };
