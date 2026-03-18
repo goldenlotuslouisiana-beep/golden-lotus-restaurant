@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import clientPromise from '../src/lib/db.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
-import nodemailer from 'nodemailer';
 import { sendEmail, cateringConfirmationHtml, cateringAdminNotificationHtml } from '../src/lib/email.js';
 
 const DB = 'goldenlotus';
@@ -232,19 +231,17 @@ async function handleOrderStatus(req: VercelRequest, res: VercelResponse) {
     };
 
     const customerEmail = order?.customerEmail || order?.customer?.email || order?.email;
-    if (emailMessages[parsedStatus] && customerEmail && process.env.GMAIL_USER) {
+    if (emailMessages[parsedStatus] && customerEmail) {
         try {
-            const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
             let subjectMap: Record<string, string> = {
                 confirmed: "Your order has been confirmed! 🎉", preparing: "Your food is being prepared! 👨‍🍳",
         ready: "Your order is ready! 🎁", picked_up: "Your order was picked up! 🛍️",
         completed: "Order completed! Enjoy your meal! 🍜", cancelled: "Your order was cancelled. We're sorry."
             };
-            await transporter.sendMail({
-                from: `"Golden Lotus Delivery" <${process.env.GMAIL_USER}>`,
+            await sendEmail({
                 to: customerEmail,
                 subject: subjectMap[parsedStatus] || `Order ${order?.orderNumber || ''} — Status Update`,
-                text: emailMessages[parsedStatus]
+                html: `<p>${emailMessages[parsedStatus]}</p>`
             });
         } catch (e) {
             console.error("Failed to send order status email:", e);
@@ -517,19 +514,22 @@ async function handleSendEmail(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     const { name, email, phone, date, guests, serviceType, address, message } = req.body;
     try {
-        const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
-        await transporter.sendMail({
-            from: `"Golden Lotus Delivery" <${process.env.GMAIL_USER}>`,
+        await sendEmail({
             to: process.env.VITE_ADMIN_EMAIL || process.env.GMAIL_USER,
-            replyTo: email,
             subject: `New Catering Request from ${name}`,
-            text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\nDate: ${date}\nGuests: ${guests}\nService: ${serviceType}\nAddress: ${address}\nMessage: ${message}`
+            html: `<pre style="white-space:pre-wrap;font-family:inherit">Name: ${name}
+Email: ${email}
+Phone: ${phone}
+Date: ${date}
+Guests: ${guests}
+Service: ${serviceType}
+Address: ${address}
+Message: ${message}</pre>`
         });
-        await transporter.sendMail({
-            from: `"Golden Lotus Delivery" <${process.env.GMAIL_USER}>`,
+        await sendEmail({
             to: email,
             subject: `Catering Request Received - Golden Lotus`,
-            text: `Hi ${name},\n\nWe have received your catering request for ${date}. Our team will contact you shortly at ${phone}.\n\nThank you,\nGolden Lotus Team`
+            html: `<p>Hi ${name},</p><p>We have received your catering request for ${date}. Our team will contact you shortly at ${phone}.</p><p>Thank you,<br/>Golden Lotus Team</p>`
         });
         return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: 'Failed' }); }
@@ -827,13 +827,9 @@ async function handleSendContactEmail(req: VercelRequest, res: VercelResponse) {
     if (!name || !email || !subject || !message) return res.status(400).json({ error: 'Missing required fields' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Invalid email address' });
     try {
-        const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
-        await transporter.sendMail({
-            from: `"Golden Lotus Website" <${process.env.GMAIL_USER}>`,
+        await sendEmail({
             to: process.env.VITE_ADMIN_EMAIL || process.env.GMAIL_USER,
-            replyTo: email,
             subject: `New Contact Form: ${subject}`,
-            text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || 'Not provided'}\nSubject: ${subject}\nMessage: ${message}\nSent at: ${new Date().toLocaleString()}`,
             html: `<h2>New Contact Form Submission</h2><table style="border-collapse:collapse"><tr><td style="padding:6px 12px;font-weight:bold">Name</td><td style="padding:6px 12px">${name}</td></tr><tr><td style="padding:6px 12px;font-weight:bold">Email</td><td style="padding:6px 12px"><a href="mailto:${email}">${email}</a></td></tr><tr><td style="padding:6px 12px;font-weight:bold">Phone</td><td style="padding:6px 12px">${phone || 'Not provided'}</td></tr><tr><td style="padding:6px 12px;font-weight:bold">Subject</td><td style="padding:6px 12px">${subject}</td></tr><tr><td style="padding:6px 12px;font-weight:bold;vertical-align:top">Message</td><td style="padding:6px 12px">${message.replace(/\n/g, '<br>')}</td></tr></table>`,
         });
         return res.status(200).json({ success: true });
@@ -1418,19 +1414,18 @@ async function handleValidatePromo(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleTestEmail(req: VercelRequest, res: VercelResponse) {
-    const smtpUser  = process.env.SMTP_USER  || process.env.GMAIL_USER  || '';
-    const smtpPass  = process.env.SMTP_PASS  || process.env.GMAIL_APP_PASSWORD || '';
-    const adminEmail = req.query.to as string || process.env.ADMIN_EMAIL || smtpUser;
+    const resendApiKey = process.env.RESEND_API_KEY || '';
+    const adminEmail = req.query.to as string || process.env.ADMIN_EMAIL || process.env.GMAIL_USER || '';
 
     // Return env var status even if email fails — useful for debugging
     const envStatus = {
-        SMTP_USER:  smtpUser  ? `✅ ${smtpUser}`  : '❌ NOT SET',
-        SMTP_PASS:  smtpPass  ? `✅ SET (${smtpPass.length} chars)` : '❌ NOT SET',
-        ADMIN_EMAIL: process.env.ADMIN_EMAIL || '(not set — using SMTP_USER)',
+        RESEND_API_KEY: resendApiKey ? `✅ SET (${resendApiKey.length} chars)` : '❌ NOT SET',
+        EMAIL_FROM: process.env.EMAIL_FROM || '(not set — using onboarding@resend.dev)',
+        ADMIN_EMAIL: process.env.ADMIN_EMAIL || '(not set — using query/email fallback)',
     };
 
-    if (!smtpUser || !smtpPass) {
-        return res.status(200).json({ success: false, error: 'SMTP credentials missing', envStatus });
+    if (!resendApiKey) {
+        return res.status(200).json({ success: false, error: 'Resend API key missing', envStatus });
     }
 
     const result = await sendEmail({
@@ -1446,7 +1441,7 @@ async function handleTestEmail(req: VercelRequest, res: VercelResponse) {
               <h2 style="color:#B8853A;margin:0 0 12px">Email is working!</h2>
               <p style="color:#6B5540;font-size:14px">
                 Sent to: <strong>${adminEmail}</strong><br>
-                SMTP user: <strong>${smtpUser}</strong>
+                Transport: <strong>Resend API (HTTP)</strong>
               </p>
             </div>
           </div>

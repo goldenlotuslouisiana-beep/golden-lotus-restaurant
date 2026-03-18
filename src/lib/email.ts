@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 export const sendEmail = async ({
   to,
@@ -11,39 +11,33 @@ export const sendEmail = async ({
   html: string;
   from?: string;
 }) => {
-  // Resolve credentials at call-time (important for serverless).
-  const user = process.env.SMTP_USER || process.env.GMAIL_USER || '';
-  const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '';
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const port = Number(process.env.SMTP_PORT || '587');
-
-  if (!user || !pass) {
-    console.error('[EMAIL] ❌ SMTP credentials missing (SMTP_USER/SMTP_PASS or GMAIL_USER/GMAIL_APP_PASSWORD).');
-    return { success: false, error: 'SMTP credentials not configured' };
+  const apiKey = process.env.RESEND_API_KEY || '';
+  if (!apiKey) {
+    console.error('[EMAIL] ❌ RESEND_API_KEY env var is not set');
+    return { success: false, error: 'RESEND_API_KEY not configured' };
   }
 
-  const sender = from || process.env.EMAIL_FROM || `"Golden Lotus Restaurant" <${user}>`;
+  const resend = new Resend(apiKey);
+  const sender = from || process.env.EMAIL_FROM || 'Golden Lotus <onboarding@resend.dev>';
 
   try {
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-    });
-
-    const info = await transporter.sendMail({
+    const { data, error } = await resend.emails.send({
       from: sender,
       to,
       subject,
       html,
     });
 
-    console.log(`[EMAIL] ✅ Sent → ${to} | messageId: ${info.messageId}`);
-    return { success: true, id: info.messageId };
+    if (error) {
+      console.error(`[EMAIL] ❌ Resend error → ${to} | ${JSON.stringify(error)}`);
+      return { success: false, error: error.message || 'Resend send failed' };
+    }
+
+    console.log(`[EMAIL] ✅ Sent → ${to} | id: ${data?.id}`);
+    return { success: true, id: data?.id };
   } catch (err: any) {
-    console.error(`[EMAIL] ❌ SMTP send error → ${to} | ${err?.message || err}`);
-    return { success: false, error: err?.message || 'SMTP send failed' };
+    console.error(`[EMAIL] ❌ Email send error → ${to} | ${err?.message || err}`);
+    return { success: false, error: err?.message || 'Email send failed' };
   }
 };
 

@@ -3,8 +3,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
 import clientPromise from '../src/lib/db.js';
+import { sendEmail } from '../src/lib/email.js';
 
 const DB_NAME = 'goldenlotus';
 if (!process.env.JWT_SECRET) {
@@ -307,25 +307,21 @@ async function handleForgotPassword(req: VercelRequest, res: VercelResponse) {
       { $set: { resetToken: hashedToken, resetTokenExpiry } }
     );
 
-    const gmailUser = process.env.GMAIL_USER;
-    const gmailPass = process.env.GMAIL_APP_PASSWORD;
-    if (!gmailUser || !gmailPass) {
+    if (!process.env.RESEND_API_KEY) {
       // Still return success; password reset email can't be sent without SMTP configured
       return res.status(200).json({ success: true, message: 'Check your email' });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: gmailUser, pass: gmailPass },
-    });
-
     const resetLink = `/reset-password?token=${resetToken}`;
-
-    await transporter.sendMail({
-      from: `"Golden Lotus" <${gmailUser}>`,
+    await sendEmail({
       to: normalizedEmail,
       subject: 'Reset your Golden Lotus password',
-      text: `You requested a password reset.\n\nReset your password here:\n${resetLink}\n\nThis link expires in 1 hour.\nIf you didn't request this, you can ignore this email.`,
+      html: `
+        <p>You requested a password reset.</p>
+        <p>Reset your password here: <a href="${resetLink}">${resetLink}</a></p>
+        <p>This link expires in 1 hour.</p>
+        <p>If you didn't request this, you can ignore this email.</p>
+      `,
     });
 
     return res.status(200).json({ success: true, message: 'Check your email' });
