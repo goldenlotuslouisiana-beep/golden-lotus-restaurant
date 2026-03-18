@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -56,16 +55,6 @@ const TABS: { key: Tab; label: string; icon: React.ElementType; description: str
   { key: 'loyalty', label: 'Loyalty', icon: Star, description: 'Check your reward points' },
 ];
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  confirmed: 'bg-blue-100 text-blue-800 border-blue-200',
-  preparing: 'bg-purple-100 text-purple-800 border-purple-200',
-  ready: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  out_for_delivery: 'bg-orange-100 text-orange-800 border-orange-200',
-  delivered: 'bg-green-100 text-green-800 border-green-200',
-  completed: 'bg-green-100 text-green-800 border-green-200',
-  cancelled: 'bg-red-100 text-red-800 border-red-200',
-};
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pending',
@@ -101,7 +90,7 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-50/50 to-white pt-24 pb-16 px-4">
+      <div className="min-h-screen pt-24 pb-16 px-4" style={{ background: '#F9F4EC' }}>
         <div className="max-w-6xl mx-auto space-y-6">
           <Skeleton className="h-32 w-full rounded-2xl" />
           <div className="grid lg:grid-cols-4 gap-6">
@@ -122,41 +111,42 @@ export default function Profile() {
         noIndex={true}
       />
       <Toaster />
-      <div className="min-h-screen bg-gradient-to-b from-orange-50/50 to-white pt-24 pb-16 px-4">
+      <div className="min-h-screen pt-24 pb-16 px-4" style={{ background: '#F9F4EC' }}>
         <div className="max-w-6xl mx-auto">
           {/* Profile Header */}
           <Card className="mb-6 overflow-hidden border-0 shadow-lg">
-            <div className="bg-gradient-to-r from-[#F97316] via-[#ea6c10] to-[#F97316] p-6 sm:p-8">
+            <div className="p-6 sm:p-8" style={{ background: 'radial-gradient(ellipse at 30% 50%, rgba(184,133,58,0.2), transparent 60%), #1E1810' }}>
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                <Avatar className="w-24 h-24 border-4 border-white/30 shadow-xl">
+                <Avatar className="w-24 h-24 shadow-xl" style={{ border: '3px solid rgba(184,133,58,0.4)', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
                   <AvatarImage src={authUser?.avatar || ''} />
-                  <AvatarFallback className="bg-white/20 text-white text-3xl font-bold">
+                  <AvatarFallback className="text-white text-3xl font-bold" style={{ background: 'rgba(184,133,58,0.3)' }}>
                     {(authUser?.name?.charAt(0) || authUser?.email?.charAt(0) || 'U').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-center sm:text-left">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400 }}>
                     {authUser?.name || 'Welcome!'}
                   </h1>
-                  <p className="text-white/80 flex items-center justify-center sm:justify-start gap-2 mb-3">
+                  <p className="flex items-center justify-center sm:justify-start gap-2 mb-3" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
                     <Mail className="w-4 h-4" />
                     {authUser?.email}
                   </p>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                    <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                      <Star className="w-3 h-3 mr-1 fill-current" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'rgba(184,133,58,0.2)', border: '1px solid rgba(184,133,58,0.3)', color: '#C9963F' }}>
+                      <Star className="w-3 h-3" style={{ fill: '#B8853A', color: '#B8853A' }} />
                       {authUser?.loyaltyPoints || 0} Points
-                    </Badge>
-                    <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                    </span>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
                       Member
-                    </Badge>
+                    </span>
                   </div>
                 </div>
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => { logout(); navigate('/'); }}
-                  className="bg-white/20 text-white border-0 hover:bg-white/30 backdrop-blur-sm"
+                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}
+                  className="hover:bg-white/20 backdrop-blur-sm"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
@@ -168,7 +158,7 @@ export default function Profile() {
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Sidebar */}
             <div className="lg:col-span-1">
-              <Card className="border border-gray-200 shadow-sm lg:sticky lg:top-24">
+              <Card className="shadow-sm lg:sticky lg:top-24" style={{ border: '1px solid #EDE3D2', borderRadius: 16 }}>
                 <CardContent className="p-2">
                   <nav className="space-y-1">
                     {TABS.map((t) => {
@@ -178,29 +168,26 @@ export default function Profile() {
                         <button
                           key={t.key}
                           onClick={() => setTab(t.key)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-[12px] text-left text-sm transition-all duration-200 border-l-4 ${
-                            isActive
-                              ? 'bg-[#FFF7ED] text-[#F97316] border-[#F97316] shadow-sm'
-                              : 'bg-white text-gray-700 border-transparent hover:bg-gray-50 hover:text-[#F97316]'
-                          }`}
+                          className="w-full flex items-center gap-3 text-left transition-all duration-200"
+                          style={{
+                            padding: '14px 16px',
+                            borderRadius: 12,
+                            background: isActive ? '#F2E4C8' : 'transparent',
+                            border: isActive ? '1px solid #DDD0BB' : '1px solid transparent',
+                          }}
+                          onMouseOver={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F9F4EC'; }}
+                          onMouseOut={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                         >
                           <Icon
-                            className={`w-5 h-5 flex-shrink-0 ${
-                              isActive ? 'text-[#F97316]' : 'text-gray-400'
-                            }`}
+                            className="w-5 h-5 flex-shrink-0"
+                            style={{ color: isActive ? '#B8853A' : '#9E8870' }}
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{t.label}</p>
-                            <p
-                              className={`text-xs ${
-                                isActive ? 'text-[#F97316]' : 'text-gray-400'
-                              }`}
-                            >
-                              {t.description}
-                            </p>
+                            <p style={{ fontSize: 14, fontWeight: isActive ? 600 : 500, color: isActive ? '#0F0C08' : '#6B5540', margin: 0 }} className="truncate">{t.label}</p>
+                            <p style={{ fontSize: 11.5, color: '#9E8870', margin: 0 }}>{t.description}</p>
                           </div>
                           {isActive && (
-                            <ChevronDown className="w-4 h-4 text-[#F97316] rotate-[-90deg]" />
+                            <ChevronDown className="w-4 h-4 rotate-[-90deg]" style={{ color: '#B8853A' }} />
                           )}
                         </button>
                       );
@@ -430,7 +417,7 @@ function PersonalInfoTab({ token }: { token: string | null }) {
     <Card className="border-0 shadow-md">
       <CardHeader>
         <CardTitle className="text-xl flex items-center gap-2">
-          <User className="w-5 h-5 text-[#F97316]" />
+          <User className="w-5 h-5" style={{ color: '#B8853A' }} />
           Personal Information
         </CardTitle>
         <CardDescription>
@@ -442,7 +429,7 @@ function PersonalInfoTab({ token }: { token: string | null }) {
         <div className="flex items-center gap-4">
           <Avatar className="w-20 h-20">
             <AvatarImage src={user?.avatar || ''} />
-            <AvatarFallback className="bg-gradient-to-br from-[#F97316] to-[#ea6c10] text-white text-2xl font-bold">
+            <AvatarFallback className="text-white text-2xl font-bold" style={{ background: 'linear-gradient(135deg, #B8853A, #C9963F)' }}>
               {(formData.fullName?.charAt(0) || formData.email?.charAt(0) || 'U').toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -550,7 +537,10 @@ function PersonalInfoTab({ token }: { token: string | null }) {
           <Button 
             onClick={handleSave} 
             disabled={isSaving}
-            className="bg-gradient-to-r from-[#F97316] to-[#ea6c10] hover:shadow-lg hover:shadow-orange-200 transition-all"
+            className="transition-all"
+            style={{ background: '#1E1810', color: 'white', borderRadius: 10 }}
+            onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#B8853A'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(184,133,58,0.35)'; }}
+            onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = '#1E1810'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
           >
             {isSaving ? (
               <>
@@ -596,7 +586,7 @@ interface AddressFormProps {
 
 function AddressForm({ form, setForm, onSubmit, onCancel, title, isSubmitting }: AddressFormProps) {
   return (
-    <Card className="border-orange-200 bg-orange-50/30">
+    <Card style={{ borderColor: '#EDE3D2', background: 'rgba(249,244,236,0.5)' }}>
       <CardHeader className="pb-4">
         <CardTitle className="text-lg flex items-center justify-between">
           {title}
@@ -613,11 +603,12 @@ function AddressForm({ form, setForm, onSubmit, onCancel, title, isSubmitting }:
               key={l}
               type="button"
               onClick={() => setForm(p => ({ ...p, label: l }))}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                form.label === l 
-                  ? 'bg-[#F97316] text-white shadow-sm' 
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-              }`}
+              style={{
+                padding: '7px 16px', borderRadius: 8, fontSize: 13.5, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+                background: form.label === l ? '#1E1810' : 'white',
+                color: form.label === l ? 'white' : '#6B5540',
+                border: form.label === l ? '1.5px solid #1E1810' : '1.5px solid #EDE3D2',
+              }}
             >
               {l}
             </button>
@@ -676,7 +667,10 @@ function AddressForm({ form, setForm, onSubmit, onCancel, title, isSubmitting }:
           <Button 
             onClick={onSubmit}
             disabled={isSubmitting}
-            className="bg-[#F97316] hover:bg-[#ea6c10]"
+            style={{ background: '#1E1810', color: 'white' }}
+            className="hover:opacity-90 transition-opacity"
+            onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#B8853A'; }}
+            onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = '#1E1810'; }}
           >
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Address'}
           </Button>
@@ -913,7 +907,7 @@ function AddressesTab({ token }: { token: string | null }) {
     return (
       <Card className="border-0 shadow-md">
         <CardContent className="p-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: '#B8853A' }} />
         </CardContent>
       </Card>
     );
@@ -925,7 +919,7 @@ function AddressesTab({ token }: { token: string | null }) {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-xl flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-[#F97316]" />
+              <MapPin className="w-5 h-5" style={{ color: '#B8853A' }} />
               Saved Addresses
             </CardTitle>
             <CardDescription>Manage your delivery addresses</CardDescription>
@@ -933,7 +927,9 @@ function AddressesTab({ token }: { token: string | null }) {
           {!showAddForm && !editingAddress && (
             <Button 
               onClick={() => setShowAddForm(true)}
-              className="bg-[#F97316] hover:bg-[#ea6c10]"
+              style={{ background: '#1E1810', color: 'white' }}
+              onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#B8853A'; }}
+              onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = '#1E1810'; }}
             >
               <Plus className="w-4 h-4 mr-2" />
               Add New
@@ -965,15 +961,16 @@ function AddressesTab({ token }: { token: string | null }) {
 
           {addresses.length === 0 && !showAddForm ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-8 h-8 text-[#F97316]" />
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: '#F2E4C8' }}>
+                <MapPin className="w-8 h-8" style={{ color: '#B8853A' }} />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-1">No saved addresses</h3>
               <p className="text-gray-500 mb-4">Add an address to make checkout faster</p>
               <Button 
                 onClick={() => setShowAddForm(true)}
                 variant="outline"
-                className="border-[#F97316] text-[#F97316] hover:bg-orange-50"
+                style={{ borderColor: '#B8853A', color: '#B8853A' }}
+                className="hover:bg-[#F2E4C8]"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Your First Address
@@ -985,19 +982,19 @@ function AddressesTab({ token }: { token: string | null }) {
                 const addrId = addr._id || addr.id;
                 const LabelIcon = getLabelIcon(addr.label);
                 return (
-                  <Card key={addrId} className={`border ${addr.isDefault ? 'border-[#F97316] bg-orange-50/20' : 'border-gray-200'} hover:shadow-md transition-shadow`}>
+                  <Card key={addrId} className="hover:shadow-md transition-shadow" style={{ border: addr.isDefault ? '1px solid #B8853A' : '1px solid #EDE3D2', borderRadius: 14, ...(addr.isDefault ? { borderLeft: '3px solid #B8853A' } : {}) }}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${addr.isDefault ? 'bg-[#F97316] text-white' : 'bg-orange-100 text-[#F97316]'}`}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#F2E4C8', color: '#B8853A' }}>
                           <LabelIcon className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-gray-900">{addr.label || 'Address'}</span>
                             {addr.isDefault && (
-                              <Badge className="bg-[#F97316] text-white hover:bg-[#ea6c10]">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(184,133,58,0.1)', color: '#B8853A', border: '1px solid rgba(184,133,58,0.2)' }}>
                                 Default
-                              </Badge>
+                              </span>
                             )}
                           </div>
                           {addr.fullName && (
@@ -1020,7 +1017,8 @@ function AddressesTab({ token }: { token: string | null }) {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="text-gray-400 hover:text-blue-600"
+                            style={{ color: '#9E8870' }}
+                            className="hover:text-[#B8853A]"
                             onClick={() => startEdit(addr)}
                           >
                             <Edit2 className="w-4 h-4" />
@@ -1028,7 +1026,8 @@ function AddressesTab({ token }: { token: string | null }) {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="text-gray-400 hover:text-red-600"
+                            style={{ color: '#9E8870' }}
+                            className="hover:text-[#C53A3A]"
                             onClick={() => handleDelete(addrId || '')}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1041,7 +1040,8 @@ function AddressesTab({ token }: { token: string | null }) {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-[#F97316] hover:text-[#ea6c10] hover:bg-orange-50"
+                            style={{ color: '#B8853A' }}
+                            className="hover:bg-[#F2E4C8]"
                             onClick={() => handleSetDefault(addrId || '')}
                           >
                             <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -1102,7 +1102,7 @@ function OrderHistoryTab({ token }: { token: string | null }) {
     return (
       <Card className="border-0 shadow-md">
         <CardContent className="p-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: '#B8853A' }} />
         </CardContent>
       </Card>
     );
@@ -1112,7 +1112,7 @@ function OrderHistoryTab({ token }: { token: string | null }) {
     <Card className="border-0 shadow-md">
       <CardHeader>
         <CardTitle className="text-xl flex items-center gap-2">
-          <ShoppingBag className="w-5 h-5 text-[#F97316]" />
+          <ShoppingBag className="w-5 h-5" style={{ color: '#B8853A' }} />
           Order History
         </CardTitle>
         <CardDescription>View and track your past orders</CardDescription>
@@ -1120,14 +1120,16 @@ function OrderHistoryTab({ token }: { token: string | null }) {
       <CardContent>
         {orders.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ShoppingBag className="w-8 h-8 text-[#F97316]" />
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: '#F2E4C8' }}>
+              <ShoppingBag className="w-8 h-8" style={{ color: '#B8853A' }} />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
             <p className="text-gray-500 mb-4">Start ordering to see your history here</p>
             <Button 
               onClick={() => window.location.href = '/menu'}
-              className="bg-[#F97316] hover:bg-[#ea6c10]"
+              style={{ background: '#1E1810', color: 'white' }}
+              onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#B8853A'; }}
+              onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = '#1E1810'; }}
             >
               Browse Menu
             </Button>
@@ -1135,22 +1137,30 @@ function OrderHistoryTab({ token }: { token: string | null }) {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <div key={order.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+              <div key={order.id} className="hover:shadow-md transition-shadow overflow-hidden" style={{ border: '1px solid #EDE3D2', borderRadius: 14, background: 'white' }}>
                 <button 
                   onClick={() => setExpanded(expanded === order.id ? null : order.id)}
                   className="w-full p-4 flex items-center gap-4 text-left"
                 >
-                  <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
-                    <Package className="w-6 h-6 text-[#F97316]" />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#F2E4C8' }}>
+                    <Package className="w-6 h-6" style={{ color: '#B8853A' }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-gray-900">{order.orderNumber}</span>
-                      <Badge className={STATUS_COLORS[order.status] || 'bg-gray-100'}>
+                      <span className="font-semibold" style={{ color: '#0F0C08' }}>{order.orderNumber}</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={
+                        order.status === 'completed' || order.status === 'delivered' || order.status === 'ready'
+                          ? { background: 'rgba(47,149,85,0.1)', color: '#2F9555' }
+                          : order.status === 'cancelled'
+                          ? { background: 'rgba(197,58,58,0.1)', color: '#C53A3A' }
+                          : order.status === 'pending'
+                          ? { background: 'rgba(216,155,35,0.1)', color: '#D89B23' }
+                          : { background: 'rgba(30,24,16,0.08)', color: '#6B5540' }
+                      }>
                         {STATUS_LABELS[order.status] || order.status}
-                      </Badge>
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs mt-0.5" style={{ color: '#9E8870' }}>
                       {new Date(order.createdAt).toLocaleDateString('en-US', { 
                         year: 'numeric', 
                         month: 'short', 
@@ -1165,13 +1175,13 @@ function OrderHistoryTab({ token }: { token: string | null }) {
                 </button>
                 
                 {expanded === order.id && (
-                  <div className="px-4 pb-4 border-t bg-gray-50/50">
-                    <div className="pt-4 space-y-3">
-                      <h4 className="font-medium text-sm text-gray-700">Order Items</h4>
+                  <div className="px-4 pb-4 border-t" style={{ background: '#F9F4EC' }}>
+                    <div className="pt-4 space-y-3" style={{ background: '#F9F4EC', borderRadius: 10, padding: 14, marginTop: 4 }}>
+                      <h4 className="font-medium text-sm" style={{ color: '#6B5540' }}>Order Items</h4>
                       {order.items?.map((item, i) => (
                         <div key={i} className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">
-                            {item.name} <span className="text-gray-400">×{item.quantity}</span>
+                          <span style={{ color: '#6B5540' }}>
+                            {item.name} <span style={{ color: '#9E8870' }}>×{item.quantity}</span>
                           </span>
                           <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                         </div>
@@ -1181,13 +1191,15 @@ function OrderHistoryTab({ token }: { token: string | null }) {
                       
                       <div className="flex justify-between items-center font-bold">
                         <span>Total</span>
-                        <span className="text-[#F97316]">${order.total?.toFixed(2)}</span>
+                        <span style={{ color: '#B8853A', fontWeight: 700 }}>${order.total?.toFixed(2)}</span>
                       </div>
                       
                       <div className="flex gap-2 pt-2">
                         <Button 
                           size="sm" 
-                          className="bg-[#F97316] hover:bg-[#ea6c10]"
+                          style={{ background: '#1E1810', color: 'white', borderRadius: 8 }}
+                          onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#B8853A'; }}
+                          onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = '#1E1810'; }}
                           onClick={() => handleReorder(order)}
                         >
                           <Plus className="w-4 h-4 mr-2" />
@@ -1196,6 +1208,8 @@ function OrderHistoryTab({ token }: { token: string | null }) {
                         <Button 
                           size="sm" 
                           variant="outline"
+                          style={{ borderRadius: 8, borderColor: '#EDE3D2', color: '#6B5540' }}
+                          className="hover:border-[#B8853A] hover:text-[#B8853A]"
                           onClick={() => window.location.href = `/order-tracking?id=${order.id}`}
                         >
                           Track Order
@@ -1281,7 +1295,7 @@ function LoyaltyTab({ token, userPoints }: { token: string | null; userPoints: n
     return (
       <Card className="border-0 shadow-md">
         <CardContent className="p-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: '#B8853A' }} />
         </CardContent>
       </Card>
     );
@@ -1290,20 +1304,21 @@ function LoyaltyTab({ token, userPoints }: { token: string | null; userPoints: n
   return (
     <div className="space-y-6">
       {/* Points Card */}
-      <div className="bg-gradient-to-r from-[#F97316] to-[#ea6c10] rounded-2xl p-8 text-white shadow-xl shadow-orange-500/20">
+      <div className="rounded-2xl p-8 text-white shadow-xl" style={{ background: 'radial-gradient(ellipse at 20% 50%, rgba(184,133,58,0.2), transparent 50%), #1E1810' }}>
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center">
-            <Star className="w-10 h-10 fill-current" />
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(184,133,58,0.2)', border: '1px solid rgba(184,133,58,0.3)' }}>
+            <Star className="w-10 h-10" style={{ color: '#B8853A', fill: '#B8853A' }} />
           </div>
           <div className="flex-1 text-center sm:text-left">
-            <p className="text-white/80 text-sm font-medium mb-1">Your Loyalty Points</p>
-            <p className="text-5xl font-bold">{points}</p>
-            <p className="text-white/80 mt-1">= ${(points / 100).toFixed(2)} value</p>
+            <p className="mb-1" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Your Loyalty Points</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 56, fontWeight: 700, color: 'white', lineHeight: 1 }}>{points}</p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: 4, fontSize: 13 }}>= ${(points / 100).toFixed(2)} value</p>
           </div>
           {points >= 100 && (
             <Button 
               onClick={handleRedeem}
-              className="bg-white text-[#F97316] hover:bg-white/90 font-semibold"
+              style={{ background: '#B8853A', color: 'white', fontWeight: 600 }}
+              className="hover:opacity-90"
             >
               Redeem {Math.floor(points / 100) * 100} Points
             </Button>
@@ -1311,15 +1326,15 @@ function LoyaltyTab({ token, userPoints }: { token: string | null; userPoints: n
         </div>
         
         <div className="grid grid-cols-2 gap-4 mt-8">
-          <div className="bg-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
-            <p className="text-xs text-white/70 mb-1">Earn Rate</p>
-            <p className="text-xl font-bold">1 pt / $1</p>
-            <p className="text-xs text-white/70">On every order</p>
+          <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
+            <p className="mb-1" style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Earn Rate</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: '#B8853A', lineHeight: 1 }}>1 pt / $1</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>On every order</p>
           </div>
-          <div className="bg-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
-            <p className="text-xs text-white/70 mb-1">Redeem Rate</p>
-            <p className="text-xl font-bold">100 pts = $1</p>
-            <p className="text-xs text-white/70">Min. 100 points</p>
+          <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
+            <p className="mb-1" style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Redeem Rate</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: '#B8853A', lineHeight: 1 }}>100 pts = $1</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>Min. 100 points</p>
           </div>
         </div>
       </div>
@@ -1327,8 +1342,8 @@ function LoyaltyTab({ token, userPoints }: { token: string | null; userPoints: n
       {/* Transaction History */}
       <Card className="border-0 shadow-md">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Package className="w-5 h-5 text-[#F97316]" />
+          <CardTitle className="flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 600 }}>
+            <Package className="w-5 h-5" style={{ color: '#B8853A' }} />
             Transaction History
           </CardTitle>
         </CardHeader>
@@ -1344,19 +1359,22 @@ function LoyaltyTab({ token, userPoints }: { token: string | null; userPoints: n
               {history.map((entry, i) => (
                 <div 
                   key={i} 
-                  className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                  className="flex items-center justify-between"
+                  style={{ background: 'white', border: '1px solid #EDE3D2', borderRadius: 12, padding: '14px 18px', marginBottom: i < history.length - 1 ? 8 : 0 }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      entry.points > 0 ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-[#F97316]'
-                    }`}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={
+                      entry.points > 0
+                        ? { background: 'rgba(47,149,85,0.1)', color: '#2F9555' }
+                        : { background: 'rgba(197,58,58,0.1)', color: '#C53A3A' }
+                    }>
                       {entry.points > 0 ? <Plus className="w-5 h-5" /> : <Star className="w-5 h-5" />}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">
+                      <p style={{ fontSize: 13.5, fontWeight: 500, color: '#0F0C08', margin: 0 }}>
                         {entry.action === 'earned' ? 'Points Earned' : 'Points Redeemed'}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p style={{ fontSize: 12, color: '#9E8870', margin: 0 }}>
                         {new Date(entry.date).toLocaleDateString('en-US', { 
                           month: 'short', 
                           day: 'numeric', 
@@ -1365,7 +1383,7 @@ function LoyaltyTab({ token, userPoints }: { token: string | null; userPoints: n
                       </p>
                     </div>
                   </div>
-                  <span className={`font-bold text-lg ${entry.points > 0 ? 'text-green-600' : 'text-[#F97316]'}`}>
+                  <span style={{ fontWeight: 700, fontSize: 16, color: entry.points > 0 ? '#2F9555' : '#C53A3A' }}>
                     {entry.points > 0 ? '+' : ''}{entry.points}
                   </span>
                 </div>
