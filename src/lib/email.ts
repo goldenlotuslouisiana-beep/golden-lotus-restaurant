@@ -1,15 +1,5 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER || process.env.GMAIL_USER,
-    pass: process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD,
-  },
-});
-
 export const sendEmail = async ({
   to,
   subject,
@@ -19,18 +9,36 @@ export const sendEmail = async ({
   subject: string;
   html: string;
 }) => {
+  // Resolve credentials at call-time so serverless cold-starts always pick
+  // up the correct env vars — never cache at module level
+  const user = process.env.SMTP_USER || process.env.GMAIL_USER || '';
+  const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '';
+
+  if (!user || !pass) {
+    console.error('Email not sent — SMTP_USER / SMTP_PASS env vars are missing');
+    return { success: false, error: 'SMTP credentials not configured' };
+  }
+
   try {
-    const from = process.env.SMTP_USER || process.env.GMAIL_USER;
-    await transporter.sendMail({
-      from: `"Golden Lotus Restaurant" <${from}>`,
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: { user, pass },
+    });
+
+    const info = await transporter.sendMail({
+      from: `"Golden Lotus Restaurant" <${user}>`,
       to,
       subject,
       html,
     });
+
+    console.log(`Email sent → ${to} | messageId: ${info.messageId}`);
     return { success: true };
-  } catch (err) {
-    console.error('Email send error:', err);
-    return { success: false };
+  } catch (err: any) {
+    console.error(`Email send error → ${to} | ${err?.message || err}`);
+    return { success: false, error: err?.message };
   }
 };
 
