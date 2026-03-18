@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, User, Shield } from 'lucide-react';
 
 export default function AdminLogin() {
@@ -126,9 +126,9 @@ export default function AdminLogin() {
           </form>
 
           <div className="mt-6 text-center">
-            <a href="/" className="text-sm text-gray-500 hover:text-lotus-gold transition-colors">
+            <Link to="/" className="text-sm text-gray-500 hover:text-lotus-gold transition-colors">
               Back to Website
-            </a>
+            </Link>
           </div>
         </div>
 

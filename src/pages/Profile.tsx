@@ -1070,6 +1070,7 @@ function OrderHistoryTab({ token }: { token: string | null }) {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchOrderHistory();
@@ -1126,7 +1127,7 @@ function OrderHistoryTab({ token }: { token: string | null }) {
             <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
             <p className="text-gray-500 mb-4">Start ordering to see your history here</p>
             <Button 
-              onClick={() => window.location.href = '/menu'}
+              onClick={() => navigate('/menu')}
               style={{ background: '#1E1810', color: 'white' }}
               onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#B8853A'; }}
               onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = '#1E1810'; }}
@@ -1210,7 +1211,7 @@ function OrderHistoryTab({ token }: { token: string | null }) {
                           variant="outline"
                           style={{ borderRadius: 8, borderColor: '#EDE3D2', color: '#6B5540' }}
                           className="hover:border-[#B8853A] hover:text-[#B8853A]"
-                          onClick={() => window.location.href = `/order-tracking?id=${order.id}`}
+                          onClick={() => navigate(`/order-tracking?id=${order.id}`)}
                         >
                           Track Order
                         </Button>

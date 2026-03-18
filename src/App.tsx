@@ -1,6 +1,6 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from '@/context/AuthContext';
+import ScrollToTop from '@/components/ScrollToTop';
 
 // Layout
 import MainLayout from '@/components/ui-custom/MainLayout';
@@ -55,27 +55,32 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  useEffect(() => {
-    // Data now initialized from database
-  }, []);
-
   return (
-    <AuthProvider>
-      <Router>
-        <Suspense
-          fallback={
-            <div className="min-h-[60vh] flex items-center justify-center px-4">
-              <div className="w-full max-w-md bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div className="h-6 w-40 bg-gray-100 rounded mb-4 animate-pulse" />
-                <div className="space-y-3">
-                  <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
-                  <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
-                  <div className="h-10 w-full bg-gray-100 rounded-xl animate-pulse" />
-                </div>
-              </div>
-            </div>
-          }
-        >
+    <Router>
+      <ScrollToTop />
+      <Suspense
+        fallback={
+          <div style={{
+            minHeight: '100vh',
+            background: '#F9F4EC',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <style>{`
+              @keyframes _spin { to { transform: rotate(360deg); } }
+            `}</style>
+            <div style={{
+              width: 40,
+              height: 40,
+              border: '3px solid #EDE3D2',
+              borderTopColor: '#B8853A',
+              borderRadius: '50%',
+              animation: '_spin 0.8s linear infinite',
+            }} />
+          </div>
+        }
+      >
           <Routes>
             {/* User Routes */}
             <Route element={<MainLayout />}>
@@ -137,9 +142,8 @@ function App() {
               <Route path="pages" element={<AdminPagesManager />} />
             </Route>
           </Routes>
-        </Suspense>
-      </Router>
-    </AuthProvider>
+      </Suspense>
+    </Router>
   );
 }
 
