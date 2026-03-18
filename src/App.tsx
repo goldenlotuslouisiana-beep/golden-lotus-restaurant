@@ -45,6 +45,8 @@ const AdminReviews = lazy(() => import('@/admin/Reviews'));
 const AdminEvents = lazy(() => import('@/admin/Events'));
 const AdminCatering = lazy(() => import('@/admin/Catering'));
 const AdminHomePage = lazy(() => import('@/admin/HomePage'));
+const AdminPagesManager = lazy(() => import('@/admin/PagesManager'));
+const Contact = lazy(() => import('@/pages/Contact'));
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -97,7 +99,7 @@ function App() {
               {/* Static pages */}
               <Route path="/careers" element={<div className="pt-32 pb-20 text-center">We're Hiring - Coming Soon</div>} />
               <Route path="/gift-cards" element={<div className="pt-32 pb-20 text-center">Gift Cards - Coming Soon</div>} />
-              <Route path="/contact" element={<div className="pt-32 pb-20 text-center">Contact Us - Coming Soon</div>} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/accessibility" element={<div className="pt-32 pb-20 text-center">Accessibility - Coming Soon</div>} />
@@ -132,6 +134,7 @@ function App() {
               <Route path="events" element={<AdminEvents />} />
               <Route path="catering" element={<AdminCatering />} />
               <Route path="home" element={<AdminHomePage />} />
+              <Route path="pages" element={<AdminPagesManager />} />
             </Route>
           </Routes>
         </Suspense>

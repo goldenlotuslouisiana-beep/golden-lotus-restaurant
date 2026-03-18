@@ -40,6 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'save-catering-packages', 'save-catering-inquiries',
         'save-homepage', 'save-homepage-content',
         'toggle-homepage-section', 'reorder-homepage-sections',
+        'save-page-content', 'toggle-page-section',
     ]);
 
     if (protectedActions.has(action)) {
@@ -92,6 +93,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'save-homepage-content': return handleSaveHomepage(req, res);
         case 'toggle-homepage-section': return handleToggleHomepageSection(req, res);
         case 'reorder-homepage-sections': return handleReorderHomepageSections(req, res);
+        case 'get-page-content': return handleGetPageContent(req, res);
+        case 'save-page-content': return handleSavePageContent(req, res);
+        case 'toggle-page-section': return handleTogglePageSection(req, res);
+        case 'send-contact-email': return handleSendContactEmail(req, res);
         default:
             // Fallback for old route payloads like method based deletions or updates
             if (action === 'user-detail' && req.method === 'DELETE') return handleUserDetail(req, res);
@@ -667,6 +672,161 @@ async function handleReorderHomepageSections(req: VercelRequest, res: VercelResp
     } catch (e) {
         console.error('Error reordering sections:', e);
         return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+// ─── Page Content (Contact, Story, Privacy, Terms) ───────────────────────────
+
+const DEFAULT_PAGE_CONTENT: Record<string, any> = {
+    contact: {
+        section: 'contact',
+        hero: { eyebrow: 'Get In Touch', title: "We'd love to", titleItalic: 'hear from you', subtitle: "Have a question, feedback, or want to book catering? We're here to help." },
+        info: { address: '1473 Dorchester Dr, Alexandria, LA 71301', phone: '(318) 445-5688', email: 'hello@goldenlotusgrill.com', mapEmbedUrl: '' },
+        hours: [
+            { day: 'Monday',    open: '11:00 AM', close: '10:00 PM', closed: false },
+            { day: 'Tuesday',   open: '11:00 AM', close: '10:00 PM', closed: false },
+            { day: 'Wednesday', open: '11:00 AM', close: '10:00 PM', closed: false },
+            { day: 'Thursday',  open: '11:00 AM', close: '10:00 PM', closed: false },
+            { day: 'Friday',    open: '11:00 AM', close: '11:00 PM', closed: false },
+            { day: 'Saturday',  open: '11:00 AM', close: '11:00 PM', closed: false },
+            { day: 'Sunday',    open: '12:00 PM', close: '9:00 PM',  closed: false },
+        ],
+        social: { instagram: '', facebook: '', twitter: '', tiktok: '' },
+        sections: { hero: { visible: true }, map: { visible: true }, hours: { visible: true }, form: { visible: true }, social: { visible: true } },
+    },
+    story: {
+        section: 'story',
+        hero: { eyebrow: 'Our Story', title: 'A journey of', titleItalic: 'flavors & passion', subtitle: "From a small dream to Alexandria's favorite Indian restaurant", heroImage: '' },
+        founding: { eyebrow: 'How It All Started', title: 'Born from a', titleItalic: 'love of cooking', story: 'Our story began in 2010 when we brought the authentic flavors of India to Alexandria, Louisiana. With generations-old recipes and a passion for spices, we set out to create a dining experience unlike anything the region had seen before.\n\nEvery dish we serve carries the soul of traditional Indian cooking — fresh ingredients sourced daily, spices ground in-house, and techniques perfected over decades.', image: '', imageCaption: '' },
+        timeline: {
+            eyebrow: 'Our Journey', title: 'Milestones that', titleItalic: 'shaped us',
+            items: [
+                { year: '2010', title: 'Grand Opening', description: 'Golden Lotus opens its doors in Alexandria, LA' },
+                { year: '2013', title: 'First Award',   description: 'Voted Best Indian Restaurant in Central Louisiana' },
+                { year: '2016', title: 'Menu Expansion',description: 'Added 30+ new dishes inspired by regional Indian cuisine' },
+                { year: '2019', title: 'Online Ordering',description: 'Launched online ordering for convenient pickup' },
+                { year: '2024', title: 'New Chapter',   description: 'Renovated and launched our new website' },
+            ],
+        },
+        values: {
+            eyebrow: 'What We Stand For', title: 'Our core', titleItalic: 'values',
+            items: [
+                { icon: '🌿', title: 'Fresh Always',    description: 'Every ingredient sourced fresh daily. No shortcuts, ever.' },
+                { icon: '❤️', title: 'Made with Love',  description: 'Every dish prepared with the same care as cooking for family.' },
+                { icon: '🌍', title: 'Authentic Roots', description: 'Recipes passed down generations, honoring Indian culinary heritage.' },
+                { icon: '🤝', title: 'Community First', description: 'Proud to serve and support the Alexandria community.' },
+            ],
+        },
+        team: {
+            eyebrow: 'Meet The Team', title: 'The people behind', titleItalic: 'every dish',
+            members: [
+                { name: 'Head Chef', role: 'Head Chef & Founder', bio: 'With over 20 years of culinary experience, our head chef brings authentic flavors from India to every dish.', image: '' },
+                { name: 'Kitchen Manager', role: 'Kitchen Manager', bio: 'Ensuring every order is prepared with the highest standards of quality and freshness.', image: '' },
+                { name: 'Front of House', role: 'Guest Experience', bio: 'Making every guest feel welcome and ensuring an exceptional dining experience.', image: '' },
+            ],
+        },
+        gallery: { eyebrow: 'Our Kitchen', title: 'A glimpse', titleItalic: 'inside', images: [] },
+        cta: { title: 'Come taste the', titleItalic: 'difference', description: 'Experience the flavors that have made Golden Lotus a beloved part of Alexandria.', buttonText: 'Order Online →', button2Text: 'View Our Menu' },
+        sections: { hero: { visible: true }, founding: { visible: true }, timeline: { visible: true }, values: { visible: true }, team: { visible: true }, gallery: { visible: true }, cta: { visible: true } },
+    },
+    privacy: {
+        section: 'privacy',
+        lastUpdated: '2026-03-19',
+        title: 'Privacy Policy',
+        subtitle: 'Your privacy matters to us',
+        content: '',
+    },
+    terms: {
+        section: 'terms',
+        lastUpdated: '2026-03-19',
+        title: 'Terms of Service',
+        subtitle: 'Please read these terms carefully',
+        content: '',
+    },
+};
+
+async function handleGetPageContent(req: VercelRequest, res: VercelResponse) {
+    const page = (req.query.page as string) || '';
+    if (!page) return res.status(400).json({ error: 'Missing page parameter' });
+    try {
+        const client = await clientPromise;
+        const doc = await client.db(DB).collection('page_content').findOne({ section: page });
+        if (!doc) {
+            const defaultContent = DEFAULT_PAGE_CONTENT[page];
+            if (defaultContent) {
+                await client.db(DB).collection('page_content').insertOne({ ...defaultContent });
+                return res.status(200).json({ success: true, data: defaultContent });
+            }
+            return res.status(404).json({ error: 'Page not found' });
+        }
+        const { _id, ...rest } = doc;
+        return res.status(200).json({ success: true, data: rest });
+    } catch {
+        const defaultContent = DEFAULT_PAGE_CONTENT[page];
+        return res.status(200).json({ success: true, data: defaultContent || null });
+    }
+}
+
+async function handleSavePageContent(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const body = req.body as any;
+    const page = body?.page || body?.section;
+    if (!page) return res.status(400).json({ error: 'Missing page' });
+    try {
+        const { _id, id, page: _p, ...rest } = body;
+        const client = await clientPromise;
+        await client.db(DB).collection('page_content').updateOne(
+            { section: page },
+            { $set: { ...rest, section: page, updatedAt: new Date().toISOString() } },
+            { upsert: true }
+        );
+        const updated = await client.db(DB).collection('page_content').findOne({ section: page });
+        if (!updated) return res.status(500).json({ error: 'Failed to save' });
+        const { _id: docId, ...updatedRest } = updated;
+        return res.status(200).json({ success: true, data: updatedRest });
+    } catch (e) {
+        console.error('Error saving page content:', e);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function handleTogglePageSection(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { page, sectionKey, visible } = req.body as { page: string; sectionKey: string; visible: boolean };
+    if (!page || !sectionKey) return res.status(400).json({ error: 'Missing page or sectionKey' });
+    try {
+        const client = await clientPromise;
+        await client.db(DB).collection('page_content').updateOne(
+            { section: page },
+            { $set: { [`sections.${sectionKey}.visible`]: visible, updatedAt: new Date().toISOString() } },
+            { upsert: true }
+        );
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.error('Error toggling page section:', e);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function handleSendContactEmail(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { name, email, phone, subject, message } = req.body as { name: string; email: string; phone?: string; subject: string; message: string };
+    if (!name || !email || !subject || !message) return res.status(400).json({ error: 'Missing required fields' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Invalid email address' });
+    try {
+        const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
+        await transporter.sendMail({
+            from: `"Golden Lotus Website" <${process.env.GMAIL_USER}>`,
+            to: process.env.VITE_ADMIN_EMAIL || process.env.GMAIL_USER,
+            replyTo: email,
+            subject: `New Contact Form: ${subject}`,
+            text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || 'Not provided'}\nSubject: ${subject}\nMessage: ${message}\nSent at: ${new Date().toLocaleString()}`,
+            html: `<h2>New Contact Form Submission</h2><table style="border-collapse:collapse"><tr><td style="padding:6px 12px;font-weight:bold">Name</td><td style="padding:6px 12px">${name}</td></tr><tr><td style="padding:6px 12px;font-weight:bold">Email</td><td style="padding:6px 12px"><a href="mailto:${email}">${email}</a></td></tr><tr><td style="padding:6px 12px;font-weight:bold">Phone</td><td style="padding:6px 12px">${phone || 'Not provided'}</td></tr><tr><td style="padding:6px 12px;font-weight:bold">Subject</td><td style="padding:6px 12px">${subject}</td></tr><tr><td style="padding:6px 12px;font-weight:bold;vertical-align:top">Message</td><td style="padding:6px 12px">${message.replace(/\n/g, '<br>')}</td></tr></table>`,
+        });
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.error('Contact email error:', e);
+        return res.status(500).json({ error: 'Failed to send email' });
     }
 }
 
