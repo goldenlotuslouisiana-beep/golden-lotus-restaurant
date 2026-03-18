@@ -13,7 +13,7 @@ export default function AdminMenu() {
   const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [formData, setFormData] = useState<Partial<MenuItem>>({
+  const [formData, setFormData] = useState<Partial<MenuItem> & { prepTime?: number }>({
     name: '',
     description: '',
     price: 0,
@@ -23,6 +23,7 @@ export default function AdminMenu() {
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
+    prepTime: 15,
   });
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function AdminMenu() {
       isVegetarian: false,
       isVegan: false,
       isGlutenFree: false,
+      prepTime: 15,
     });
     setImagePreview(null);
     setIsModalOpen(true);
@@ -74,7 +76,7 @@ export default function AdminMenu() {
 
   const handleEdit = (item: MenuItem) => {
     setEditingItem(item);
-    setFormData({ ...item });
+    setFormData({ ...item, prepTime: (item as any).prepTime ?? 15 });
     setImagePreview(item.image || null);
     setIsModalOpen(true);
   };
@@ -191,6 +193,7 @@ export default function AdminMenu() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Price</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Prep Time</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Actions</th>
               </tr>
@@ -218,6 +221,9 @@ export default function AdminMenu() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="font-medium text-lotus-gold">${item.price.toFixed(2)}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-sm text-gray-600">{(item as any).prepTime || 15} min</span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
@@ -320,6 +326,22 @@ export default function AdminMenu() {
                     step="0.01"
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Preparation Time</label>
+                  <input
+                    type="number"
+                    name="prepTime"
+                    value={(formData as any).prepTime ?? 15}
+                    onChange={(e) => setFormData((p) => ({ ...p, prepTime: parseInt(e.target.value) || 15 }))}
+                    min="5"
+                    max="120"
+                    step="5"
+                    placeholder="e.g. 15"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lotus-gold"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">How many minutes to prepare this dish</p>
                 </div>
 
                 <div>

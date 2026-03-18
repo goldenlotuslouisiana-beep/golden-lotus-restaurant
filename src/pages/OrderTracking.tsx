@@ -1,15 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle, ChefHat, Package, Clock, ChevronDown, ChevronUp, HelpCircle, XCircle } from 'lucide-react';
+import { CheckCircle, ChefHat, Package, ChevronDown, ChevronUp, HelpCircle, XCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import SEO from '@/components/SEO';
 
 const STAGES = [
-    { key: 'confirmed', label: 'Order Confirmed', icon: CheckCircle, color: 'text-green-600 bg-green-100' },
-    { key: 'preparing', label: 'Being Prepared', icon: ChefHat, color: 'text-purple-600 bg-purple-100' },
-    { key: 'ready', label: 'Ready for Pickup', icon: Package, color: 'text-indigo-600 bg-indigo-100' },
-    { key: 'picked_up', label: 'Picked Up / Completed', icon: CheckCircle, color: 'text-[#F97316] bg-orange-100' },
+    { key: 'confirmed', label: 'Order Confirmed', Icon: CheckCircle },
+    { key: 'preparing', label: 'Being Prepared', Icon: ChefHat },
+    { key: 'ready', label: 'Ready for Pickup', Icon: Package },
+    { key: 'picked_up', label: 'Picked Up / Completed', Icon: CheckCircle },
 ];
 
 interface OrderData {
@@ -19,6 +19,15 @@ interface OrderData {
     paymentMethod: string;
 }
 
+const OT_CSS = `
+  @keyframes ot-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(184,133,58,0.5); }
+    50% { box-shadow: 0 0 0 10px rgba(184,133,58,0); }
+  }
+  .ot-current-ring { animation: ot-pulse 1.8s ease-in-out infinite; }
+  .ot-help-btn:hover { border-color: #B8853A !important; color: #B8853A !important; }
+`;
+
 export default function OrderTracking() {
     const { id } = useParams<{ id: string }>();
     const [order, setOrder] = useState<OrderData | null>(null);
@@ -27,18 +36,16 @@ export default function OrderTracking() {
     const [countdown, setCountdown] = useState('');
     const [canCancel, setCanCancel] = useState(false);
 
+    // ── API fetch (unchanged) ─────────────────────────────────────────────────
     useEffect(() => {
-        if (!id) {
-            setLoading(false);
-            return;
-        }
+        if (!id) { setLoading(false); return; }
 
         const fetchStatus = async () => {
             try {
                 const res = await fetch(`/api/orders?action=single&id=${id}`);
                 if (res.ok) {
                     const data = await res.json();
-                    setOrder(prev => {
+                    setOrder((prev) => {
                         if (prev && prev.status !== data.status) {
                             toast.success('Your order status has been updated!');
                         }
@@ -57,7 +64,7 @@ export default function OrderTracking() {
         return () => clearInterval(interval);
     }, [id]);
 
-    // Countdown timer
+    // ── Countdown timer (unchanged) ───────────────────────────────────────────
     useEffect(() => {
         if (!order) return;
         const created = new Date(order.createdAt).getTime();
@@ -76,62 +83,54 @@ export default function OrderTracking() {
         return () => clearInterval(interval);
     }, [order]);
 
+    // ── Stage index (unchanged) ───────────────────────────────────────────────
     const getStageIndex = () => {
         if (!order) return 0;
-        const map: Record<string, number> = { 
-            pending: 0, 
-            confirmed: 0, 
-            preparing: 1, 
-            ready: 2, 
-            picked_up: 3,
-            completed: 3 
+        const map: Record<string, number> = {
+            pending: 0, confirmed: 0, preparing: 1, ready: 2, picked_up: 3, completed: 3,
         };
         return map[order.status] ?? 0;
     };
 
-    const getActiveStages = () => STAGES;
-
+    // ── Loading skeleton ──────────────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
-                <div className="max-w-lg mx-auto space-y-6">
-                    <div className="text-center space-y-3">
-                        <Skeleton className="h-7 w-40 mx-auto rounded-xl" />
-                        <Skeleton className="h-8 w-52 mx-auto rounded-full" />
+            <div style={{ minHeight: '100vh', background: '#F9F4EC', paddingTop: 96, paddingBottom: 64, padding: '96px 24px 64px', fontFamily: "'Jost', sans-serif" }}>
+                <div style={{ maxWidth: 640, margin: '0 auto' }}>
+                    <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                        <Skeleton className="h-7 w-40 mx-auto rounded-xl mb-3" />
+                        <Skeleton className="h-8 w-52 mx-auto rounded-full mb-2" />
                         <Skeleton className="h-4 w-32 mx-auto rounded-full" />
                     </div>
+                    <Skeleton className="h-28 w-full rounded-2xl mb-4" />
+                    <Skeleton className="h-64 w-full rounded-2xl mb-4" />
                     <Skeleton className="h-32 w-full rounded-2xl" />
-                    <Skeleton className="h-64 w-full rounded-2xl" />
-                    <Skeleton className="h-40 w-full rounded-2xl" />
                 </div>
             </div>
         );
     }
 
+    // ── Not found ─────────────────────────────────────────────────────────────
     if (!order) {
         return (
-            <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
-                <div className="max-w-lg mx-auto text-center bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                    <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                        <XCircle className="w-7 h-7 text-red-500" />
+            <div style={{ minHeight: '100vh', background: '#F9F4EC', paddingTop: 96, paddingBottom: 64, padding: '96px 24px 64px', fontFamily: "'Jost', sans-serif" }}>
+                <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center', background: 'white', borderRadius: 20, border: '1px solid #EDE3D2', padding: 40 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(197,58,58,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                        <XCircle style={{ width: 28, height: 28, color: '#C53A3A' }} />
                     </div>
-                    <h1 className="text-xl font-semibold text-gray-900 mb-1">Order not found</h1>
-                    <p className="text-gray-500 mb-4">
-                        We couldn&apos;t find this order. Please check your link or order number and try again.
-                    </p>
+                    <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 600, color: '#0F0C08', margin: '0 0 8px' }}>Order not found</h1>
+                    <p style={{ fontSize: 13, color: '#9E8870', marginBottom: 20 }}>We couldn't find this order. Please check your link or order number and try again.</p>
                     <button
                         type="button"
                         onClick={() => window.location.reload()}
-                        className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA6C0A] transition-colors"
+                        style={{ padding: '11px 24px', background: '#1E1810', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif", marginBottom: 12 }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = '#B8853A')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = '#1E1810')}
                     >
-                        Try again
+                        Try Again
                     </button>
-                    <Link
-                        to="/"
-                        className="mt-3 block text-sm text-[#F97316] hover:text-[#EA6C0A] font-medium"
-                    >
-                        Back to home
-                    </Link>
+                    <br />
+                    <Link to="/" style={{ fontSize: 13, color: '#B8853A', fontWeight: 500, textDecoration: 'none' }}>Back to home</Link>
                 </div>
             </div>
         );
@@ -141,120 +140,169 @@ export default function OrderTracking() {
 
     return (
         <>
-            <SEO 
+            <SEO
                 title="Track Order | Golden Lotus Restaurant"
                 description="Track your Golden Lotus order in real-time. See when your food is being prepared and when it's ready for pickup."
                 url="https://www.goldenlotusgrill.com/order-tracking"
                 noIndex={true}
             />
-        <div className="min-h-screen bg-gray-50 pt-28 pb-16 px-4">
-            <div className="max-w-lg mx-auto">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-1">Track Your Order</h1>
-                    <p className="text-sm font-mono bg-gray-100 inline-block px-4 py-1.5 rounded-full text-gray-700">#{order.orderNumber}</p>
-                    <p className="text-sm text-gray-500 mt-2">Placed {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                </div>
+            <style dangerouslySetInnerHTML={{ __html: OT_CSS }} />
 
-                {/* ETA Card */}
-                <div className="bg-gradient-to-r from-[#F97316] to-[#ea6c10] rounded-2xl p-6 text-white mb-6 shadow-lg shadow-orange-200">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm opacity-90">Estimated Arrival</p>
-                            <p className="text-3xl font-bold mt-1">{countdown}</p>
+            <div style={{ minHeight: '100vh', background: '#F9F4EC', fontFamily: "'Jost', sans-serif", paddingTop: 96, paddingBottom: 64 }}>
+                <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 24px' }}>
+
+                    {/* Header */}
+                    <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 600, color: '#0F0C08', margin: '0 0 8px' }}>Track Your Order</h1>
+                        <div style={{ display: 'inline-block', background: '#F2E4C8', border: '1px solid #DDD0BB', borderRadius: 20, padding: '5px 16px', marginBottom: 8 }}>
+                            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: '#B8853A' }}>#{order.orderNumber}</span>
                         </div>
-                        <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                            <Clock className="w-7 h-7" />
+                        <p style={{ fontSize: 13, color: '#9E8870', margin: 0 }}>
+                            Placed at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                    </div>
+
+                    {/* ETA Card — dark ink bg */}
+                    <div style={{ background: '#1E1810', borderRadius: 16, padding: '20px 24px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#B8853A', fontWeight: 600, margin: '0 0 6px' }}>Estimated Pickup</p>
+                            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 700, color: '#B8853A', margin: 0, lineHeight: 1 }}>{countdown || '18m 00s'}</p>
+                        </div>
+                        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(184,133,58,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8853A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                            </svg>
                         </div>
                     </div>
-                </div>
 
-                {/* Progress Tracker */}
-                <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-gray-100">
-                    <div className="space-y-0">
-                        {getActiveStages().map((stage, i) => {
-                            const isActive = i <= stageIdx;
-                            const isCurrent = i === stageIdx;
-                            const Icon = stage.icon;
-                            // Need to know total stages to draw the line correctly
-                            const totalStages = getActiveStages().length;
+                    {/* Status stepper */}
+                    <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EDE3D2', padding: 24, marginBottom: 20 }}>
+                        {STAGES.map((stage, i) => {
+                            const completed = i < stageIdx;
+                            const current = i === stageIdx;
+                            const upcoming = i > stageIdx;
+                            const { Icon } = stage;
                             return (
-                                <div key={stage.key} className="flex gap-4">
-                                    <div className="flex flex-col items-center">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isActive ? stage.color : 'bg-gray-100 text-gray-400'} ${isCurrent ? 'ring-4 ring-offset-2 ring-[#F97316]/20' : ''}`}>
-                                            <Icon className="w-5 h-5" />
+                                <div key={stage.key} style={{ display: 'flex', gap: 16 }}>
+                                    {/* Left: circle + line */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                        <div
+                                            className={current ? 'ot-current-ring' : ''}
+                                            style={{
+                                                width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.3s',
+                                                background: completed ? '#B8853A' : current ? '#1E1810' : 'white',
+                                                border: upcoming ? '1.5px solid #EDE3D2' : 'none',
+                                            }}
+                                        >
+                                            {completed ? (
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M5 12l5 5L19 7" />
+                                                </svg>
+                                            ) : (
+                                                <Icon style={{ width: 18, height: 18, color: current ? 'white' : '#9E8870' }} />
+                                            )}
                                         </div>
-                                        {i < totalStages - 1 && <div className={`w-0.5 h-12 ${isActive ? 'bg-green-300' : 'bg-gray-200'}`} />}
+                                        {i < STAGES.length - 1 && (
+                                            <div style={{ width: 2, height: 32, background: completed ? '#B8853A' : '#EDE3D2', transition: 'background 0.3s', margin: '4px 0' }} />
+                                        )}
                                     </div>
-                                    <div className="pt-2 pb-6">
-                                        <p className={`font-medium ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>{stage.label}</p>
-                                        {isCurrent && <p className="text-sm text-[#F97316] mt-0.5 font-medium">Current status</p>}
+
+                                    {/* Right: label */}
+                                    <div style={{ paddingTop: 8, paddingBottom: i < STAGES.length - 1 ? 0 : 0, flex: 1 }}>
+                                        <p style={{ fontSize: 14, fontWeight: 500, color: upcoming ? '#9E8870' : '#0F0C08', margin: '0 0 4px', transition: 'color 0.3s' }}>{stage.label}</p>
+                                        {current && (
+                                            <span style={{ display: 'inline-block', background: 'rgba(184,133,58,0.10)', color: '#B8853A', borderRadius: 20, fontSize: 11, fontWeight: 700, padding: '2px 10px', marginBottom: 4 }}>
+                                                Current status
+                                            </span>
+                                        )}
+                                        {i < STAGES.length - 1 && <div style={{ height: 24 }} />}
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
-                </div>
 
-                {/* Pickup Instructions */}
-                {order.status === 'ready' && (
-                  <div className="mt-8 bg-orange-500 text-white rounded-xl p-5 text-center shadow-lg">
-                    <p className="text-3xl mb-2">🎁</p>
-                    <h3 className="text-xl font-bold">Your order is ready!</h3>
-                    <p className="mt-1 text-white/90">
-                      Please come pick it up at Golden Lotus
-                    </p>
-                    <p className="mt-1 text-white/80 text-sm">
-                      168 Dragon Blvd, Los Angeles, CA 90012
-                    </p>
-                    <a href="https://maps.google.com?q=168+Dragon+Blvd+Los+Angeles+CA"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       className="mt-3 inline-block bg-white text-orange-500 px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-orange-50 transition-colors">
-                      📌 Get Directions
-                    </a>
-                  </div>
-                )}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
-                    <button onClick={() => setShowDetails(!showDetails)} className="w-full p-4 flex items-center justify-between">
-                        <span className="font-medium text-gray-900">Order Details ({order.items.length} items)</span>
-                        {showDetails ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                    </button>
-                    {showDetails && (
-                        <div className="px-4 pb-4 space-y-3 border-t pt-3">
-                            {order.items.map((item, i) => (
-                                <div key={i} className="flex justify-between text-sm">
-                                    <span className="text-gray-600">{item.name} x{item.quantity}</span>
-                                    <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
-                                </div>
-                            ))}
-                            <div className="flex justify-between font-bold pt-2 border-t"><span>Total</span><span className="text-[#F97316]">${order.total.toFixed(2)}</span></div>
+                    {/* Ready card */}
+                    {order.status === 'ready' && (
+                        <div style={{ background: '#B8853A', borderRadius: 14, padding: '20px 24px', marginBottom: 20, textAlign: 'center' }}>
+                            <p style={{ fontSize: 28, margin: '0 0 8px' }}>🎁</p>
+                            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 700, color: 'white', margin: '0 0 6px' }}>Your order is ready!</h3>
+                            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', margin: '0 0 4px' }}>Please come pick it up at:</p>
+                            <p style={{ fontSize: 14, fontWeight: 600, color: 'white', margin: '0 0 14px' }}>1473 Dorchester Dr, Alexandria, LA 71301</p>
+                            <a
+                                href="https://maps.google.com?q=1473+Dorchester+Dr+Alexandria+LA+71301"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ display: 'inline-block', background: 'white', color: '#B8853A', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'opacity 0.2s' }}
+                                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+                                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+                            >
+                                📌 Get Directions
+                            </a>
                         </div>
                     )}
-                </div>
 
-                {/* Actions */}
-                <div className="space-y-3">
-                    {canCancel ? (
-                        <button className="w-full py-3 border-2 border-red-200 text-red-600 font-semibold rounded-xl hover:bg-red-50 transition-all flex items-center justify-center gap-2">
-                            <XCircle className="w-5 h-5" /> Cancel Order
+                    {/* Order details collapsible */}
+                    <div style={{ background: 'white', borderRadius: 14, border: '1px solid #EDE3D2', marginBottom: 20, overflow: 'hidden' }}>
+                        <button
+                            onClick={() => setShowDetails((v) => !v)}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost', sans-serif" }}
+                        >
+                            <span style={{ fontSize: 14, fontWeight: 600, color: '#0F0C08' }}>📦 Order Details ({order.items.length} items)</span>
+                            {showDetails ? <ChevronUp style={{ width: 18, height: 18, color: '#9E8870' }} /> : <ChevronDown style={{ width: 18, height: 18, color: '#9E8870' }} />}
                         </button>
-                    ) : (
-                        <div className="relative group">
-                            <button disabled className="w-full py-3 border-2 border-gray-200 text-gray-400 font-semibold rounded-xl cursor-not-allowed flex items-center justify-center gap-2">
-                                <XCircle className="w-5 h-5" /> Cancel Order
-                            </button>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap">
-                                Orders can only be cancelled within 2 minutes of placing
+                        {showDetails && (
+                            <div style={{ padding: '0 20px 20px', borderTop: '1px solid #EDE3D2', paddingTop: 14 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
+                                    {order.items.map((item, i) => (
+                                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontFamily: "'Jost', sans-serif" }}>
+                                            <span style={{ color: '#6B5540' }}>{item.name} × {item.quantity}</span>
+                                            <span style={{ fontWeight: 500, color: '#0F0C08' }}>${(item.price * item.quantity).toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, paddingTop: 10, borderTop: '1px solid #EDE3D2', fontFamily: "'Jost', sans-serif" }}>
+                                    <span style={{ color: '#0F0C08' }}>Total</span>
+                                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: '#B8853A' }}>${order.total.toFixed(2)}</span>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                    <Link to="/contact" className="w-full py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
-                        <HelpCircle className="w-5 h-5" /> Need Help?
-                    </Link>
+                        )}
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {canCancel ? (
+                            <button
+                                style={{ width: '100%', padding: '13px', border: '2px solid rgba(197,58,58,0.3)', color: '#C53A3A', background: 'white', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: "'Jost', sans-serif", transition: 'all 0.2s' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(197,58,58,0.05)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; }}
+                            >
+                                <XCircle style={{ width: 18, height: 18 }} /> Cancel Order
+                            </button>
+                        ) : (
+                            <div style={{ position: 'relative' }} className="group">
+                                <button
+                                    disabled
+                                    style={{ width: '100%', padding: '13px', border: '1.5px solid #EDE3D2', color: '#9E8870', background: 'white', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: "'Jost', sans-serif" }}
+                                    title="Cannot cancel after 2 minutes"
+                                >
+                                    <XCircle style={{ width: 18, height: 18 }} /> Cancel Order
+                                </button>
+                                <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 8, background: '#1E1810', color: 'white', fontSize: 11.5, borderRadius: 8, padding: '6px 12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 10 }}>
+                                    Cannot cancel after 2 minutes
+                                </div>
+                            </div>
+                        )}
+                        <Link
+                            to="/contact"
+                            className="ot-help-btn"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px', border: '1px solid #EDE3D2', color: '#6B5540', background: 'white', borderRadius: 12, fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s', fontFamily: "'Jost', sans-serif" }}
+                        >
+                            <HelpCircle style={{ width: 18, height: 18 }} /> Need Help?
+                        </Link>
+                    </div>
                 </div>
             </div>
-        </div>
         </>
     );
 }

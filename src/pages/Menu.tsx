@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingBag, Plus, Minus, X, Tag, Flame, Leaf, Sparkles, ChevronRight, Trash2 } from 'lucide-react';
+import { Search, ShoppingBag, Plus, Minus, X, Tag, Trash2, ChevronRight } from 'lucide-react';
 import type { MenuItem, MenuCategory, Coupon } from '@/types';
 import SEO, { breadcrumbSchema } from '@/components/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +19,41 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debounced;
 }
 
+const MENU_CSS = `
+  .menu-topbar { padding: 14px 48px; }
+  .menu-tabs-bar { padding: 16px 48px; }
+  .menu-promos { padding: 20px 48px; }
+  .menu-section-hdr { padding: 28px 48px 18px; }
+  .menu-grid-wrap { padding: 0 48px 64px; }
+  .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 640px) {
+    .menu-topbar { padding: 12px 16px !important; }
+    .menu-tabs-bar { padding: 10px 16px !important; }
+    .menu-promos { padding: 12px 16px !important; }
+    .menu-section-hdr { padding: 20px 16px 14px !important; }
+    .menu-grid-wrap { padding: 0 16px 48px !important; }
+    .menu-grid { grid-template-columns: 1fr !important; }
+  }
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .menu-topbar { padding: 14px 24px !important; }
+    .menu-tabs-bar { padding: 14px 24px !important; }
+    .menu-promos { padding: 16px 24px !important; }
+    .menu-section-hdr { padding: 24px 24px 16px !important; }
+    .menu-grid-wrap { padding: 0 24px 56px !important; }
+    .menu-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+  .menu-tabs-inner::-webkit-scrollbar { display: none; }
+  .menu-tab-btn:hover:not(.menu-tab-active) { border-color: #B8853A !important; color: #B8853A !important; }
+  .menu-card { background: white; border-radius: 16px; border: 1px solid #EDE3D2; box-shadow: 0 2px 12px rgba(15,12,8,0.06); overflow: hidden; cursor: pointer; transition: all 0.32s cubic-bezier(.4,0,.2,1); position: relative; }
+  .menu-card:hover { transform: translateY(-5px); box-shadow: 0 20px 52px rgba(15,12,8,0.10); border-color: transparent !important; }
+  .menu-card:hover .menu-card-img { transform: scale(1.05); }
+  .menu-card-img { transition: transform 0.5s ease; }
+  .menu-add-btn:hover { background: #B8853A !important; transform: scale(1.12) !important; box-shadow: 0 4px 14px rgba(184,133,58,0.4) !important; }
+  .cart-btn:hover { background: #B8853A !important; }
+  .checkout-btn:hover { background: #B8853A !important; }
+  .modal-add-btn:hover { background: #B8853A !important; box-shadow: 0 6px 20px rgba(184,133,58,0.35) !important; }
+`;
+
 export default function Menu() {
   const navigate = useNavigate();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -34,6 +69,12 @@ export default function Menu() {
   const [showAddedToast, setShowAddedToast] = useState<string | null>(null);
   const cartScrollRef = useRef<HTMLDivElement>(null);
 
+  // Modal state
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [modalQty, setModalQty] = useState(1);
+  const [modalInstructions, setModalInstructions] = useState('');
+
+  // ── API calls (unchanged) ──────────────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       setLoadError(false);
@@ -66,6 +107,7 @@ export default function Menu() {
     fetchData();
   }, []);
 
+  // ── Filtering (unchanged) ─────────────────────────────────────────────────
   const filteredItems = useMemo(() => {
     return menuItems.filter((item) => {
       const matchesCategory = activeCategory === 'Popular'
@@ -79,6 +121,7 @@ export default function Menu() {
     });
   }, [menuItems, activeCategory, debouncedSearch]);
 
+  // ── Cart handlers (unchanged) ─────────────────────────────────────────────
   const addToCart = (item: MenuItem) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id);
@@ -91,8 +134,21 @@ export default function Menu() {
     });
     setShowAddedToast(item.id);
     setTimeout(() => setShowAddedToast(null), 1500);
-    // On mobile, auto-open cart after first add
     if (cart.length === 0) setIsCartOpen(true);
+  };
+
+  const addToCartWithQty = (item: MenuItem, qty: number) => {
+    setCart((prev) => {
+      const existing = prev.find((i) => i.id === item.id);
+      if (existing) {
+        return prev.map((i) =>
+          i.id === item.id ? { ...i, quantity: i.quantity + qty } : i
+        );
+      }
+      return [...prev, { ...item, quantity: qty }];
+    });
+    setShowAddedToast(item.id);
+    setTimeout(() => setShowAddedToast(null), 1500);
   };
 
   const removeFromCart = (itemId: string) => {
@@ -101,13 +157,15 @@ export default function Menu() {
 
   const updateQuantity = (itemId: string, delta: number) => {
     setCart((prev) =>
-      prev.map((item) => {
-        if (item.id === itemId) {
-          const newQuantity = Math.max(0, item.quantity + delta);
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      }).filter((item) => item.quantity > 0)
+      prev
+        .map((item) => {
+          if (item.id === itemId) {
+            const newQuantity = Math.max(0, item.quantity + delta);
+            return { ...item, quantity: newQuantity };
+          }
+          return item;
+        })
+        .filter((item) => item.quantity > 0)
     );
   };
 
@@ -116,9 +174,27 @@ export default function Menu() {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  // ── Modal handlers ────────────────────────────────────────────────────────
+  const openModal = (item: MenuItem) => {
+    setSelectedItem(item);
+    setModalQty(1);
+    setModalInstructions('');
+  };
+  const closeModal = () => setSelectedItem(null);
+  const handleModalAdd = () => {
+    if (!selectedItem) return;
+    addToCartWithQty(selectedItem, modalQty);
+    closeModal();
+  };
+
+  // ── Filtered promo banners ────────────────────────────────────────────────
+  const visibleCoupons = coupons.filter((c) =>
+    ['DIMSUM10', 'BOBAMONDAY'].includes(c.code.toUpperCase())
+  );
+
   return (
     <>
-      <SEO 
+      <SEO
         title="Our Menu | Authentic Indian Dishes | Golden Lotus Alexandria, LA"
         description="Explore our menu of authentic Indian cuisine in Alexandria, Louisiana. From flavorful curries to fresh tandoori dishes, vegetarian options, and more."
         url="https://www.goldenlotusgrill.com/menu"
@@ -127,363 +203,364 @@ export default function Menu() {
           { name: 'Menu', url: 'https://www.goldenlotusgrill.com/menu' },
         ])}
       />
-      
-      <div className="min-h-screen bg-[#F9FAFB]">
-        {/* Navbar */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#F3F4F6]">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2"
-            >
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#D9772A] to-[#B25E1F] flex items-center justify-center shadow-md" style={{ boxShadow: '0 18px 40px rgba(15,10,20,0.18)' }}>
-                <span className="text-white text-lg font-bold">GL</span>
-              </div>
-              <div className="hidden sm:flex flex-col leading-tight">
-                <span className="font-['Playfair_Display'] text-base font-semibold text-[#111827]">
-                  Golden Lotus
-                </span>
-                <span className="text-[11px] uppercase tracking-[0.18em] text-[#6B7280]">
-                  Alexandria, LA
-                </span>
-              </div>
-            </button>
 
-            {/* Center search on desktop */}
-            <div className="flex-1 hidden md:block max-w-md mx-auto">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search dishes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-[#D9772A] focus:bg-white transition-all text-[16px]"
-                />
-              </div>
-            </div>
+      <style dangerouslySetInnerHTML={{ __html: MENU_CSS }} />
 
-            <div className="flex items-center gap-3">
-              {/* Compact cart pill */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setIsCartOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-semibold transition-all"
-                style={{ backgroundColor: '#D9772A', boxShadow: '0 18px 40px rgba(15,10,20,0.18)' }}
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Cart ({cartCount})</span>
-                {cartCount > 0 && (
-                  <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-white/15 text-[11px] font-medium">
-                    ${cartTotal.toFixed(2)}
-                  </span>
-                )}
-              </motion.button>
+      <div style={{ minHeight: '100vh', background: '#F9F4EC', fontFamily: "'Jost', sans-serif", paddingTop: 68 }}>
 
-              {/* Simple circular avatar placeholder */}
-              <div className="hidden sm:flex w-9 h-9 rounded-full border border-[#E5E7EB] bg-white items-center justify-center text-[13px] font-semibold text-[#111827]">
-                GL
-              </div>
-            </div>
+        {/* ── SEARCH + CART TOPBAR ─────────────────────────────── */}
+        <div
+          className="menu-topbar"
+          style={{
+            position: 'sticky', top: 68, zIndex: 30,
+            background: 'white', borderBottom: '1px solid #EDE3D2',
+            boxShadow: '0 1px 8px rgba(15,12,8,0.04)',
+            display: 'flex', alignItems: 'center', gap: 16,
+          }}
+        >
+          <div style={{ flex: 1, position: 'relative', maxWidth: 440 }}>
+            <Search style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#9E8870', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              placeholder="Search dishes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '100%', paddingLeft: 40, paddingRight: 14, paddingTop: 10, paddingBottom: 10, background: '#F9F4EC', border: '1.5px solid #EDE3D2', borderRadius: 10, fontSize: '13.5px', fontFamily: "'Jost', sans-serif", color: '#0F0C08', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
+              onFocus={(e) => { e.target.style.borderColor = '#B8853A'; e.target.style.boxShadow = '0 0 0 3px rgba(184,133,58,0.1)'; e.target.style.background = 'white'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#EDE3D2'; e.target.style.boxShadow = 'none'; e.target.style.background = '#F9F4EC'; }}
+            />
           </div>
 
-          {/* Mobile search under navbar */}
-          <div className="md:hidden border-t border-[#F3F4F6] bg-white/95">
-            <div className="max-w-6xl mx-auto px-4 py-2.5">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search dishes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#D9772A]/45 focus:border-[#D9772A] focus:bg-white transition-all text-[16px]"
-                />
-              </div>
-            </div>
-          </div>
-        </header>
+          <button
+            className="cart-btn"
+            onClick={() => setIsCartOpen(true)}
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#1E1810', color: 'white', border: 'none', borderRadius: 10, fontSize: 13.5, fontWeight: 600, fontFamily: "'Jost', sans-serif", cursor: 'pointer', transition: 'background 0.2s', position: 'relative', flexShrink: 0 }}
+          >
+            <ShoppingBag style={{ width: 16, height: 16 }} />
+            <span>Cart</span>
+            {cartCount > 0 && (
+              <>
+                <span style={{ width: 4, height: 4, background: 'rgba(255,255,255,0.4)', borderRadius: '50%', display: 'inline-block' }} />
+                <span>${cartTotal.toFixed(2)}</span>
+                <span style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, background: '#B8853A', borderRadius: '50%', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white', color: 'white' }}>{cartCount}</span>
+              </>
+            )}
+          </button>
+        </div>
 
-        {/* Category Tabs */}
-        <div className="bg-white border-b sticky top-[96px] md:top-16 z-30">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3 -mx-4 px-4 sm:mx-0 sm:px-0">
-              <CategoryPill
-                active={activeCategory === 'Popular'}
-                onClick={() => setActiveCategory('Popular')}
-                icon={<Sparkles className="w-4 h-4" />}
-              >
-                Popular
-              </CategoryPill>
-              {categories.filter(c => c.name !== 'Popular').map((category) => (
-                <CategoryPill
-                  key={category.id}
-                  active={activeCategory === category.name}
-                  onClick={() => setActiveCategory(category.name)}
-                >
-                  {category.name}
-                </CategoryPill>
-              ))}
-            </div>
+        {/* ── CATEGORY TABS ────────────────────────────────────── */}
+        <div
+          className="menu-tabs-bar"
+          style={{ position: 'sticky', top: 138, zIndex: 29, background: '#F9F4EC', borderBottom: '1px solid #EDE3D2' }}
+        >
+          <div className="menu-tabs-inner" style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none' }}>
+            <CategoryTab active={activeCategory === 'Popular'} onClick={() => setActiveCategory('Popular')}>Popular</CategoryTab>
+            {categories.filter((c) => c.name !== 'Popular').map((cat) => (
+              <CategoryTab key={cat.id} active={activeCategory === cat.name} onClick={() => setActiveCategory(cat.name)}>
+                {cat.name}
+              </CategoryTab>
+            ))}
           </div>
         </div>
 
-        {/* Coupons */}
-        <AnimatePresence>
-          {coupons.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
-            >
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-[#111827]">
-                <Tag className="w-5 h-5 text-[#D9772A]" />
-                Special Offers
-              </h3>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {coupons
-                  .filter((coupon) =>
-                    ['DIMSUM10', 'BOBAMONDAY'].includes(coupon.code.toUpperCase())
-                  )
-                  .map((coupon) => (
-                  <motion.div
-                    key={coupon.id}
-                    whileHover={{ scale: 1.02 }}
-                    className="bg-[#F5E0CF] border border-[#E0D5E4] rounded-2xl p-4"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="px-3 py-1 bg-[#D9772A] text-white text-xs font-bold rounded-full">
-                        {coupon.code}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-700">{coupon.description}</p>
-                  </motion.div>
-                ))}
+        {/* ── PROMO BANNERS ────────────────────────────────────── */}
+        {visibleCoupons.length > 0 && (
+          <div className="menu-promos" style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+            {visibleCoupons.map((coupon) => (
+              <div key={coupon.id} style={{ background: 'white', border: '1px solid #EDE3D2', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ background: '#1E1810', color: 'white', borderRadius: 6, fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.1em', padding: '3px 8px', textTransform: 'uppercase' }}>{coupon.code}</span>
+                <span style={{ fontSize: '12.5px', color: '#6B5540' }}>{coupon.description}</span>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Menu Items */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-                <p className="text-xs font-semibold tracking-[0.1em] uppercase text-[#D9772A]">Menu</p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#111827]">{activeCategory}</h2>
-            </div>
-            <span className="text-sm text-gray-500">{filteredItems.length} items</span>
+            ))}
           </div>
+        )}
 
+        {/* ── SECTION HEADER ───────────────────────────────────── */}
+        <div className="menu-section-hdr">
+          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#B8853A', fontWeight: 600, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ display: 'block', width: 20, height: 1.5, background: '#B8853A', flexShrink: 0 }} />
+            Menu
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 500, color: '#0F0C08', margin: 0 }}>{activeCategory}</h2>
+            <span style={{ fontSize: 13, color: '#9E8870' }}>{filteredItems.length} items</span>
+          </div>
+        </div>
+
+        {/* ── MENU GRID ────────────────────────────────────────── */}
+        <div className="menu-grid-wrap">
           {isLoading ? (
-            <MenuGridSkeleton />
+            <div className="menu-grid">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} style={{ background: 'white', borderRadius: 16, border: '1px solid #EDE3D2', overflow: 'hidden' }}>
+                  <Skeleton className="w-full" style={{ height: 200 }} />
+                  <div style={{ padding: '16px 18px 18px' }}>
+                    <Skeleton className="h-5 w-3/4 mb-2" />
+                    <Skeleton className="h-3 w-full mb-1" />
+                    <Skeleton className="h-3 w-5/6 mb-3" />
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Skeleton className="h-6 w-20" />
+                      <Skeleton className="h-9 w-9 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : loadError ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#F3F4F6] mx-auto flex items-center justify-center mb-4">
-                <X className="w-6 h-6 text-gray-400" />
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EDE3D2', padding: '48px 24px', textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#F9F4EC', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X style={{ width: 24, height: 24, color: '#9E8870' }} />
               </div>
-              <h3 className="text-lg font-semibold text-[#111827]">Something went wrong. Please try again.</h3>
-              <p className="text-sm text-gray-500 mt-1">We couldn’t load the menu right now.</p>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#0F0C08', margin: '0 0 6px' }}>Something went wrong</h3>
+              <p style={{ fontSize: 13, color: '#9E8870', marginBottom: 20 }}>We couldn't load the menu right now.</p>
               <button
-                className="mt-6 px-6 py-3 rounded-xl bg-[#F97316] hover:bg-[#EA6C0A] text-white font-semibold transition-all"
-                style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
+                style={{ padding: '11px 24px', background: '#1E1810', color: 'white', border: 'none', borderRadius: 10, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif" }}
                 onClick={() => window.location.reload()}
               >
-                Retry
+                Try Again
+              </button>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '64px 0' }}>
+              <div style={{ width: 80, height: 80, background: '#F9F4EC', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Search style={{ width: 32, height: 32, color: '#9E8870' }} />
+              </div>
+              <p style={{ fontSize: 16, fontWeight: 600, color: '#0F0C08', margin: '0 0 4px' }}>No items found</p>
+              <p style={{ fontSize: 13, color: '#9E8870', marginBottom: 20 }}>Try a different search or category.</p>
+              <button
+                onClick={() => { setSearchQuery(''); setActiveCategory('Popular'); }}
+                style={{ padding: '11px 24px', background: 'transparent', border: '1.5px solid #B8853A', borderRadius: 10, color: '#B8853A', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif" }}
+              >
+                Browse Popular
               </button>
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <AnimatePresence mode="popLayout">
-                  {filteredItems.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <MenuCard 
-                        item={item} 
-                        onAdd={() => addToCart(item)}
-                        showToast={showAddedToast === item.id}
-                      />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-
-              {filteredItems.length === 0 && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-16"
-                >
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <p className="text-gray-900 text-lg font-semibold">No items found</p>
-                  <p className="text-gray-500 text-sm mt-1">Try a different search or category.</p>
-                  <button
-                    onClick={() => { setSearchQuery(''); setActiveCategory('Popular'); }}
-                    className="mt-6 px-6 py-3 rounded-xl border-2 border-[#F97316] text-[#F97316] font-semibold hover:bg-[#FFF7ED] transition-colors"
+            <div className="menu-grid">
+              <AnimatePresence mode="popLayout">
+                {filteredItems.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ duration: 0.25 }}
                   >
-                    Browse Popular
-                  </button>
-                </motion.div>
-              )}
-            </>
+                    <MenuCard
+                      item={item}
+                      onAdd={() => addToCart(item)}
+                      onCardClick={() => openModal(item)}
+                      showToast={showAddedToast === item.id}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
           )}
         </div>
 
-        {/* Cart Sidebar */}
+        {/* ── ITEM DETAIL MODAL ────────────────────────────────── */}
+        <AnimatePresence>
+          {selectedItem && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 16px' }}>
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                style={{ position: 'absolute', inset: 0, background: 'rgba(15,12,8,0.6)', backdropFilter: 'blur(4px)' }}
+                onClick={closeModal}
+              />
+              <motion.div
+                initial={{ y: 80, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 80, opacity: 0 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 240 }}
+                style={{ position: 'relative', width: '100%', maxWidth: 540, background: 'white', borderRadius: 24, overflow: 'hidden', marginBottom: 24, zIndex: 1 }}
+              >
+                {/* Image */}
+                <div style={{ position: 'relative', height: 220, overflow: 'hidden', flexShrink: 0 }}>
+                  {selectedItem.image ? (
+                    <img src={selectedItem.image} alt={selectedItem.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg,#3D1C00,#8B4513)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80 }}>🍛</div>
+                  )}
+                  <button
+                    onClick={closeModal}
+                    style={{ position: 'absolute', top: 14, right: 14, width: 36, height: 36, background: 'white', borderRadius: '50%', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 16px rgba(15,12,8,0.2)' }}
+                  >
+                    <X style={{ width: 16, height: 16, color: '#0F0C08' }} />
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div style={{ padding: '20px 24px 24px' }}>
+                  <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 600, color: '#0F0C08', margin: '0 0 6px' }}>{selectedItem.name}</h2>
+                  <p style={{ fontSize: 13, color: '#9E8870', lineHeight: 1.6, margin: '0 0 12px' }}>{selectedItem.description}</p>
+
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#F9F4EC', border: '1px solid #EDE3D2', borderRadius: 20, fontSize: 11, color: '#9E8870', padding: '3px 10px', marginBottom: 12 }}>
+                    ⏱ Ready in {(selectedItem as any).prepTime || 15} min
+                  </span>
+
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: '#B8853A', marginBottom: 16 }}>
+                    ${selectedItem.price.toFixed(2)}
+                  </div>
+
+                  {/* Special instructions */}
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6B5540', marginBottom: 6 }}>Special Instructions</label>
+                    <textarea
+                      rows={2}
+                      value={modalInstructions}
+                      onChange={(e) => setModalInstructions(e.target.value)}
+                      placeholder="e.g. No onions, extra spicy..."
+                      style={{ width: '100%', border: '1.5px solid #EDE3D2', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontFamily: "'Jost', sans-serif", color: '#0F0C08', resize: 'none', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box' }}
+                      onFocus={(e) => { e.target.style.borderColor = '#B8853A'; }}
+                      onBlur={(e) => { e.target.style.borderColor = '#EDE3D2'; }}
+                    />
+                  </div>
+
+                  {/* Footer */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, background: '#F9F4EC', border: '1.5px solid #EDE3D2', borderRadius: 10, padding: '6px 12px', flexShrink: 0 }}>
+                      <button
+                        onClick={() => setModalQty((q) => Math.max(1, q - 1))}
+                        style={{ width: 28, height: 28, borderRadius: '50%', background: modalQty > 1 ? '#1E1810' : '#DDD0BB', color: 'white', border: 'none', cursor: modalQty > 1 ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Minus style={{ width: 12, height: 12 }} />
+                      </button>
+                      <span style={{ fontSize: 16, fontWeight: 600, color: '#0F0C08', minWidth: 20, textAlign: 'center' }}>{modalQty}</span>
+                      <button
+                        onClick={() => setModalQty((q) => q + 1)}
+                        style={{ width: 28, height: 28, borderRadius: '50%', background: '#1E1810', color: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Plus style={{ width: 12, height: 12 }} />
+                      </button>
+                    </div>
+                    <button
+                      className="modal-add-btn"
+                      onClick={handleModalAdd}
+                      style={{ flex: 1, background: '#1E1810', color: 'white', border: 'none', borderRadius: 12, padding: '13px 20px', fontSize: 15, fontWeight: 700, fontFamily: "'Jost', sans-serif", cursor: 'pointer', transition: 'all 0.2s' }}
+                    >
+                      Add to Cart · ${(selectedItem.price * modalQty).toFixed(2)}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* ── CART SIDEBAR ─────────────────────────────────────── */}
         <AnimatePresence>
           {isCartOpen && (
-            <div className="fixed inset-0 z-50">
+            <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                style={{ position: 'absolute', inset: 0, background: 'rgba(15,12,8,0.55)', backdropFilter: 'blur(4px)' }}
                 onClick={() => setIsCartOpen(false)}
               />
               <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 30, opacity: 0 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="absolute bottom-0 left-0 right-0 sm:right-0 sm:top-0 sm:bottom-0 sm:left-auto w-full sm:max-w-md bg-white shadow-2xl rounded-t-3xl sm:rounded-none overflow-hidden"
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+                style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '100%', maxWidth: 460, background: 'white', display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 40px rgba(15,12,8,0.1)' }}
               >
-                <div className="flex flex-col h-full">
-                  {/* Cart Header */}
-                  <div className="flex items-center justify-between p-5 border-b">
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-[#111827]">
-                      <ShoppingBag className="w-6 h-6 text-[#F97316]" />
-                      Your Cart
-                      <span className="text-sm font-normal text-gray-500">({cartCount} items)</span>
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      {cart.length > 0 && (
-                        <button
-                          onClick={clearCart}
-                          className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                          title="Clear cart"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      )}
+                {/* Cart Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #EDE3D2', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <ShoppingBag style={{ width: 20, height: 20, color: '#B8853A' }} />
+                    <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 600, color: '#0F0C08', margin: 0 }}>Your Cart</h2>
+                    <span style={{ fontSize: 12, color: '#9E8870' }}>({cartCount})</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {cart.length > 0 && (
+                      <button onClick={clearCart} style={{ padding: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#9E8870' }} title="Clear">
+                        <Trash2 style={{ width: 18, height: 18 }} />
+                      </button>
+                    )}
+                    <button onClick={() => setIsCartOpen(false)} style={{ padding: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#9E8870' }}>
+                      <X style={{ width: 20, height: 20 }} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Cart Items */}
+                <div ref={cartScrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
+                  {cart.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '56px 0' }}>
+                      <div style={{ width: 80, height: 80, background: '#F9F4EC', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                        <ShoppingBag style={{ width: 36, height: 36, color: '#DDD0BB' }} />
+                      </div>
+                      <p style={{ color: '#6B5540', fontSize: 15, margin: '0 0 6px' }}>Your cart is empty</p>
+                      <p style={{ color: '#9E8870', fontSize: 13, marginBottom: 20 }}>Add some delicious items from our menu</p>
                       <button
                         onClick={() => setIsCartOpen(false)}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                        aria-label="Close cart"
+                        style={{ background: 'none', border: 'none', color: '#B8853A', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: "'Jost', sans-serif" }}
                       >
-                        <X className="w-6 h-6" />
+                        Continue Browsing
                       </button>
                     </div>
-                  </div>
-
-                  {/* Cart Items */}
-                  <div ref={cartScrollRef} className="flex-1 overflow-y-auto p-5">
-                    {cart.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                          <ShoppingBag className="w-12 h-12 text-gray-300" />
-                        </div>
-                        <p className="text-gray-500 text-lg mb-2">Your cart is empty</p>
-                        <p className="text-gray-400 text-sm mb-6">Add some delicious items from our menu</p>
-                        <button
-                          onClick={() => setIsCartOpen(false)}
-                          className="text-[#F97316] font-semibold hover:underline"
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {cart.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          layout
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          style={{ display: 'flex', gap: 14, background: '#F9F4EC', borderRadius: 14, padding: 14, border: '1px solid #EDE3D2' }}
                         >
-                          Continue Shopping
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {cart.map((item) => (
-                          <motion.div
-                            key={item.id}
-                            layout
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="flex gap-4 bg-[#F9FAFB] rounded-2xl p-4 border border-[#F3F4F6]"
-                          >
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-20 h-20 object-cover rounded-xl"
-                              loading="lazy"
-                              width={80}
-                              height={80}
-                            />
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-[#111827] line-clamp-1">{item.name}</h4>
-                              <p className="text-[#F97316] font-bold">${(item.price * item.quantity).toFixed(2)}</p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <button
-                                  onClick={() => updateQuantity(item.id, -1)}
-                                  className="w-9 h-9 bg-white border border-[#E5E7EB] rounded-xl flex items-center justify-center hover:bg-[#F3F4F6] transition-colors"
-                                  aria-label={`Decrease ${item.name}`}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="w-8 text-center font-medium">{item.quantity}</span>
-                                <button
-                                  onClick={() => updateQuantity(item.id, 1)}
-                                  className="w-9 h-9 bg-white border border-[#E5E7EB] rounded-xl flex items-center justify-center hover:bg-[#F3F4F6] transition-colors"
-                                  aria-label={`Increase ${item.name}`}
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => removeFromCart(item.id)}
-                                  className="ml-auto text-gray-400 hover:text-red-500 p-1"
-                                  aria-label={`Remove ${item.name}`}
-                                >
-                                  <X className="w-5 h-5" />
-                                </button>
-                              </div>
+                          {item.image && (
+                            <img src={item.image} alt={item.name} style={{ width: 68, height: 68, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} loading="lazy" width={68} height={68} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <h4 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 600, color: '#0F0C08', margin: '0 0 2px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.name}</h4>
+                            <p style={{ fontSize: 14, fontWeight: 700, color: '#B8853A', margin: '0 0 8px' }}>${(item.price * item.quantity).toFixed(2)}</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <button onClick={() => updateQuantity(item.id, -1)} style={{ width: 28, height: 28, background: 'white', border: '1px solid #EDE3D2', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                <Minus style={{ width: 12, height: 12, color: '#6B5540' }} />
+                              </button>
+                              <span style={{ minWidth: 22, textAlign: 'center', fontWeight: 600, fontSize: 14, color: '#0F0C08' }}>{item.quantity}</span>
+                              <button onClick={() => updateQuantity(item.id, 1)} style={{ width: 28, height: 28, background: 'white', border: '1px solid #EDE3D2', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                <Plus style={{ width: 12, height: 12, color: '#6B5540' }} />
+                              </button>
+                              <button onClick={() => removeFromCart(item.id)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#9E8870', padding: 4 }}>
+                                <X style={{ width: 15, height: 15 }} />
+                              </button>
                             </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Cart Footer */}
-                  {cart.length > 0 && (
-                    <div className="border-t p-5 space-y-4 bg-white">
-                      <div className="flex justify-between text-lg font-bold">
-                        <span className="text-gray-600">Subtotal</span>
-                        <span className="text-[#111827]">${cartTotal.toFixed(2)}</span>
-                      </div>
-                      <p className="text-sm text-gray-500">Taxes and fees calculated at checkout</p>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => {
-                          setIsCartOpen(false);
-                          navigate('/checkout', {
-                            state: {
-                              cart: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, image: i.image })),
-                              orderType: 'pickup',
-                            },
-                          });
-                        }}
-                        className="w-full py-4 bg-[#F97316] hover:bg-[#EA6C0A] text-white font-bold rounded-xl transition-all"
-                        style={{ boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
-                      >
-                        Proceed to Checkout
-                        <ChevronRight className="w-5 h-5 inline ml-2" />
-                      </motion.button>
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
                   )}
                 </div>
+
+                {/* Cart Footer */}
+                {cart.length > 0 && (
+                  <div style={{ borderTop: '1px solid #EDE3D2', padding: '16px 24px 28px', background: 'white', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 14, color: '#6B5540', fontWeight: 500 }}>Subtotal</span>
+                      <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 700, color: '#0F0C08' }}>${cartTotal.toFixed(2)}</span>
+                    </div>
+                    <p style={{ fontSize: 12, color: '#9E8870', marginBottom: 16 }}>Taxes calculated at checkout</p>
+                    <button
+                      className="checkout-btn"
+                      onClick={() => {
+                        setIsCartOpen(false);
+                        navigate('/checkout', {
+                          state: {
+                            cart: cart.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, image: i.image })),
+                            orderType: 'pickup',
+                          },
+                        });
+                      }}
+                      style={{ width: '100%', padding: '15px', background: '#1E1810', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: "'Jost', sans-serif", cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'background 0.2s' }}
+                    >
+                      Proceed to Checkout
+                      <ChevronRight style={{ width: 18, height: 18 }} />
+                    </button>
+                  </div>
+                )}
               </motion.div>
             </div>
           )}
@@ -493,93 +570,97 @@ export default function Menu() {
   );
 }
 
-// Category Pill Component
-function CategoryPill({ 
-  children, 
-  active, 
-  onClick,
-  icon
-}: { 
-  children: React.ReactNode; 
-  active: boolean;
-  onClick: () => void;
-  icon?: React.ReactNode;
-}) {
+// ── Sub-components ──────────────────────────────────────────────────────────
+
+function CategoryTab({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
   return (
     <button
+      className={`menu-tab-btn${active ? ' menu-tab-active' : ''}`}
       onClick={onClick}
-      className={`flex items-center gap-2 flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
-        active
-          ? 'bg-[#F97316] text-white'
-          : 'bg-[#F3F4F6] text-[#374151] hover:bg-[#E5E7EB]'
-      }`}
-      style={active ? { boxShadow: '0 4px 14px rgba(249,115,22,0.4)' } : undefined}
+      style={{
+        flexShrink: 0,
+        padding: '7px 18px',
+        borderRadius: 40,
+        fontSize: 13,
+        fontWeight: 500,
+        fontFamily: "'Jost', sans-serif",
+        border: active ? '1.5px solid #1E1810' : '1.5px solid #EDE3D2',
+        background: active ? '#1E1810' : 'white',
+        color: active ? 'white' : '#6B5540',
+        cursor: 'pointer',
+        transition: 'all 0.18s',
+        whiteSpace: 'nowrap',
+      }}
     >
-      {icon}
       {children}
     </button>
   );
 }
 
-// Menu Card Component
-function MenuCard({ 
-  item, 
-  onAdd,
-  showToast
-}: { 
-  item: MenuItem;
-  onAdd: () => void;
-  showToast: boolean;
+function MenuCard({
+  item, onAdd, onCardClick, showToast,
+}: {
+  item: MenuItem; onAdd: () => void; onCardClick: () => void; showToast: boolean;
 }) {
+  const getBadge = () => {
+    if (item.popular) return { label: 'Popular', bg: 'rgba(15,12,8,0.80)', dot: '#C9963F' };
+    if (item.isVegetarian) return { label: 'Veg', bg: 'rgba(30,92,58,0.85)', dot: '#5AC480' };
+    return null;
+  };
+  const badge = getBadge();
+
   return (
-    <div className="relative bg-white rounded-2xl overflow-hidden border border-[#F3F4F6] shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-all duration-300 group">
-      <div className="relative overflow-hidden" style={{ height: 200 }}>
-        <img
-          src={item.image}
-          alt={item.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400"
-          loading="lazy"
-          width={400}
-          height={200}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {item.popular && (
-            <span className="px-3 py-1 bg-[#F97316] text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
-              <Flame className="w-3 h-3" /> Popular
-            </span>
-          )}
-        </div>
-        
-        <div className="absolute top-3 right-3 flex flex-col gap-2">
-          {item.isVegetarian && (
-            <span className="px-3 py-1 bg-[#16A34A] text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
-              <Leaf className="w-3 h-3" /> Veg
-            </span>
-          )}
-        </div>
+    <div
+      className="menu-card"
+      onClick={onCardClick}
+    >
+      {/* Image */}
+      <div style={{ position: 'relative', overflow: 'hidden', height: 200 }}>
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            className="menu-card-img"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            loading="lazy"
+            width={400}
+            height={200}
+          />
+        ) : (
+          <div
+            className="menu-card-img"
+            style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 72, background: 'linear-gradient(145deg,#3D1C00,#8B4513)' }}
+          >
+            🍛
+          </div>
+        )}
+        {badge && (
+          <span style={{ position: 'absolute', top: 10, left: 10, padding: '4px 10px', borderRadius: 20, fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 5, background: badge.bg, color: 'rgba(255,255,255,0.9)' }}>
+            <span style={{ width: 4, height: 4, borderRadius: '50%', background: badge.dot, display: 'inline-block', flexShrink: 0 }} />
+            {badge.label}
+          </span>
+        )}
       </div>
 
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="line-clamp-1 text-[18px] font-semibold text-[#111827]">{item.name}</h3>
-        </div>
-        <p className="text-[14px] text-[#6B7280] mb-4 line-clamp-2 leading-relaxed">{item.description}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-[20px] font-bold text-[#F97316]">
-            ${item.price.toFixed(2)}
-          </span>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onAdd}
-            className="w-10 h-10 bg-[#F97316] text-white rounded-full flex items-center justify-center hover:bg-[#EA6C0A] transition-colors"
+      {/* Body */}
+      <div style={{ padding: '16px 18px 18px' }}>
+        <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 19, fontWeight: 600, color: '#0F0C08', margin: '0 0 5px', letterSpacing: '-0.01em', lineHeight: 1.2, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.name}</h3>
+        <p style={{ fontSize: '12.5px', color: '#9E8870', lineHeight: 1.55, margin: '0 0 10px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.description}</p>
+
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#F9F4EC', border: '1px solid #EDE3D2', borderRadius: 20, fontSize: 11, color: '#9E8870', padding: '3px 8px', marginBottom: 12 }}>
+          ⏱ Ready in {(item as any).prepTime || 15} min
+        </span>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 700, color: '#1E1810' }}>${item.price.toFixed(2)}</span>
+          <button
+            className="menu-add-btn"
+            onClick={(e) => { e.stopPropagation(); onAdd(); }}
             aria-label={`Add ${item.name}`}
+            style={{ width: 36, height: 36, borderRadius: '50%', background: '#1E1810', border: 'none', color: 'white', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 }}
           >
-            <Plus className="w-5 h-5" />
-          </motion.button>
+            +
+          </button>
         </div>
       </div>
 
@@ -590,9 +671,9 @@ function MenuCard({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute bottom-4 left-4 right-4 py-3 bg-[#16A34A] text-white text-center rounded-xl font-medium shadow-lg z-10"
+            style={{ position: 'absolute', bottom: 12, left: 12, right: 12, padding: '10px', background: '#2F9555', color: 'white', textAlign: 'center', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 10 }}
           >
-            Added to cart! ✓
+            Added to cart ✓
           </motion.div>
         )}
       </AnimatePresence>
@@ -600,23 +681,6 @@ function MenuCard({
   );
 }
 
-function MenuGridSkeleton() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {Array.from({ length: 8 }).map((_, idx) => (
-        <div key={idx} className="bg-white rounded-2xl border border-[#F3F4F6] overflow-hidden">
-          <Skeleton className="w-full" style={{ height: 200 }} />
-          <div className="p-5 space-y-3">
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <div className="flex items-center justify-between pt-2">
-              <Skeleton className="h-6 w-20" />
-              <Skeleton className="h-10 w-10 rounded-full" />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+// Unused import kept for reference
+const _Tag = Tag;
+void _Tag;
