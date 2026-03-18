@@ -109,6 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'update-catering-request': return handleUpdateCateringRequest(req, res);
         case 'get-promos': return handleGetPromosPublic(req, res);
         case 'validate-promo': return handleValidatePromo(req, res);
+        case 'test-email': return handleTestEmail(req, res);
         default:
             // Fallback for old route payloads like method based deletions or updates
             if (action === 'user-detail' && req.method === 'DELETE') return handleUserDetail(req, res);
@@ -1262,20 +1263,27 @@ async function handleSendCateringRequest(req: VercelRequest, res: VercelResponse
             eventType, guestCount, serviceType, venueAddress,
             dietaryRequirements, budgetRange, message,
         };
+        const adminTo = emailTo || process.env.ADMIN_EMAIL || process.env.SMTP_USER || process.env.GMAIL_USER || '';
         Promise.all([
             // Confirmation to customer
             sendEmail({
                 to: email,
                 subject: `🎊 Catering Request Received — Golden Lotus`,
                 html: cateringConfirmationHtml(requestData),
+            }).then(r => {
+                if (r.success) console.log(`[CATERING EMAIL] ✅ Customer confirmation sent to ${email}`);
+                else console.error(`[CATERING EMAIL] ❌ Customer email failed: ${(r as any).error}`);
             }),
             // Notification to admin
-            sendEmail({
-                to: emailTo || process.env.ADMIN_EMAIL || 'golden_lotusmiami@gmail.com',
+            adminTo ? sendEmail({
+                to: adminTo,
                 subject: `🆕 New Catering Request from ${name} — ${eventDate || 'TBD'}`,
                 html: cateringAdminNotificationHtml(requestData),
-            }),
-        ]).catch(err => console.error('Catering email error (non-fatal):', err));
+            }).then(r => {
+                if (r.success) console.log(`[CATERING EMAIL] ✅ Admin notification sent to ${adminTo}`);
+                else console.error(`[CATERING EMAIL] ❌ Admin email failed: ${(r as any).error}`);
+            }) : Promise.resolve(),
+        ]).catch(err => console.error('[CATERING EMAIL] ❌ Unexpected error:', err));
 
         return res.status(200).json({ success: true, message: confirmMessage });
     } catch (err) {
@@ -1407,4 +1415,43 @@ async function handleValidatePromo(req: VercelRequest, res: VercelResponse) {
     } catch {
         return res.status(500).json({ valid: false, message: 'Could not validate promo code' });
     }
+}
+
+async function handleTestEmail(req: VercelRequest, res: VercelResponse) {
+    const smtpUser  = process.env.SMTP_USER  || process.env.GMAIL_USER  || '';
+    const smtpPass  = process.env.SMTP_PASS  || process.env.GMAIL_APP_PASSWORD || '';
+    const adminEmail = req.query.to as string || process.env.ADMIN_EMAIL || smtpUser;
+
+    // Return env var status even if email fails — useful for debugging
+    const envStatus = {
+        SMTP_USER:  smtpUser  ? `✅ ${smtpUser}`  : '❌ NOT SET',
+        SMTP_PASS:  smtpPass  ? `✅ SET (${smtpPass.length} chars)` : '❌ NOT SET',
+        ADMIN_EMAIL: process.env.ADMIN_EMAIL || '(not set — using SMTP_USER)',
+    };
+
+    if (!smtpUser || !smtpPass) {
+        return res.status(200).json({ success: false, error: 'SMTP credentials missing', envStatus });
+    }
+
+    const result = await sendEmail({
+        to: adminEmail,
+        subject: '✅ Golden Lotus Email Test — Working!',
+        html: `<div style="font-family:Arial;padding:32px;background:#F9F4EC">
+          <div style="max-width:480px;margin:0 auto;background:white;border-radius:16px;overflow:hidden">
+            <div style="background:#1E1810;padding:24px;text-align:center">
+              <div style="color:#B8853A;font-size:22px;font-weight:bold">Golden Lotus</div>
+            </div>
+            <div style="padding:28px;text-align:center">
+              <div style="font-size:42px;margin-bottom:12px">✅</div>
+              <h2 style="color:#B8853A;margin:0 0 12px">Email is working!</h2>
+              <p style="color:#6B5540;font-size:14px">
+                Sent to: <strong>${adminEmail}</strong><br>
+                SMTP user: <strong>${smtpUser}</strong>
+              </p>
+            </div>
+          </div>
+        </div>`,
+    });
+
+    return res.status(200).json({ ...result, sentTo: adminEmail, envStatus });
 }

@@ -169,7 +169,15 @@ async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
                     total: newOrder.total,
                     paymentMethod: newOrder.paymentMethod,
                 }),
-            }).catch(err => console.error('Order email error (non-fatal):', err));
+            }).then(r => {
+                if (r.success) {
+                    console.log(`[ORDER EMAIL] ✅ Sent to ${customerEmail} for order ${orderNumber}`);
+                } else {
+                    console.error(`[ORDER EMAIL] ❌ Failed for ${customerEmail}: ${(r as any).error}`);
+                }
+            }).catch(err => console.error('[ORDER EMAIL] ❌ Unexpected error:', err));
+        } else {
+            console.warn(`[ORDER EMAIL] ⚠️ No customer email for order ${orderNumber} — skipped`);
         }
 
         return res.status(201).json({
