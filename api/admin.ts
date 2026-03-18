@@ -41,6 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'save-homepage', 'save-homepage-content',
         'toggle-homepage-section', 'reorder-homepage-sections',
         'save-page-content', 'toggle-page-section',
+        'save-catering-content', 'toggle-catering-section',
+        'get-catering-requests', 'update-catering-request',
     ]);
 
     if (protectedActions.has(action)) {
@@ -97,6 +99,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'save-page-content': return handleSavePageContent(req, res);
         case 'toggle-page-section': return handleTogglePageSection(req, res);
         case 'send-contact-email': return handleSendContactEmail(req, res);
+        case 'get-catering-content': return handleGetCateringContent(req, res);
+        case 'save-catering-content': return handleSaveCateringContent(req, res);
+        case 'toggle-catering-section': return handleToggleCateringSection(req, res);
+        case 'send-catering-request': return handleSendCateringRequest(req, res);
+        case 'get-catering-packages': return handleGetCateringPackagesPublic(req, res);
+        case 'get-catering-requests': return handleGetCateringRequests(req, res);
+        case 'update-catering-request': return handleUpdateCateringRequest(req, res);
         default:
             // Fallback for old route payloads like method based deletions or updates
             if (action === 'user-detail' && req.method === 'DELETE') return handleUserDetail(req, res);
@@ -1108,5 +1117,228 @@ async function handleAdminCrudItem(req: VercelRequest, res: VercelResponse, coll
     } catch (error) {
         console.error(`Error in CRUD ${collectionName}:`, error);
         return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+// ─── Catering Content ─────────────────────────────────────────────────────
+
+const DEFAULT_CATERING_CONTENT = {
+    section: 'catering',
+    sections: {
+        hero:     { visible: true },
+        stats:    { visible: true },
+        packages: { visible: true },
+        process:  { visible: true },
+        cta:      { visible: true },
+    },
+    hero: {
+        eyebrow: 'Alexandria, Louisiana',
+        titleLine1: 'Premium Catering',
+        titleLine2: 'for every occasion',
+        subtitle: 'From intimate gatherings to grand celebrations, we bring authentic Indian flavors to your events with elegance and care.',
+        button1Text: 'Explore Packages',
+        button2Text: 'Request Custom Quote',
+        heroImage: '',
+    },
+    stats: [
+        { number: '500', suffix: '+', label: 'Events catered' },
+        { number: '14',  suffix: '+', label: 'Years experience' },
+        { number: '50',  suffix: '+', label: 'Menu options' },
+        { number: '4.9', suffix: '',  label: 'Client rating' },
+    ],
+    process: {
+        eyebrow: 'How It Works',
+        title: 'Simple process,',
+        titleItalic: 'exceptional results',
+        steps: [
+            { number: '1', title: 'Choose Package',   description: 'Browse our catering packages and select the one that fits your event.' },
+            { number: '2', title: 'Submit Request',   description: 'Fill out our catering request form with your event details.' },
+            { number: '3', title: 'We Confirm',       description: 'Our team contacts you within 24 hours to confirm details.' },
+            { number: '4', title: 'Enjoy Your Event', description: 'We handle everything. You just enjoy the celebration!' },
+        ],
+    },
+    cta: {
+        title: 'Ready to make your',
+        titleItalic: 'event unforgettable?',
+        description: 'Contact us today to discuss your catering needs.',
+        buttonText: 'Request a Quote →',
+        phone: '(318) 445-5688',
+    },
+    formSettings: {
+        emailTo: 'hello@goldenlotusgrill.com',
+        confirmMessage: 'Thank you! We will contact you within 24 hours.',
+        serviceTypes: [
+            { id: 'pickup',      label: 'Pickup',      icon: '🚗', description: 'Collect from us' },
+            { id: 'onsite',      label: 'On-Site',      icon: '🍽️', description: 'We come to you' },
+            { id: 'fullservice', label: 'Full Service', icon: '👨‍🍳', description: 'Staff + setup' },
+        ],
+        budgetRanges: ['Under $500', '$500 - $1,000', '$1,000 - $2,500', '$2,500 - $5,000', '$5,000+'],
+        eventTypes: ['Wedding', 'Corporate Lunch', 'Birthday Party', 'Graduation', 'Religious Celebration', 'Other'],
+    },
+};
+
+async function handleGetCateringContent(req: VercelRequest, res: VercelResponse) {
+    try {
+        const client = await clientPromise;
+        const doc = await client.db(DB).collection('site_content').findOne({ section: 'catering' });
+        if (!doc) {
+            await client.db(DB).collection('site_content').insertOne({ ...DEFAULT_CATERING_CONTENT });
+            return res.status(200).json({ success: true, data: DEFAULT_CATERING_CONTENT });
+        }
+        const { _id, ...data } = doc as any;
+        return res.status(200).json({ success: true, data });
+    } catch {
+        return res.status(200).json({ success: true, data: DEFAULT_CATERING_CONTENT });
+    }
+}
+
+async function handleSaveCateringContent(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const body = req.body;
+        const client = await clientPromise;
+        await client.db(DB).collection('site_content').updateOne(
+            { section: 'catering' },
+            { $set: { ...body, section: 'catering', updatedAt: new Date().toISOString() } },
+            { upsert: true }
+        );
+        return res.status(200).json({ success: true });
+    } catch {
+        return res.status(500).json({ error: 'Failed to save catering content' });
+    }
+}
+
+async function handleToggleCateringSection(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const { sectionKey, visible } = req.body;
+        const client = await clientPromise;
+        await client.db(DB).collection('site_content').updateOne(
+            { section: 'catering' },
+            { $set: { [`sections.${sectionKey}.visible`]: visible, updatedAt: new Date().toISOString() } },
+            { upsert: true }
+        );
+        return res.status(200).json({ success: true });
+    } catch {
+        return res.status(500).json({ error: 'Failed to toggle section' });
+    }
+}
+
+async function handleSendCateringRequest(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const {
+            name, email, phone, packageName, eventDate, eventTime,
+            guestCount, eventType, serviceType, venueAddress,
+            needStaff, needEquipment, budgetRange, dietaryRequirements, message,
+        } = req.body;
+
+        // Fetch form settings for emailTo and confirmMessage
+        const client = await clientPromise;
+        const contentDoc = await client.db(DB).collection('site_content').findOne({ section: 'catering' }) as any;
+        const emailTo = contentDoc?.formSettings?.emailTo || process.env.VITE_ADMIN_EMAIL || process.env.GMAIL_USER || '';
+        const confirmMessage = contentDoc?.formSettings?.confirmMessage || DEFAULT_CATERING_CONTENT.formSettings.confirmMessage;
+
+        // Save request to DB
+        await client.db(DB).collection('catering_inquiries').insertOne({
+            name, email, phone, packageName, eventDate, eventTime,
+            guestCount, eventType, serviceType, venueAddress,
+            needStaff: needStaff || false, needEquipment: needEquipment || false,
+            budgetRange, dietaryRequirements, message,
+            status: 'new',
+            createdAt: new Date().toISOString(),
+        });
+
+        // Send email
+        try {
+            const nodemailer = require('nodemailer');
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+            });
+            const subject = `New Catering Request: ${eventType || 'Event'} - ${eventDate || 'TBD'}`;
+            const html = `
+                <h2>New Catering Request</h2>
+                <table style="border-collapse:collapse;width:100%">
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Name</td><td style="padding:8px;border:1px solid #ddd">${name}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Email</td><td style="padding:8px;border:1px solid #ddd">${email}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Phone</td><td style="padding:8px;border:1px solid #ddd">${phone}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Package</td><td style="padding:8px;border:1px solid #ddd">${packageName || 'Custom'}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Event Date</td><td style="padding:8px;border:1px solid #ddd">${eventDate} ${eventTime || ''}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Guests</td><td style="padding:8px;border:1px solid #ddd">${guestCount}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Event Type</td><td style="padding:8px;border:1px solid #ddd">${eventType || 'N/A'}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Service Type</td><td style="padding:8px;border:1px solid #ddd">${serviceType || 'N/A'}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Venue</td><td style="padding:8px;border:1px solid #ddd">${venueAddress || 'N/A'}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Budget</td><td style="padding:8px;border:1px solid #ddd">${budgetRange || 'N/A'}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Dietary</td><td style="padding:8px;border:1px solid #ddd">${dietaryRequirements || 'None'}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Message</td><td style="padding:8px;border:1px solid #ddd">${message || 'N/A'}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Sent At</td><td style="padding:8px;border:1px solid #ddd">${new Date().toLocaleString()}</td></tr>
+                </table>`;
+            await transporter.sendMail({
+                from: `"Golden Lotus Catering" <${process.env.GMAIL_USER}>`,
+                to: emailTo,
+                replyTo: email,
+                subject,
+                html,
+            });
+        } catch (emailErr) {
+            console.error('Email send failed (non-fatal):', emailErr);
+        }
+
+        return res.status(200).json({ success: true, message: confirmMessage });
+    } catch (err) {
+        console.error('Catering request error:', err);
+        return res.status(500).json({ error: 'Failed to submit catering request' });
+    }
+}
+
+async function handleGetCateringPackagesPublic(req: VercelRequest, res: VercelResponse) {
+    try {
+        const client = await clientPromise;
+        const docs = await client.db(DB).collection('catering_packages').find({}).toArray();
+        const packages = docs.map(d => ({ ...d, id: d._id.toString(), _id: undefined }));
+        return res.status(200).json({ success: true, packages });
+    } catch {
+        return res.status(200).json({ success: true, packages: [] });
+    }
+}
+
+async function handleGetCateringRequests(req: VercelRequest, res: VercelResponse) {
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const client = await clientPromise;
+        const docs = await client.db(DB).collection('catering_inquiries').find({}).sort({ createdAt: -1 }).toArray();
+        const requests = docs.map(d => ({ ...d, id: d._id.toString(), _id: undefined }));
+        return res.status(200).json({ success: true, requests });
+    } catch {
+        return res.status(500).json({ error: 'Failed to fetch requests' });
+    }
+}
+
+async function handleUpdateCateringRequest(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const { requestId, status, notes } = req.body;
+        if (!requestId) return res.status(400).json({ error: 'Missing requestId' });
+        const client = await clientPromise;
+        const updates: any = { updatedAt: new Date().toISOString() };
+        if (status) updates.status = status;
+        if (notes !== undefined) updates.notes = notes;
+        if (ObjectId.isValid(requestId)) {
+            await client.db(DB).collection('catering_inquiries').updateOne(
+                { _id: new ObjectId(requestId) },
+                { $set: updates }
+            );
+        }
+        return res.status(200).json({ success: true });
+    } catch {
+        return res.status(500).json({ error: 'Failed to update request' });
     }
 }
