@@ -38,7 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'save-features', 'save-faqs', 'save-menu-categories',
         'save-site-content', 'save-events', 'save-event-packages',
         'save-catering-packages', 'save-catering-inquiries',
-        'save-homepage',
+        'save-homepage', 'save-homepage-content',
+        'toggle-homepage-section', 'reorder-homepage-sections',
     ]);
 
     if (protectedActions.has(action)) {
@@ -87,6 +88,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'save-catering-inquiries': return handleAdminCrudItem(req, res, 'catering_inquiries');
         case 'get-homepage': return handleGetHomepage(req, res);
         case 'save-homepage': return handleSaveHomepage(req, res);
+        case 'get-homepage-content': return handleGetHomepage(req, res);
+        case 'save-homepage-content': return handleSaveHomepage(req, res);
+        case 'toggle-homepage-section': return handleToggleHomepageSection(req, res);
+        case 'reorder-homepage-sections': return handleReorderHomepageSections(req, res);
         default:
             // Fallback for old route payloads like method based deletions or updates
             if (action === 'user-detail' && req.method === 'DELETE') return handleUserDetail(req, res);
@@ -516,6 +521,14 @@ async function handleSendEmail(req: VercelRequest, res: VercelResponse) {
 
 const DEFAULT_HOMEPAGE_CONTENT = {
     section: 'homepage',
+    sections: {
+        hero:         { visible: true, order: 1 },
+        ticker:       { visible: true, order: 2 },
+        featured:     { visible: true, order: 3 },
+        whyUs:        { visible: true, order: 4 },
+        testimonials: { visible: true, order: 5 },
+        cta:          { visible: true, order: 6 },
+    },
     hero: {
         eyebrow: 'Alexandria, Louisiana · Est. 2010',
         titleLine1: 'Taste the art of',
@@ -611,6 +624,48 @@ async function handleSaveHomepage(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true, data: updatedRest });
     } catch (e) {
         console.error('Error saving homepage:', e);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function handleToggleHomepageSection(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { sectionKey, visible } = req.body as { sectionKey: string; visible: boolean };
+    if (!sectionKey) return res.status(400).json({ error: 'Missing sectionKey' });
+    try {
+        const client = await clientPromise;
+        const col = client.db(DB).collection('homepage_content');
+        await col.updateOne(
+            { section: 'homepage' },
+            { $set: { [`sections.${sectionKey}.visible`]: visible, updatedAt: new Date().toISOString() } },
+            { upsert: true }
+        );
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.error('Error toggling section:', e);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function handleReorderHomepageSections(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { sections } = req.body as { sections: Record<string, number> };
+    if (!sections || typeof sections !== 'object') return res.status(400).json({ error: 'Missing sections map' });
+    try {
+        const client = await clientPromise;
+        const col = client.db(DB).collection('homepage_content');
+        const setFields: Record<string, number> = {};
+        for (const [key, order] of Object.entries(sections)) {
+            setFields[`sections.${key}.order`] = order;
+        }
+        await col.updateOne(
+            { section: 'homepage' },
+            { $set: { ...setFields, updatedAt: new Date().toISOString() } },
+            { upsert: true }
+        );
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.error('Error reordering sections:', e);
         return res.status(500).json({ error: 'Internal server error' });
     }
 }

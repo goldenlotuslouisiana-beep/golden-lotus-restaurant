@@ -5,7 +5,16 @@ import SEO, { restaurantSchema, breadcrumbSchema } from '@/components/SEO';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface HeroStat { number: string; suffix: string; label: string; }
+interface SectionVisibility { visible: boolean; order?: number; }
 interface HomepageContent {
+  sections?: {
+    hero?: SectionVisibility;
+    ticker?: SectionVisibility;
+    featured?: SectionVisibility;
+    whyUs?: SectionVisibility;
+    testimonials?: SectionVisibility;
+    cta?: SectionVisibility;
+  };
   hero: {
     eyebrow: string;
     titleLine1: string;
@@ -21,7 +30,7 @@ interface HomepageContent {
     speedBadgeSubtitle: string;
   };
   ticker: string[];
-  featuredSection: { eyebrow: string; titleLine1: string; titleLine2Italic: string; };
+  featuredSection: { eyebrow: string; titleLine1: string; titleLine2Italic: string; viewAllText?: string; };
   whyUs: {
     eyebrow: string;
     titleLine1: string;
@@ -60,6 +69,14 @@ interface FeaturedMenuItem {
 // ─── Default content (always used as fallback) ───────────────────────────────
 
 const DEFAULT: HomepageContent = {
+  sections: {
+    hero:         { visible: true, order: 1 },
+    ticker:       { visible: true, order: 2 },
+    featured:     { visible: true, order: 3 },
+    whyUs:        { visible: true, order: 4 },
+    testimonials: { visible: true, order: 5 },
+    cta:          { visible: true, order: 6 },
+  },
   hero: {
     eyebrow: 'Alexandria, Louisiana · Est. 2010',
     titleLine1: 'Taste the art of',
@@ -248,7 +265,7 @@ export default function Home() {
       <div style={{ fontFamily: "'Jost', sans-serif", background: '#F9F4EC', color: '#0F0C08', overflowX: 'hidden' }}>
 
         {/* ── HERO ─────────────────────────────────────────────────────── */}
-        <section className="hl-hero">
+        {hc.sections?.hero?.visible !== false && <section className="hl-hero">
           <div className="hl-hero-l">
             {/* Eyebrow */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: '#F2E4C8', border: '1px solid #DDD0BB', borderRadius: 40, fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#B8853A', marginBottom: 32, width: 'fit-content' }}>
@@ -327,9 +344,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </section>}
 
         {/* ── TICKER ───────────────────────────────────────────────────── */}
+        {hc.sections?.ticker?.visible !== false && (
         <div style={{ background: '#1E1810', padding: '14px 0', overflow: 'hidden' }}>
           <div className="hl-ticker-track">
             {[...hc.ticker, ...hc.ticker].map((item, i) => (
@@ -340,9 +358,10 @@ export default function Home() {
             ))}
           </div>
         </div>
+        )}
 
         {/* ── FEATURED DISHES ──────────────────────────────────────────── */}
-        <div className="hl-sec">
+        {hc.sections?.featured?.visible !== false && <div className="hl-sec">
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 52, flexWrap: 'wrap', gap: 16 }}>
             <div>
               <div className="hl-eyebrow">{hc.featuredSection.eyebrow}</div>
@@ -383,10 +402,10 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
+        </div>}
 
         {/* ── WHY GOLDEN LOTUS ─────────────────────────────────────────── */}
-        <div className="hl-dark-block" style={{ background: '#1E1810', padding: '88px 64px', position: 'relative', overflow: 'hidden' }}>
+        {hc.sections?.whyUs?.visible !== false && <div className="hl-dark-block" style={{ background: '#1E1810', padding: '88px 64px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle,rgba(184,133,58,0.09) 0%,transparent 70%)', pointerEvents: 'none' }} />
           <div className="hl-dark-grid" style={{ maxWidth: 1260, margin: '0 auto' }}>
             <div>
@@ -413,10 +432,10 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
-        <div className="hl-sec">
+        {hc.sections?.testimonials?.visible !== false && <div className="hl-sec">
           <div style={{ marginBottom: 52 }}>
             <div className="hl-eyebrow">{hc.testimonials.eyebrow}</div>
             <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(32px,3.5vw,48px)', fontWeight: 400, color: '#0F0C08', lineHeight: 1.15, letterSpacing: '-0.02em', margin: 0 }}>
@@ -444,10 +463,10 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
+        </div>}
 
         {/* ── CTA ──────────────────────────────────────────────────────── */}
-        <div className="hl-cta-wrap" style={{ maxWidth: 1260, margin: '0 auto', padding: '0 64px 88px' }}>
+        {hc.sections?.cta?.visible !== false && <div className="hl-cta-wrap" style={{ maxWidth: 1260, margin: '0 auto', padding: '0 64px 88px' }}>
           <div className="hl-cta-block" style={{ background: '#F0E8D8', borderRadius: 24, padding: '72px 80px', border: '1px solid #DDD0BB', position: 'relative', overflow: 'hidden' }}>
             <span className="hl-cta-emoji" style={{ position: 'absolute', right: 240, top: '50%', transform: 'translateY(-50%) rotate(-15deg)', fontSize: 200, opacity: 0.06, pointerEvents: 'none', userSelect: 'none' }}>🪷</span>
             <div className="hl-cta-inner">
@@ -471,7 +490,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
       </div>
     </>

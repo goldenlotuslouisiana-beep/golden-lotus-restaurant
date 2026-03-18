@@ -98,6 +98,33 @@ export default function AdminMenu() {
     }
   };
 
+  const handleToggleFeatured = async (item: MenuItem) => {
+    const token = localStorage.getItem('admin_jwt');
+    const isFeatured = (item as any).featured;
+    if (!isFeatured) {
+      const currentFeaturedCount = menuItems.filter(m => (m as any).featured).length;
+      if (currentFeaturedCount >= 4) {
+        alert('Maximum 4 featured items allowed. Remove one before adding another.');
+        return;
+      }
+    }
+    setMenuItems(prev => prev.map(m => m.id === item.id ? { ...m, featured: !isFeatured } as MenuItem : m));
+    try {
+      const res = await fetch('/api/menu?action=set-featured', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ itemId: item.id, featured: !isFeatured }),
+      });
+      const data = await res.json();
+      if (!data.success && data.error) {
+        alert(data.error);
+        setMenuItems(prev => prev.map(m => m.id === item.id ? { ...m, featured: isFeatured } as MenuItem : m));
+      }
+    } catch {
+      setMenuItems(prev => prev.map(m => m.id === item.id ? { ...m, featured: isFeatured } as MenuItem : m));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem('admin_jwt');
@@ -194,6 +221,7 @@ export default function AdminMenu() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Price</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Prep Time</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Featured</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Actions</th>
               </tr>
@@ -224,6 +252,23 @@ export default function AdminMenu() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-sm text-gray-600">{(item as any).prepTime || 15} min</span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => handleToggleFeatured(item)}
+                      title={(item as any).featured ? 'Remove from featured' : 'Add to featured'}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-all hover:scale-110"
+                      style={{ background: (item as any).featured ? 'rgba(184,133,58,0.1)' : 'transparent' }}
+                    >
+                      <Star
+                        className="w-4 h-4"
+                        fill={(item as any).featured ? '#B8853A' : 'none'}
+                        stroke={(item as any).featured ? '#B8853A' : '#9E8870'}
+                      />
+                    </button>
+                    {(item as any).featured && (
+                      <div className="text-xs font-semibold mt-0.5" style={{ color: '#B8853A' }}>Featured</div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">

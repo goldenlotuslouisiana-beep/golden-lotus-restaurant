@@ -41,6 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'menu-categories': return handlePublicGet(req, res, 'menu_categories');
         // Admin CRUD actions preserved for existing functionality
         case 'featured': return handleGetFeatured(req, res);
+        case 'get-featured': return handleGetFeatured(req, res);
+        case 'set-featured': return handleSetFeatured(req, res);
         case 'add': return handleAddItem(req, res);
         case 'edit': return handleEditItem(req, res);
         case 'delete': return handleDeleteItem(req, res);
@@ -190,6 +192,32 @@ async function handleDeleteItem(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true });
     } catch (error) {
         return res.status(401).json({ error: 'Unauthorized' });
+    }
+}
+
+async function handleSetFeatured(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        authenticate(req);
+        const { itemId, featured, featuredOrder } = req.body as { itemId: string; featured: boolean; featuredOrder?: number };
+        if (!itemId) return res.status(400).json({ error: 'Missing itemId' });
+        const client = await clientPromise;
+        const db = client.db(DB_NAME);
+        // If featuring, check max 4
+        if (featured) {
+            const count = await db.collection('menu').countDocuments({ featured: true });
+            if (count >= 4) {
+                return res.status(400).json({ error: 'Maximum 4 featured items allowed. Remove one before adding another.' });
+            }
+        }
+        await db.collection('menu').updateOne(
+            { _id: new ObjectId(itemId) },
+            { $set: { featured, featuredOrder: featuredOrder ?? 0 } }
+        );
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        if ((error as Error).message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' });
+        return res.status(500).json({ error: 'Internal server error' });
     }
 }
 
