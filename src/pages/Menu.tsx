@@ -187,10 +187,8 @@ export default function Menu() {
     closeModal();
   };
 
-  // ── Filtered promo banners ────────────────────────────────────────────────
-  const visibleCoupons = coupons.filter((c) =>
-    ['DIMSUM10', 'BOBAMONDAY'].includes(c.code.toUpperCase())
-  );
+  // ── Active promo banners (all active display coupons from DB) ────────────
+  const visibleCoupons = coupons.filter((c) => c.active !== false);
 
   return (
     <>

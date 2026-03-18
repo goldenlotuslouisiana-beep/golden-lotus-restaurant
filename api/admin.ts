@@ -106,6 +106,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'get-catering-packages': return handleGetCateringPackagesPublic(req, res);
         case 'get-catering-requests': return handleGetCateringRequests(req, res);
         case 'update-catering-request': return handleUpdateCateringRequest(req, res);
+        case 'get-promos': return handleGetPromosPublic(req, res);
+        case 'validate-promo': return handleValidatePromo(req, res);
         default:
             // Fallback for old route payloads like method based deletions or updates
             if (action === 'user-detail' && req.method === 'DELETE') return handleUserDetail(req, res);
@@ -1340,5 +1342,83 @@ async function handleUpdateCateringRequest(req: VercelRequest, res: VercelRespon
         return res.status(200).json({ success: true });
     } catch {
         return res.status(500).json({ error: 'Failed to update request' });
+    }
+}
+
+// ─── Public promo endpoints ─────────────────────────────────────────────────
+
+async function handleGetPromosPublic(req: VercelRequest, res: VercelResponse) {
+    // Returns display coupons (shown as banners on menu page) — no auth required
+    try {
+        const client = await clientPromise;
+        const db = client.db(DB);
+        const docs = await db.collection('coupons').find({ active: { $ne: false } }).sort({ createdAt: -1 }).toArray();
+        return res.status(200).json({ promos: docs.map(d => ({ ...d, id: d._id?.toString() })) });
+    } catch {
+        return res.status(200).json({ promos: [] });
+    }
+}
+
+async function handleValidatePromo(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const { code, orderTotal = 0 } = req.body || {};
+        if (!code) return res.status(400).json({ valid: false, message: 'No code provided' });
+
+        const client = await clientPromise;
+        const db = client.db(DB);
+
+        // Search checkout promos collection
+        const promo = await db.collection('promos').findOne({
+            code: code.toUpperCase().trim(),
+            status: 'active',
+        });
+
+        if (!promo) return res.status(200).json({ valid: false, message: 'Invalid promo code' });
+
+        // Check expiry
+        if (promo.expires && new Date() > new Date(promo.expires)) {
+            return res.status(200).json({ valid: false, message: 'This promo code has expired' });
+        }
+
+        // Check max uses
+        if (promo.maxUses && promo.uses >= promo.maxUses) {
+            return res.status(200).json({ valid: false, message: 'This promo code has reached its usage limit' });
+        }
+
+        // Check min order
+        const minOrder = promo.minOrder || 0;
+        if (orderTotal < minOrder) {
+            return res.status(200).json({ valid: false, message: `Minimum order of $${minOrder.toFixed(2)} required` });
+        }
+
+        // Calculate discount
+        let discount = 0;
+        let label = '';
+        const discountType = promo.discountType || 'percentage';
+        const value = promo.value || 0;
+
+        if (discountType === 'percentage') {
+            discount = Math.min((orderTotal * value) / 100, orderTotal);
+            label = `${value}% off`;
+        } else if (discountType === 'fixed') {
+            discount = Math.min(value, orderTotal);
+            label = `$${value.toFixed(2)} off`;
+        } else if (discountType === 'free_delivery') {
+            discount = 0;
+            label = 'Free delivery';
+        }
+
+        return res.status(200).json({
+            valid: true,
+            discount: parseFloat(discount.toFixed(2)),
+            type: discountType === 'percentage' ? 'percent' : discountType === 'fixed' ? 'fixed' : 'freeDelivery',
+            value,
+            label,
+            message: `Code applied! ${label}`,
+            promoId: promo._id?.toString(),
+        });
+    } catch {
+        return res.status(500).json({ valid: false, message: 'Could not validate promo code' });
     }
 }

@@ -4,8 +4,6 @@ import {
   LayoutDashboard,
   UtensilsCrossed,
   List,
-  MapPin,
-  Star,
   Image,
   FileText,
   Settings,
@@ -16,7 +14,6 @@ import {
   ShoppingBag,
   BarChart3,
   Users,
-  Truck,
   Gift,
   Tag,
   MessageSquare,
@@ -25,26 +22,50 @@ import {
   Globe,
 } from 'lucide-react';
 
-const navItems = [
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Home Page', href: '/admin/home', icon: Globe },
-  { name: 'Pages', href: '/admin/pages', icon: FileText },
-  { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
-  { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { name: 'Delivery', href: '/admin/delivery', icon: Truck },
-  { name: 'Menu Items', href: '/admin/menu', icon: UtensilsCrossed },
-  { name: 'Categories', href: '/admin/categories', icon: List },
-  { name: 'Catering', href: '/admin/catering', icon: ChefHat },
-  { name: 'Promos', href: '/admin/promos', icon: Tag },
-  { name: 'Loyalty', href: '/admin/loyalty', icon: Gift },
-  { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare },
-  { name: 'Events', href: '/admin/events', icon: Calendar },
-  { name: 'Locations', href: '/admin/locations', icon: MapPin },
-  { name: 'Testimonials', href: '/admin/testimonials', icon: Star },
-  { name: 'Gallery', href: '/admin/gallery', icon: Image },
-  { name: 'Site Content', href: '/admin/content', icon: FileText },
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
+type NavItem = { name: string; href: string; icon: React.ElementType };
+type NavSection = { label: string; items: NavItem[] };
+
+const navSections: NavSection[] = [
+  {
+    label: 'Orders & Customers',
+    items: [
+      { name: 'Dashboard',  href: '/admin',            icon: LayoutDashboard },
+      { name: 'Orders',     href: '/admin/orders',     icon: ShoppingBag },
+      { name: 'Users',      href: '/admin/users',      icon: Users },
+      { name: 'Reviews',    href: '/admin/reviews',    icon: MessageSquare },
+      { name: 'Loyalty',    href: '/admin/loyalty',    icon: Gift },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      { name: 'Menu Items',  href: '/admin/menu',        icon: UtensilsCrossed },
+      { name: 'Categories',  href: '/admin/categories',  icon: List },
+      { name: 'Gallery',     href: '/admin/gallery',     icon: Image },
+      { name: 'Events',      href: '/admin/events',      icon: Calendar },
+    ],
+  },
+  {
+    label: 'Marketing',
+    items: [
+      { name: 'Promos',    href: '/admin/promos',    icon: Tag },
+      { name: 'Catering',  href: '/admin/catering',  icon: ChefHat },
+    ],
+  },
+  {
+    label: 'Website',
+    items: [
+      { name: 'Home Page',  href: '/admin/home',   icon: Globe },
+      { name: 'Pages',      href: '/admin/pages',  icon: FileText },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { name: 'Analytics',  href: '/admin/analytics',  icon: BarChart3 },
+      { name: 'Settings',   href: '/admin/settings',   icon: Settings },
+    ],
+  },
 ];
 
 export default function AdminLayout() {
@@ -82,28 +103,35 @@ export default function AdminLayout() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1 px-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.name}>
-                <Link
-                  to={item.href}
-                  onClick={() => setMobileSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                    isActive(item.href)
-                      ? 'bg-lotus-gold text-white'
-                      : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm font-medium">{item.name}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <nav className="flex-1 overflow-y-auto py-2">
+        {navSections.map((section) => (
+          <div key={section.label}>
+            <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.16em', color: 'rgba(255,255,255,0.25)', padding: '16px 16px 6px' }}>
+              {section.label}
+            </p>
+            <ul className="space-y-0.5 px-2">
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      to={item.href}
+                      onClick={() => setMobileSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                        isActive(item.href)
+                          ? 'bg-lotus-gold text-white'
+                          : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      <span className="text-sm font-medium">{item.name}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       {/* Logout */}
@@ -164,7 +192,7 @@ export default function AdminLayout() {
                   <>
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                     <span className="text-lotus-dark font-medium">
-                      {navItems.find((item) => isActive(item.href) && item.href !== '/admin')?.name || 'Page'}
+                      {navSections.flatMap(s => s.items).find((item) => isActive(item.href) && item.href !== '/admin')?.name || 'Page'}
                     </span>
                   </>
                 )}

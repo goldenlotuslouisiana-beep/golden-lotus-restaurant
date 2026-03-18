@@ -29,10 +29,7 @@ const AdminLogin = lazy(() => import('@/admin/Login'));
 const AdminDashboard = lazy(() => import('@/admin/Dashboard'));
 const AdminMenu = lazy(() => import('@/admin/Menu'));
 const AdminCategories = lazy(() => import('@/admin/Categories'));
-const AdminLocations = lazy(() => import('@/admin/Locations'));
-const AdminTestimonials = lazy(() => import('@/admin/Testimonials'));
 const AdminGallery = lazy(() => import('@/admin/Gallery'));
-const AdminContent = lazy(() => import('@/admin/Content'));
 const AdminSettings = lazy(() => import('@/admin/Settings'));
 const AdminOrders = lazy(() => import('@/admin/Orders'));
 const AdminOrderDetail = lazy(() => import('@/admin/OrderDetail'));
@@ -123,10 +120,10 @@ function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="menu" element={<AdminMenu />} />
               <Route path="categories" element={<AdminCategories />} />
-              <Route path="locations" element={<AdminLocations />} />
-              <Route path="testimonials" element={<AdminTestimonials />} />
               <Route path="gallery" element={<AdminGallery />} />
-              <Route path="content" element={<AdminContent />} />
+              <Route path="locations" element={<Navigate to="/admin" replace />} />
+              <Route path="testimonials" element={<Navigate to="/admin" replace />} />
+              <Route path="content" element={<Navigate to="/admin" replace />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="orders/:id" element={<AdminOrderDetail />} />

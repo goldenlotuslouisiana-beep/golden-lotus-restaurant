@@ -8,11 +8,6 @@ import SEO from '@/components/SEO';
 
 interface CartItem { id: string; name: string; price: number; quantity: number; image?: string; }
 
-const PROMOS: Record<string, { type: string; value: number; minOrder: number; label: string; dayOnly?: number }> = {
-    DIMSUM10: { type: 'percent', value: 10, minOrder: 50, label: '10% off orders over $50' },
-    FREEDELIVERY: { type: 'freeDelivery', value: 0, minOrder: 40, label: 'Free on orders over $40' },
-    BOBAMONDAY: { type: 'fixed', value: 5, minOrder: 0, label: '$5 off on Mondays', dayOnly: 1 },
-};
 
 const isStripeConfigured = !!(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -243,6 +238,7 @@ function CheckoutInner() {
     const [appliedPromo, setAppliedPromo] = useState<{ code: string; type: string; value: number; label: string } | null>(null);
     const [promoError, setPromoError] = useState('');
     const [promoExpanded, setPromoExpanded] = useState(false);
+    const [promoLoading, setPromoLoading] = useState(false);
     const [scheduleType, setScheduleType] = useState<'asap' | 'schedule'>('asap');
     const [scheduleTime, setScheduleTime] = useState('');
     const [isSummaryOpenMobile, setIsSummaryOpenMobile] = useState(false);
@@ -266,14 +262,28 @@ function CheckoutInner() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
         setCust((p) => ({ ...p, [e.target.name]: e.target.value }));
 
-    const applyPromo = () => {
+    const applyPromo = async () => {
         setPromoError('');
         const code = promoCode.toUpperCase().trim();
-        const promo = PROMOS[code];
-        if (!promo) { setPromoError('Invalid promo code'); return; }
-        if (subtotal < promo.minOrder) { setPromoError(`Minimum order of $${promo.minOrder} required`); return; }
-        if (promo.dayOnly !== undefined && new Date().getDay() !== promo.dayOnly) { setPromoError('This promo is only valid on Mondays'); return; }
-        setAppliedPromo({ code, ...promo });
+        if (!code) { setPromoError('Please enter a promo code'); return; }
+        setPromoLoading(true);
+        try {
+            const res = await fetch('/api/admin?action=validate-promo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, orderTotal: subtotal }),
+            });
+            const data = await res.json();
+            if (data.valid) {
+                setAppliedPromo({ code, type: data.type, value: data.value, label: data.label });
+            } else {
+                setPromoError(data.message || 'Invalid promo code');
+            }
+        } catch {
+            setPromoError('Could not validate code. Please try again.');
+        } finally {
+            setPromoLoading(false);
+        }
     };
 
     const fieldErrors = useMemo(() => {
@@ -634,7 +644,7 @@ function CheckoutInner() {
                                                     {appliedPromo ? (
                                                         <button type="button" onClick={() => { setAppliedPromo(null); setPromoCode(''); }} style={{ padding: '11px 16px', border: '1.5px solid #C53A3A', color: '#C53A3A', background: 'white', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif", whiteSpace: 'nowrap' }}>Remove</button>
                                                     ) : (
-                                                        <button type="button" onClick={applyPromo} style={{ padding: '11px 20px', background: '#1E1810', color: 'white', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Jost', sans-serif", whiteSpace: 'nowrap' }}>Apply</button>
+                                                        <button type="button" onClick={applyPromo} disabled={promoLoading} style={{ padding: '11px 20px', background: '#1E1810', color: 'white', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: promoLoading ? 'not-allowed' : 'pointer', fontFamily: "'Jost', sans-serif", whiteSpace: 'nowrap', opacity: promoLoading ? 0.7 : 1 }}>{promoLoading ? '...' : 'Apply'}</button>
                                                     )}
                                                 </div>
                                                 {promoError && (
