@@ -93,14 +93,21 @@ const CSS = `
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
+interface GalleryImg { id: string; src: string; alt: string; category: string; }
+
 export default function Story() {
   const [content, setContent] = useState<StoryContent>(DEFAULT);
+  const [galleryImages, setGalleryImages] = useState<GalleryImg[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetch('/api/admin?action=get-page-content&page=story')
       .then(r => r.json())
       .then(d => { if (d.success && d.data) setContent({ ...DEFAULT, ...d.data }); })
+      .catch(() => {});
+    fetch('/api/menu?action=gallery')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setGalleryImages(d); })
       .catch(() => {});
   }, []);
 
@@ -299,17 +306,22 @@ export default function Story() {
                   <em style={{ fontStyle: 'italic', color: '#B8853A' }}>{content.gallery.titleItalic}</em>
                 </h2>
               </div>
-              {content.gallery.images.length > 0 ? (
+              {galleryImages.length > 0 ? (
                 <div className="st-gallery-grid">
-                  {content.gallery.images.map((img, i) => (
-                    <div key={i} className="st-gallery-img">
-                      <img src={img} alt={`Gallery ${i + 1}`} />
+                  {galleryImages.map((img, i) => (
+                    <div key={img.id || i} className="st-gallery-img">
+                      <img
+                        src={img.src}
+                        alt={img.alt || `Gallery ${i + 1}`}
+                        style={{ height: i % 3 === 1 ? 260 : 200 }}
+                        loading="lazy"
+                      />
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ border: '2px dashed #DDD0BB', borderRadius: 16, padding: '48px 32px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 48, marginBottom: 12 }}>📷</div>
+                <div style={{ border: '2px dashed #DDD0BB', borderRadius: 16, padding: '48px 32px', textAlign: 'center', background: '#F2E4C8' }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>📸</div>
                   <div style={{ fontSize: 16, fontWeight: 600, color: '#9E8870' }}>Gallery coming soon</div>
                   <div style={{ fontSize: 13, color: '#9E8870', marginTop: 4 }}>Photos will appear here once added from the admin panel.</div>
                 </div>
