@@ -3,6 +3,7 @@ import clientPromise from '../src/lib/db.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 import nodemailer from 'nodemailer';
+import { sendEmail, cateringConfirmationHtml, cateringAdminNotificationHtml } from '../src/lib/email.js';
 
 const DB = 'goldenlotus';
 if (!process.env.JWT_SECRET) {
@@ -1255,41 +1256,26 @@ async function handleSendCateringRequest(req: VercelRequest, res: VercelResponse
             createdAt: new Date().toISOString(),
         });
 
-        // Send email
-        try {
-            const nodemailer = require('nodemailer');
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
-            });
-            const subject = `New Catering Request: ${eventType || 'Event'} - ${eventDate || 'TBD'}`;
-            const html = `
-                <h2>New Catering Request</h2>
-                <table style="border-collapse:collapse;width:100%">
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Name</td><td style="padding:8px;border:1px solid #ddd">${name}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Email</td><td style="padding:8px;border:1px solid #ddd">${email}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Phone</td><td style="padding:8px;border:1px solid #ddd">${phone}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Package</td><td style="padding:8px;border:1px solid #ddd">${packageName || 'Custom'}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Event Date</td><td style="padding:8px;border:1px solid #ddd">${eventDate} ${eventTime || ''}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Guests</td><td style="padding:8px;border:1px solid #ddd">${guestCount}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Event Type</td><td style="padding:8px;border:1px solid #ddd">${eventType || 'N/A'}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Service Type</td><td style="padding:8px;border:1px solid #ddd">${serviceType || 'N/A'}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Venue</td><td style="padding:8px;border:1px solid #ddd">${venueAddress || 'N/A'}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Budget</td><td style="padding:8px;border:1px solid #ddd">${budgetRange || 'N/A'}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Dietary</td><td style="padding:8px;border:1px solid #ddd">${dietaryRequirements || 'None'}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Message</td><td style="padding:8px;border:1px solid #ddd">${message || 'N/A'}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Sent At</td><td style="padding:8px;border:1px solid #ddd">${new Date().toLocaleString()}</td></tr>
-                </table>`;
-            await transporter.sendMail({
-                from: `"Golden Lotus Catering" <${process.env.GMAIL_USER}>`,
-                to: emailTo,
-                replyTo: email,
-                subject,
-                html,
-            });
-        } catch (emailErr) {
-            console.error('Email send failed (non-fatal):', emailErr);
-        }
+        // Send emails — non-blocking, never fails the request
+        const requestData = {
+            name, email, phone, packageName, eventDate, eventTime,
+            eventType, guestCount, serviceType, venueAddress,
+            dietaryRequirements, budgetRange, message,
+        };
+        Promise.all([
+            // Confirmation to customer
+            sendEmail({
+                to: email,
+                subject: `🎊 Catering Request Received — Golden Lotus`,
+                html: cateringConfirmationHtml(requestData),
+            }),
+            // Notification to admin
+            sendEmail({
+                to: emailTo || process.env.ADMIN_EMAIL || 'golden_lotusmiami@gmail.com',
+                subject: `🆕 New Catering Request from ${name} — ${eventDate || 'TBD'}`,
+                html: cateringAdminNotificationHtml(requestData),
+            }),
+        ]).catch(err => console.error('Catering email error (non-fatal):', err));
 
         return res.status(200).json({ success: true, message: confirmMessage });
     } catch (err) {

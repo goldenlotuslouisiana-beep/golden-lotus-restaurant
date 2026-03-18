@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import clientPromise from '../src/lib/db.js';
 import { ObjectId } from 'mongodb';
 import jwt from 'jsonwebtoken';
+import { sendEmail, orderConfirmationHtml } from '../src/lib/email.js';
 
 const DB_NAME = 'goldenlotus';
 if (!process.env.JWT_SECRET) {
@@ -152,6 +153,25 @@ async function handleCreateOrder(req: VercelRequest, res: VercelResponse) {
             }
         }
         
+        // Send order confirmation email — non-blocking, never fails the order
+        if (customerEmail) {
+            sendEmail({
+                to: customerEmail,
+                subject: `✅ Order Confirmed #${orderNumber} — Golden Lotus`,
+                html: orderConfirmationHtml({
+                    customerName: customerName || 'Guest',
+                    orderNumber,
+                    orderId: result.insertedId.toString(),
+                    items: newOrder.items,
+                    subtotal: newOrder.subtotal,
+                    tax: newOrder.tax,
+                    discount: newOrder.discount || 0,
+                    total: newOrder.total,
+                    paymentMethod: newOrder.paymentMethod,
+                }),
+            }).catch(err => console.error('Order email error (non-fatal):', err));
+        }
+
         return res.status(201).json({
             success: true,
             orderId: result.insertedId.toString(),
